@@ -29,13 +29,17 @@ data class Environment(
 
         const val HTTP_CLIENT_TIMEOUT_MS = 10_000
 
+        val DELTAKER_HENDELSE_TOPIC = "amt.deltaker-hendelse-v1"
+
+        val cluster: String = getEnvVar("NAIS_CLUSER_NAME", "lokal")
+        val appName: String = getEnvVar("NAIS_APP_NAME", "amt-distribusjon")
+        val namespace: String = getEnvVar("NAIS_NAMESPACE", "amt")
+
         fun isDev(): Boolean {
-            val cluster = System.getenv("NAIS_CLUSTER_NAME") ?: "Ikke dev"
             return cluster == "dev-gcp"
         }
 
         fun isProd(): Boolean {
-            val cluster = System.getenv("NAIS_CLUSTER_NAME") ?: "Ikke prod"
             return cluster == "prod-gcp"
         }
 
