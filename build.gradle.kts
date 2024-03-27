@@ -58,6 +58,8 @@ dependencies {
 
     implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 
+    implementation("no.nav.tms.varsel:kotlin-builder:1.0.0")
+
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
     implementation("no.nav.common:log:$commonVersion")
