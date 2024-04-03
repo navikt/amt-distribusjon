@@ -14,6 +14,10 @@ import no.nav.amt.distribusjon.application.plugins.configureMonitoring
 import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.db.Database
+import no.nav.amt.distribusjon.hendelse.HendelseConsumer
+import no.nav.amt.distribusjon.varsel.VarselProducer
+import no.nav.amt.distribusjon.varsel.VarselRepository
+import no.nav.amt.distribusjon.varsel.VarselService
 
 fun main() {
     val server = embeddedServer(Netty, port = 8080, module = Application::module)
@@ -44,6 +48,13 @@ fun Application.module() {
             jackson { applicationConfig() }
         }
     }
+
+    val varselService = VarselService(VarselRepository(), VarselProducer())
+
+    val consumers = listOf(
+        HendelseConsumer(varselService),
+    )
+    consumers.forEach { it.run() }
 
     configureRouting()
     configureMonitoring()
