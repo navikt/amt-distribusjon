@@ -15,8 +15,10 @@ class VarselService(
     private val repository: VarselRepository,
     private val producer: VarselProducer,
 ) {
-    private val varselUtsettelse = Duration.ofHours(1)
-    private val beskjedAktivLengde = Duration.ofDays(14)
+    companion object {
+        val varselUtsettelse = Duration.ofHours(1)
+        val beskjedAktivLengde = Duration.ofDays(14)
+    }
 
     fun handleHendelse(hendelse: Hendelse) {
         when (hendelse.payload) {
@@ -74,9 +76,13 @@ class VarselService(
 
     fun inaktiverVarsel(deltaker: HendelseDeltaker, type: Varsel.Type) {
         repository.getSisteVarsel(deltaker.id, type).onSuccess { varsel ->
-            if (varsel.aktivTil != null && varsel.aktivTil > nowUTC()) {
-                producer.inaktiver(varsel)
-                repository.upsert(varsel.copy(aktivTil = nowUTC()))
+            val now = nowUTC()
+            if (varsel.aktivTil == null || varsel.aktivTil > now) {
+                repository.upsert(varsel.copy(aktivTil = now))
+
+                if (varsel.aktivFra < now) {
+                    producer.inaktiver(varsel)
+                }
             }
         }
     }
@@ -107,4 +113,4 @@ class VarselService(
     }
 }
 
-fun nowUTC() = ZonedDateTime.now(ZoneId.of("Z"))
+fun nowUTC(): ZonedDateTime = ZonedDateTime.now(ZoneId.of("Z"))

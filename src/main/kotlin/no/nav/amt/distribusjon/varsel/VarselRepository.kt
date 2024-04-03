@@ -21,17 +21,18 @@ class VarselRepository {
     fun upsert(varsel: Varsel) = Database.query {
         val sql =
             """
-            insert into varsel (id, type, aktiv_fra, aktiv_til, deltaker_id, personident)
-            values(:id, :type, :aktiv_fra, :aktiv_til, :deltaker_id, personident)
+            insert into varsel (id, type, tekst, aktiv_fra, aktiv_til, deltaker_id, personident)
+            values(:id, :type, :tekst, :aktiv_fra, :aktiv_til, :deltaker_id, :personident)
             on conflict (id) do update set
                 aktiv_fra = :aktiv_fra,
-                aktiv_til = :aktiv_til
+                aktiv_til = :aktiv_til,
                 modified_at = current_timestamp
             """.trimIndent()
 
         val params = mapOf(
             "id" to varsel.id,
-            "type" to varsel.type,
+            "type" to varsel.type.name,
+            "tekst" to varsel.tekst,
             "aktiv_fra" to varsel.aktivFra,
             "aktiv_til" to varsel.aktivTil,
             "deltaker_id" to varsel.deltakerId,
@@ -55,6 +56,21 @@ class VarselRepository {
 
         it.run(query.map(::rowmapper).asSingle)?.let { varsel ->
             Result.success(varsel)
-        } ?: Result.failure(NoSuchElementException(""))
+        } ?: Result.failure(NoSuchElementException("Fant ingen varsel av type $type for deltaker $deltakerId"))
+    }
+
+    fun get(id: UUID) = Database.query {
+        val sql =
+            """
+            select * 
+            from varsel
+            where id = :id
+            """.trimIndent()
+
+        val query = queryOf(sql, mapOf("id" to id))
+
+        it.run(query.map(::rowmapper).asSingle)?.let { varsel ->
+            Result.success(varsel)
+        } ?: Result.failure(NoSuchElementException("Fant ikke varsel $id"))
     }
 }

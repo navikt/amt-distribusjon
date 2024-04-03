@@ -16,6 +16,7 @@ import java.util.UUID
 
 class HendelseConsumer(
     private val varselService: VarselService,
+    groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
 ) : Consumer<UUID, String> {
     private val consumer = ManagedKafkaConsumer(
@@ -23,7 +24,7 @@ class HendelseConsumer(
         config = kafkaConfig.consumerConfig(
             keyDeserializer = UUIDDeserializer(),
             valueDeserializer = StringDeserializer(),
-            groupId = Environment.KAFKA_CONSUMER_GROUP_ID,
+            groupId = groupId,
         ),
         consume = ::consume,
     )

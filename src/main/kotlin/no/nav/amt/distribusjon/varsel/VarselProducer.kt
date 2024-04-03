@@ -18,7 +18,7 @@ class VarselProducer(
         if (skalTogglesAv) return
 
         producer.produce(
-            key = varsel.deltakerId.toString(),
+            key = varsel.id.toString(),
             value = varsel.toInaktiverDto(),
         )
     }
@@ -31,7 +31,7 @@ class VarselProducer(
         }
 
         producer.produce(
-            key = varsel.deltakerId.toString(),
+            key = varsel.id.toString(),
             value = varsel.toOppgaveDto(true),
         )
     }
@@ -42,7 +42,7 @@ class VarselProducer(
         val skalVarslesEksternt = varsel.type == Varsel.Type.PAMELDING || varsel.type == Varsel.Type.AVSLUTTNING
 
         producer.produce(
-            key = varsel.deltakerId.toString(),
+            key = varsel.id.toString(),
             value = varsel.toBeskjedDto(skalVarslesEksternt),
         )
     }
