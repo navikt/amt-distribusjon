@@ -39,7 +39,7 @@ class VarselProducer(
     fun opprettBeskjed(varsel: Varsel) {
         if (skalTogglesAv) return
 
-        val skalVarslesEksternt = varsel.type == Varsel.Type.PAMELDING || varsel.type == Varsel.Type.AVSLUTTNING
+        val skalVarslesEksternt = varsel.type == Varsel.Type.PAMELDING || varsel.type == Varsel.Type.AVSLUTNING
 
         producer.produce(
             key = varsel.id.toString(),

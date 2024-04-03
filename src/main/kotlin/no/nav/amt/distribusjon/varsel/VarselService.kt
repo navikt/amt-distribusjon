@@ -34,7 +34,7 @@ class VarselService(
             is HendelseType.ForlengDeltakelse,
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.IkkeAktuell,
-            -> opprettBeskjed(hendelse, Varsel.Type.AVSLUTTNING)
+            -> opprettBeskjed(hendelse, Varsel.Type.AVSLUTNING)
 
             is HendelseType.EndreStartdato,
             -> opprettBeskjed(hendelse, Varsel.Type.OPPSTART)

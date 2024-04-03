@@ -23,7 +23,7 @@ data class Varsel(
     enum class Type {
         PAMELDING, // opprett-utkast, avbryt-utkast, godkjenn-utkast
         OPPSTART, // legg-til-oppstartsdato, endre-oppstartsdato
-        AVSLUTTNING, // avslutt-deltakelse, ikke-aktuell, forleng-deltakelse
+        AVSLUTNING, // avslutt-deltakelse, ikke-aktuell, forleng-deltakelse
 
         // deltakelsesmengde?
     }
@@ -41,7 +41,7 @@ data class Varsel(
 
     fun toBeskjedDto(skalVarslesEksternt: Boolean) = VarselActionBuilder.opprett {
         type = Varseltype.Beskjed
-        // link = innbyggerDeltakerUrl(deltakerId) // skal beskjeder ha link?
+        link = innbyggerDeltakerUrl(deltakerId) // skal beskjeder ha link?
         commonVarselConfig()
 
         if (skalVarslesEksternt) {
