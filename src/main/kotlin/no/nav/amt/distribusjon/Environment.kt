@@ -36,6 +36,8 @@ data class Environment(
         val appName: String = getEnvVar("NAIS_APP_NAME", "amt-distribusjon")
         val namespace: String = getEnvVar("NAIS_NAMESPACE", "amt")
 
+        val testContainersReuse = getEnvVar("TESTCONTAINERS_REUSE", "false").toBoolean()
+
         fun isDev(): Boolean {
             return cluster == "dev-gcp"
         }
