@@ -4,6 +4,7 @@ import kotliquery.Row
 import kotliquery.queryOf
 import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import java.time.ZoneId
 import java.util.NoSuchElementException
 import java.util.UUID
 
@@ -11,18 +12,19 @@ class VarselRepository {
     fun rowmapper(row: Row) = Varsel(
         id = row.uuid("id"),
         type = Varsel.Type.valueOf(row.string("type")),
-        aktivFra = row.zonedDateTime("aktiv_fra"),
-        aktivTil = row.zonedDateTimeOrNull("aktiv_til"),
+        aktivFra = row.zonedDateTime("aktiv_fra").withZoneSameInstant(ZoneId.of("Z")),
+        aktivTil = row.zonedDateTimeOrNull("aktiv_til")?.withZoneSameInstant(ZoneId.of("Z")),
         deltakerId = row.uuid("deltaker_id"),
         personident = row.string("personident"),
         tekst = row.string("tekst"),
+        skalVarsleEksternt = row.boolean("skal_varsle_eksternt"),
     )
 
     fun upsert(varsel: Varsel) = Database.query {
         val sql =
             """
-            insert into varsel (id, type, tekst, aktiv_fra, aktiv_til, deltaker_id, personident)
-            values(:id, :type, :tekst, :aktiv_fra, :aktiv_til, :deltaker_id, :personident)
+            insert into varsel (id, type, tekst, aktiv_fra, aktiv_til, deltaker_id, personident, skal_varsle_eksternt)
+            values(:id, :type, :tekst, :aktiv_fra, :aktiv_til, :deltaker_id, :personident, :skal_varsle_eksternt)
             on conflict (id) do update set
                 aktiv_fra = :aktiv_fra,
                 aktiv_til = :aktiv_til,
@@ -37,6 +39,7 @@ class VarselRepository {
             "aktiv_til" to varsel.aktivTil,
             "deltaker_id" to varsel.deltakerId,
             "personident" to varsel.personident,
+            "skal_varsle_eksternt" to varsel.skalVarsleEksternt,
         )
 
         it.update(queryOf(sql, params))

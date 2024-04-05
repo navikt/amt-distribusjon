@@ -1,6 +1,7 @@
 package no.nav.amt.distribusjon.varsel.model
 
 import no.nav.amt.distribusjon.Environment
+import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.tms.varsel.action.EksternKanal
 import no.nav.tms.varsel.action.EksternVarslingBestilling
 import no.nav.tms.varsel.action.Produsent
@@ -19,13 +20,16 @@ data class Varsel(
     val deltakerId: UUID,
     val personident: String,
     val tekst: String,
+    val skalVarsleEksternt: Boolean,
 ) {
-    enum class Type {
-        PAMELDING, // opprett-utkast, avbryt-utkast, godkjenn-utkast
-        OPPSTART, // legg-til-oppstartsdato, endre-oppstartsdato
-        AVSLUTNING, // avslutt-deltakelse, ikke-aktuell, forleng-deltakelse
+    val erAktiv: Boolean get() {
+        val now = nowUTC()
+        return aktivFra <= now && (aktivTil == null || aktivTil >= now)
+    }
 
-        // deltakelsesmengde?
+    enum class Type {
+        BESKJED,
+        OPPGAVE,
     }
 
     fun toOppgaveDto(skalVarslesEksternt: Boolean) = VarselActionBuilder.opprett {

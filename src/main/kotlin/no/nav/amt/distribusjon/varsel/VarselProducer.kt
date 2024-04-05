@@ -26,7 +26,7 @@ class VarselProducer(
     fun opprettOppgave(varsel: Varsel) {
         if (skalTogglesAv) return
 
-        require(varsel.type == Varsel.Type.PAMELDING) {
+        require(varsel.type == Varsel.Type.OPPGAVE) {
             "Kan ikke opprette oppgave, feil varseltype ${varsel.type}"
         }
 
@@ -36,14 +36,12 @@ class VarselProducer(
         )
     }
 
-    fun opprettBeskjed(varsel: Varsel) {
+    fun opprettBeskjed(varsel: Varsel, skalVarsleEksternt: Boolean) {
         if (skalTogglesAv) return
-
-        val skalVarslesEksternt = varsel.type == Varsel.Type.PAMELDING || varsel.type == Varsel.Type.AVSLUTNING
 
         producer.produce(
             key = varsel.id.toString(),
-            value = varsel.toBeskjedDto(skalVarslesEksternt),
+            value = varsel.toBeskjedDto(skalVarsleEksternt),
         )
     }
 }
