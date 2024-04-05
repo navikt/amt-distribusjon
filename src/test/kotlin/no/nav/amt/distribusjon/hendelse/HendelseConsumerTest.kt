@@ -3,8 +3,10 @@ package no.nav.amt.distribusjon.hendelse
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.time.delay
 import no.nav.amt.distribusjon.Environment
+import no.nav.amt.distribusjon.TestApp
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
+import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.AsyncUtils
 import no.nav.amt.distribusjon.utils.assertProduced
@@ -31,13 +33,14 @@ class HendelseConsumerTest {
         produce(hendelse)
 
         AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.PAMELDING).getOrThrow()
+            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
 
             varsel.aktivTil shouldBe null
             varsel.tekst shouldBe PAMELDING_TEKST
             varsel.aktivFra shouldBeCloseTo nowUTC()
             varsel.deltakerId shouldBe hendelse.deltaker.id
             varsel.personident shouldBe hendelse.deltaker.personident
+            varsel.skalVarsleEksternt shouldBe hendelse.skalVarslesEksternt()
 
             assertProducedOppgave(varsel.id)
         }
@@ -47,7 +50,7 @@ class HendelseConsumerTest {
     fun `opprettUtkast - tidligere oppgave er aktiv - sender ikke nytt varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
         val forrigeVarsel = Varselsdata.varsel(
-            Varsel.Type.PAMELDING,
+            Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusMinutes(30),
             deltakerId = hendelse.deltaker.id,
         )
@@ -56,7 +59,7 @@ class HendelseConsumerTest {
         produce(hendelse)
 
         AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.PAMELDING).getOrThrow()
+            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
 
             varsel.id shouldBe forrigeVarsel.id
             varsel.aktivTil shouldBe null
@@ -64,6 +67,7 @@ class HendelseConsumerTest {
             varsel.aktivFra shouldBeCloseTo forrigeVarsel.aktivFra
             varsel.deltakerId shouldBe forrigeVarsel.deltakerId
             varsel.personident shouldBe forrigeVarsel.personident
+            varsel.skalVarsleEksternt shouldBe hendelse.skalVarslesEksternt()
 
             assertNotProduced(varsel.id)
         }
@@ -73,7 +77,7 @@ class HendelseConsumerTest {
     fun `avbrytUtkast - varsel er aktivt - inaktiverer varsel og produserer`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avbrytUtkast())
         val forrigeVarsel = Varselsdata.varsel(
-            Varsel.Type.PAMELDING,
+            Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
         )
@@ -81,7 +85,7 @@ class HendelseConsumerTest {
         produce(hendelse)
 
         AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.PAMELDING).getOrThrow()
+            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
 
             varsel.id shouldBe forrigeVarsel.id
             varsel.aktivTil!! shouldBeCloseTo nowUTC()
@@ -94,7 +98,7 @@ class HendelseConsumerTest {
     fun `innbyggerGodkjennerUtkast - inaktiverer varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast())
         val forrigeVarsel = Varselsdata.varsel(
-            Varsel.Type.PAMELDING,
+            Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
         )
@@ -102,7 +106,7 @@ class HendelseConsumerTest {
         produce(hendelse)
 
         AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.PAMELDING).getOrThrow()
+            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
 
             varsel.id shouldBe forrigeVarsel.id
             varsel.aktivTil!! shouldBeCloseTo nowUTC()
@@ -114,14 +118,8 @@ class HendelseConsumerTest {
     @Test
     fun `navGodkjennUtkast - ingen tidligere varsel - oppretter beskjed`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast())
-
         produce(hendelse)
-
-        AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.PAMELDING).getOrThrow()
-
-            assertNyBeskjed(varsel, hendelse)
-        }
+        AsyncUtils.eventually { assertNyBeskjed(app, hendelse) }
     }
 
     @Test
@@ -129,7 +127,7 @@ class HendelseConsumerTest {
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast())
 
         val forrigeVarsel = Varselsdata.varsel(
-            Varsel.Type.PAMELDING,
+            Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
         )
@@ -137,9 +135,7 @@ class HendelseConsumerTest {
         produce(hendelse)
 
         AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.PAMELDING).getOrThrow()
-
-            assertNyBeskjed(varsel, hendelse)
+            assertNyBeskjed(app, hendelse)
 
             val inaktivertVarsel = app.varselRepository.get(forrigeVarsel.id).getOrThrow()
             inaktivertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
@@ -149,47 +145,29 @@ class HendelseConsumerTest {
     }
 
     @Test
-    fun `endreSluttDato - ingen tidligere varsel - oppretter varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreSluttdato())
-
-        produce(hendelse)
-
-        AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.AVSLUTNING).getOrThrow()
-            assertNyBeskjed(varsel, hendelse)
-        }
-    }
-
-    @Test
     fun `endreSluttdato - ingen tidligere varsel - oppretter varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreSluttdato())
-
         produce(hendelse)
-
-        AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.AVSLUTNING).getOrThrow()
-            assertNyBeskjed(varsel, hendelse)
-        }
+        AsyncUtils.eventually { assertNyBeskjed(app, hendelse) }
     }
 
     @Test
     fun `endreStartdato - ingen tidligere varsel - oppretter varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreStartdato())
-
         produce(hendelse)
-
-        AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPSTART).getOrThrow()
-            assertNyBeskjed(varsel, hendelse)
-        }
+        AsyncUtils.eventually { assertNyBeskjed(app, hendelse) }
     }
 
-    private fun assertNyBeskjed(varsel: Varsel, hendelse: Hendelse) {
+    private fun assertNyBeskjed(app: TestApp, hendelse: Hendelse) {
+        val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrThrow()
+
         varsel.aktivTil!! shouldBeCloseTo nowUTC().plus(VarselService.beskjedAktivLengde)
         varsel.tekst shouldBe PLACEHOLDER_BESKJED_TEKST
         varsel.aktivFra shouldBeCloseTo nowUTC()
         varsel.deltakerId shouldBe hendelse.deltaker.id
         varsel.personident shouldBe hendelse.deltaker.personident
+
+        varsel.skalVarsleEksternt shouldBe hendelse.skalVarslesEksternt()
 
         assertProducedBeskjed(varsel.id)
     }
@@ -228,4 +206,23 @@ private fun assertProducedBeskjed(id: UUID) = assertProduced(Environment.MINSIDE
         json["@event_name"].asText() shouldBe "opprett"
         json["type"].asText() shouldBe "beskjed"
     }
+}
+
+private fun Hendelse.skalVarslesEksternt() = when (payload) {
+    is HendelseType.EndreBakgrunnsinformasjon,
+    is HendelseType.EndreDeltakelsesmengde,
+    is HendelseType.EndreInnhold,
+    is HendelseType.EndreSluttarsak,
+    is HendelseType.EndreStartdato,
+    is HendelseType.InnbyggerGodkjennUtkast,
+    -> false
+
+    is HendelseType.ForlengDeltakelse,
+    is HendelseType.AvbrytUtkast,
+    is HendelseType.EndreSluttdato,
+    is HendelseType.IkkeAktuell,
+    is HendelseType.NavGodkjennUtkast,
+    is HendelseType.OpprettUtkast,
+    is HendelseType.AvsluttDeltakelse,
+    -> true
 }

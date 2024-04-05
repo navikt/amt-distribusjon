@@ -14,5 +14,6 @@ object Varselsdata {
         deltakerId: UUID = UUID.randomUUID(),
         personident: String = randomIdent(),
         tekst: String = "Varselstekst",
-    ) = Varsel(id, type, aktivFra, aktivTil, deltakerId, personident, tekst)
+        skalVarsleEksternt: Boolean = if (type == Varsel.Type.OPPGAVE) true else false,
+    ) = Varsel(id, type, aktivFra, aktivTil, deltakerId, personident, tekst, skalVarsleEksternt)
 }

@@ -20,6 +20,7 @@ data class Varsel(
     val deltakerId: UUID,
     val personident: String,
     val tekst: String,
+    val skalVarsleEksternt: Boolean,
 ) {
     val erAktiv: Boolean get() {
         val now = nowUTC()
@@ -27,11 +28,8 @@ data class Varsel(
     }
 
     enum class Type {
-        PAMELDING, // opprett-utkast, avbryt-utkast, godkjenn-utkast
-        OPPSTART, // legg-til-oppstartsdato, endre-oppstartsdato
-        AVSLUTNING, // avslutt-deltakelse, ikke-aktuell, forleng-deltakelse
-
-        // deltakelsesmengde?
+        BESKJED,
+        OPPGAVE,
     }
 
     fun toOppgaveDto(skalVarslesEksternt: Boolean) = VarselActionBuilder.opprett {

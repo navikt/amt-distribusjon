@@ -25,21 +25,21 @@ class VarselService(
     fun handleHendelse(hendelse: Hendelse) {
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> opprettPameldingsoppgave(hendelse)
-            is HendelseType.AvbrytUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.PAMELDING)
-            is HendelseType.InnbyggerGodkjennUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.PAMELDING)
+            is HendelseType.AvbrytUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
+            is HendelseType.InnbyggerGodkjennUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
             is HendelseType.NavGodkjennUtkast -> {
-                inaktiverVarsel(hendelse.deltaker, Varsel.Type.PAMELDING)
-                opprettBeskjed(hendelse, Varsel.Type.PAMELDING)
+                inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
+                opprettBeskjed(hendelse, true)
             }
 
             is HendelseType.EndreSluttdato,
             is HendelseType.ForlengDeltakelse,
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.IkkeAktuell,
-            -> opprettBeskjed(hendelse, Varsel.Type.AVSLUTNING)
+            -> opprettBeskjed(hendelse, true)
 
             is HendelseType.EndreStartdato,
-            -> opprettBeskjed(hendelse, Varsel.Type.OPPSTART)
+            -> opprettBeskjed(hendelse, false)
 
             is HendelseType.EndreDeltakelsesmengde,
             is HendelseType.EndreBakgrunnsinformasjon,
@@ -51,18 +51,20 @@ class VarselService(
         }
     }
 
-    private fun opprettBeskjed(hendelse: Hendelse, type: Varsel.Type) = opprettVarsel(
+    private fun opprettBeskjed(hendelse: Hendelse, skalVarsleEksternt: Boolean) = opprettVarsel(
         hendelse = hendelse,
-        type = type,
+        type = Varsel.Type.BESKJED,
         aktivTil = nowUTC().plus(beskjedAktivLengde),
         tekst = PLACEHOLDER_BESKJED_TEKST,
+        skalVarsleEksternt = skalVarsleEksternt,
     )
 
     private fun opprettPameldingsoppgave(hendelse: Hendelse) = opprettVarsel(
         hendelse = hendelse,
-        type = Varsel.Type.PAMELDING,
+        type = Varsel.Type.OPPGAVE,
         aktivTil = null,
         tekst = PAMELDING_TEKST,
+        skalVarsleEksternt = true,
     )
 
     private fun opprettVarsel(
@@ -70,6 +72,7 @@ class VarselService(
         type: Varsel.Type,
         aktivTil: ZonedDateTime?,
         tekst: String,
+        skalVarsleEksternt: Boolean,
     ) {
         val forrigeVarsel = repository.getSisteVarsel(hendelse.deltaker.id, type).getOrNull()
         if (forrigeVarsel?.erAktiv == true) {
@@ -90,6 +93,7 @@ class VarselService(
             deltakerId = hendelse.deltaker.id,
             personident = hendelse.deltaker.personident,
             tekst = tekst,
+            skalVarsleEksternt = skalVarsleEksternt,
         )
 
         repository.upsert(varsel)
@@ -97,9 +101,8 @@ class VarselService(
         log.info("Opprettet varsel for deltaker ${hendelse.deltaker.id} av type $type")
 
         when (type) {
-            Varsel.Type.PAMELDING -> producer.opprettOppgave(varsel)
-            Varsel.Type.OPPSTART -> producer.opprettBeskjed(varsel)
-            Varsel.Type.AVSLUTNING -> producer.opprettBeskjed(varsel)
+            Varsel.Type.OPPGAVE -> producer.opprettOppgave(varsel)
+            Varsel.Type.BESKJED -> producer.opprettBeskjed(varsel, skalVarsleEksternt)
         }
     }
 
