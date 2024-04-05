@@ -4,6 +4,7 @@ import kotliquery.Row
 import kotliquery.queryOf
 import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import java.time.ZoneId
 import java.util.NoSuchElementException
 import java.util.UUID
 
@@ -11,8 +12,8 @@ class VarselRepository {
     fun rowmapper(row: Row) = Varsel(
         id = row.uuid("id"),
         type = Varsel.Type.valueOf(row.string("type")),
-        aktivFra = row.zonedDateTime("aktiv_fra"),
-        aktivTil = row.zonedDateTimeOrNull("aktiv_til"),
+        aktivFra = row.zonedDateTime("aktiv_fra").withZoneSameInstant(ZoneId.of("Z")),
+        aktivTil = row.zonedDateTimeOrNull("aktiv_til")?.withZoneSameInstant(ZoneId.of("Z")),
         deltakerId = row.uuid("deltaker_id"),
         personident = row.string("personident"),
         tekst = row.string("tekst"),

@@ -25,7 +25,7 @@ import java.util.UUID
 
 class HendelseConsumerTest {
     @Test
-    fun `opprettUtkast - oppretter nytt varsel`() = integrationTest { app, _ ->
+    fun `opprettUtkast - oppretter nytt varsel og produserer`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
 
         produce(hendelse)
@@ -35,18 +35,20 @@ class HendelseConsumerTest {
 
             varsel.aktivTil shouldBe null
             varsel.tekst shouldBe PAMELDING_TEKST
-            varsel.aktivFra shouldBeCloseTo nowUTC().plusHours(1)
+            varsel.aktivFra shouldBeCloseTo nowUTC()
             varsel.deltakerId shouldBe hendelse.deltaker.id
             varsel.personident shouldBe hendelse.deltaker.personident
+
+            assertProducedOppgave(varsel.id)
         }
     }
 
     @Test
-    fun `opprettUtkast - varsel ikke sendt - utsetter varsel`() = integrationTest { app, _ ->
+    fun `opprettUtkast - tidligere oppgave er aktiv - sender ikke nytt varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.PAMELDING,
-            aktivFra = nowUTC().plusMinutes(30),
+            aktivFra = nowUTC().minusMinutes(30),
             deltakerId = hendelse.deltaker.id,
         )
         app.varselRepository.upsert(forrigeVarsel)
@@ -59,9 +61,11 @@ class HendelseConsumerTest {
             varsel.id shouldBe forrigeVarsel.id
             varsel.aktivTil shouldBe null
             varsel.tekst shouldBe forrigeVarsel.tekst
-            varsel.aktivFra shouldBeCloseTo nowUTC().plusHours(1)
+            varsel.aktivFra shouldBeCloseTo forrigeVarsel.aktivFra
             varsel.deltakerId shouldBe forrigeVarsel.deltakerId
             varsel.personident shouldBe forrigeVarsel.personident
+
+            assertNotProduced(varsel.id)
         }
     }
 
@@ -84,26 +88,6 @@ class HendelseConsumerTest {
 
             assertProducedInaktiver(varsel.id)
         }
-    }
-
-    @Test
-    fun `avbrytUtkast - varsel er ikke sendt - inaktiverer varsel og produserer ikke`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avbrytUtkast())
-        val forrigeVarsel = Varselsdata.varsel(
-            Varsel.Type.PAMELDING,
-            aktivFra = nowUTC().plusHours(1),
-            deltakerId = hendelse.deltaker.id,
-        )
-        app.varselRepository.upsert(forrigeVarsel)
-        produce(hendelse)
-
-        AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.PAMELDING).getOrThrow()
-
-            varsel.id shouldBe forrigeVarsel.id
-            varsel.aktivTil!! shouldBeCloseTo nowUTC()
-        }
-        assertNotProduced(forrigeVarsel.id)
     }
 
     @Test
@@ -136,11 +120,7 @@ class HendelseConsumerTest {
         AsyncUtils.eventually {
             val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.PAMELDING).getOrThrow()
 
-            varsel.aktivTil!! shouldBeCloseTo nowUTC().plus(VarselService.beskjedAktivLengde)
-            varsel.tekst shouldBe PLACEHOLDER_BESKJED_TEKST
-            varsel.aktivFra shouldBeCloseTo nowUTC().plusHours(1)
-            varsel.deltakerId shouldBe hendelse.deltaker.id
-            varsel.personident shouldBe hendelse.deltaker.personident
+            assertNyBeskjed(varsel, hendelse)
         }
     }
 
@@ -157,19 +137,61 @@ class HendelseConsumerTest {
         produce(hendelse)
 
         AsyncUtils.eventually {
-            val beskjed = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.PAMELDING).getOrThrow()
+            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.PAMELDING).getOrThrow()
 
-            beskjed.aktivTil!! shouldBeCloseTo nowUTC().plus(VarselService.beskjedAktivLengde)
-            beskjed.tekst shouldBe PLACEHOLDER_BESKJED_TEKST
-            beskjed.aktivFra shouldBeCloseTo nowUTC().plusHours(1)
-            beskjed.deltakerId shouldBe hendelse.deltaker.id
-            beskjed.personident shouldBe hendelse.deltaker.personident
+            assertNyBeskjed(varsel, hendelse)
 
             val inaktivertVarsel = app.varselRepository.get(forrigeVarsel.id).getOrThrow()
             inaktivertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
 
             assertProducedInaktiver(forrigeVarsel.id)
         }
+    }
+
+    @Test
+    fun `endreSluttDato - ingen tidligere varsel - oppretter varsel`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreSluttdato())
+
+        produce(hendelse)
+
+        AsyncUtils.eventually {
+            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.AVSLUTNING).getOrThrow()
+            assertNyBeskjed(varsel, hendelse)
+        }
+    }
+
+    @Test
+    fun `endreSluttdato - ingen tidligere varsel - oppretter varsel`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreSluttdato())
+
+        produce(hendelse)
+
+        AsyncUtils.eventually {
+            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.AVSLUTNING).getOrThrow()
+            assertNyBeskjed(varsel, hendelse)
+        }
+    }
+
+    @Test
+    fun `endreStartdato - ingen tidligere varsel - oppretter varsel`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreStartdato())
+
+        produce(hendelse)
+
+        AsyncUtils.eventually {
+            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPSTART).getOrThrow()
+            assertNyBeskjed(varsel, hendelse)
+        }
+    }
+
+    private fun assertNyBeskjed(varsel: Varsel, hendelse: Hendelse) {
+        varsel.aktivTil!! shouldBeCloseTo nowUTC().plus(VarselService.beskjedAktivLengde)
+        varsel.tekst shouldBe PLACEHOLDER_BESKJED_TEKST
+        varsel.aktivFra shouldBeCloseTo nowUTC()
+        varsel.deltakerId shouldBe hendelse.deltaker.id
+        varsel.personident shouldBe hendelse.deltaker.personident
+
+        assertProducedBeskjed(varsel.id)
     }
 }
 
@@ -187,5 +209,23 @@ private fun assertProducedInaktiver(id: UUID) = assertProduced(Environment.MINSI
         val json = objectMapper.readTree(it[id])
         json["varselId"].asText() shouldBe id.toString()
         json["@event_name"].asText() shouldBe "inaktiver"
+    }
+}
+
+private fun assertProducedOppgave(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
+    AsyncUtils.eventually {
+        val json = objectMapper.readTree(it[id])
+        json["varselId"].asText() shouldBe id.toString()
+        json["@event_name"].asText() shouldBe "opprett"
+        json["type"].asText() shouldBe "oppgave"
+    }
+}
+
+private fun assertProducedBeskjed(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
+    AsyncUtils.eventually {
+        val json = objectMapper.readTree(it[id])
+        json["varselId"].asText() shouldBe id.toString()
+        json["@event_name"].asText() shouldBe "opprett"
+        json["type"].asText() shouldBe "beskjed"
     }
 }

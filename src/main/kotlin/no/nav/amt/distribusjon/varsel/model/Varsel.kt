@@ -1,6 +1,7 @@
 package no.nav.amt.distribusjon.varsel.model
 
 import no.nav.amt.distribusjon.Environment
+import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.tms.varsel.action.EksternKanal
 import no.nav.tms.varsel.action.EksternVarslingBestilling
 import no.nav.tms.varsel.action.Produsent
@@ -20,6 +21,11 @@ data class Varsel(
     val personident: String,
     val tekst: String,
 ) {
+    val erAktiv: Boolean get() {
+        val now = nowUTC()
+        return aktivFra <= now && (aktivTil == null || aktivTil >= now)
+    }
+
     enum class Type {
         PAMELDING, // opprett-utkast, avbryt-utkast, godkjenn-utkast
         OPPSTART, // legg-til-oppstartsdato, endre-oppstartsdato
