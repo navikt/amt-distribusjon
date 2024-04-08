@@ -38,6 +38,11 @@ data class Environment(
 
         val testContainersReuse = getEnvVar("TESTCONTAINERS_REUSE", "false").toBoolean()
 
+        val unleashUrl = getEnvVar("UNLEASH_SERVER_API_URL")
+        val unleashToken = getEnvVar("UNLEASH_SERVER_API_TOKEN")
+
+        const val VARSEL_TOGGLE = "amt.minside-varsel"
+
         fun isDev(): Boolean {
             return cluster == "dev-gcp"
         }

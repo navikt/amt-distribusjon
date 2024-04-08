@@ -1,5 +1,7 @@
 package no.nav.amt.distribusjon.varsel
 
+import io.getunleash.Unleash
+import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
@@ -15,6 +17,7 @@ import java.util.UUID
 class VarselService(
     private val repository: VarselRepository,
     private val producer: VarselProducer,
+    private val unleash: Unleash,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -23,6 +26,11 @@ class VarselService(
     }
 
     fun handleHendelse(hendelse: Hendelse) {
+        if (!unleash.isEnabled(Environment.VARSEL_TOGGLE)) {
+            log.info("Varsler er togglet av, håndterer ikke hendelse for deltaker ${hendelse.deltaker.id}.")
+            return
+        }
+
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> opprettPameldingsoppgave(hendelse)
             is HendelseType.AvbrytUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)

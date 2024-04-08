@@ -1,5 +1,7 @@
 package no.nav.amt.distribusjon
 
+import io.getunleash.DefaultUnleash
+import io.getunleash.util.UnleashConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -49,7 +51,16 @@ fun Application.module() {
         }
     }
 
-    val varselService = VarselService(VarselRepository(), VarselProducer())
+    val unleash = DefaultUnleash(
+        UnleashConfig.builder()
+            .appName(Environment.appName)
+            .instanceId(Environment.appName)
+            .unleashAPI("${Environment.unleashUrl}/api")
+            .apiKey(Environment.unleashToken)
+            .build(),
+    )
+
+    val varselService = VarselService(VarselRepository(), VarselProducer(), unleash)
 
     val consumers = listOf(
         HendelseConsumer(varselService),

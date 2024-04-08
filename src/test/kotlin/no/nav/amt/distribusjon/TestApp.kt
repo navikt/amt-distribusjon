@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon
 
+import io.getunleash.FakeUnleash
 import io.ktor.client.HttpClient
 import io.ktor.server.testing.testApplication
 import no.nav.amt.distribusjon.application.isReadyKey
@@ -17,13 +18,17 @@ import java.util.UUID
 class TestApp {
     val varselRepository: VarselRepository
     val varselService: VarselService
+    val unleash: FakeUnleash
 
     init {
         SingletonPostgresContainer.start()
         SingletonKafkaProvider.start()
 
+        unleash = FakeUnleash()
+        unleash.enableAll()
+
         varselRepository = VarselRepository()
-        varselService = VarselService(varselRepository, VarselProducer(LocalKafkaConfig(SingletonKafkaProvider.getHost())))
+        varselService = VarselService(varselRepository, VarselProducer(LocalKafkaConfig(SingletonKafkaProvider.getHost())), unleash)
 
         val consumers = listOf(
             HendelseConsumer(varselService, UUID.randomUUID().toString(), kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())),
