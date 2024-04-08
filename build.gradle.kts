@@ -35,6 +35,7 @@ val kotliqueryVersion = "1.9.0"
 val postgresVersion = "42.7.3"
 val caffeineVersion = "3.1.8"
 val mockkVersion = "1.13.10"
+val unleashVersion = "9.2.0"
 
 dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
@@ -70,6 +71,8 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql:$flywayVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+
+    implementation("io.getunleash:unleash-client-java:$unleashVersion")
 
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")

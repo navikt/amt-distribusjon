@@ -41,6 +41,12 @@ spec:
   leaderElection: true
   kafka:
     pool: nav-dev
+  accessPolicy:
+    outbound:
+      external:
+        - host: amt-unleash-api.nav.cloud.nais.io
+  envFrom:
+    - secret: amt-distribusjon-unleash-api-token
   gcp:
     sqlInstances:
       - name: amt-distribusjon
@@ -50,10 +56,10 @@ spec:
           - name: amt-distribusjon
             envVarPrefix: DB
   observability:
-      autoInstrumentation:
-        enabled: true
-        runtime: java
-      logging:
-        destinations:
-          - id: elastic
-          - id: loki
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+      destinations:
+        - id: elastic
+        - id: loki

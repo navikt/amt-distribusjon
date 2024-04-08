@@ -12,11 +12,7 @@ class VarselProducer(
 ) {
     private val producer = Producer(kafkaConfig, Environment.MINSIDE_VARSEL_TOPIC)
 
-    private val skalTogglesAv = !Environment.isLocal()
-
     fun inaktiver(varsel: Varsel) {
-        if (skalTogglesAv) return
-
         producer.produce(
             key = varsel.id.toString(),
             value = varsel.toInaktiverDto(),
@@ -24,8 +20,6 @@ class VarselProducer(
     }
 
     fun opprettOppgave(varsel: Varsel) {
-        if (skalTogglesAv) return
-
         require(varsel.type == Varsel.Type.OPPGAVE) {
             "Kan ikke opprette oppgave, feil varseltype ${varsel.type}"
         }
@@ -37,7 +31,9 @@ class VarselProducer(
     }
 
     fun opprettBeskjed(varsel: Varsel, skalVarsleEksternt: Boolean) {
-        if (skalTogglesAv) return
+        require(varsel.type == Varsel.Type.BESKJED) {
+            "Kan ikke opprette beskjed, feil varseltype ${varsel.type}"
+        }
 
         producer.produce(
             key = varsel.id.toString(),
