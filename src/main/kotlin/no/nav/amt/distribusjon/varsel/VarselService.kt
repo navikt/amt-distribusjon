@@ -114,7 +114,7 @@ class VarselService(
         }
     }
 
-    fun inaktiverVarsel(deltaker: HendelseDeltaker, type: Varsel.Type) {
+    private fun inaktiverVarsel(deltaker: HendelseDeltaker, type: Varsel.Type) {
         repository.getSisteVarsel(deltaker.id, type).onSuccess { varsel ->
             if (varsel.erAktiv) {
                 repository.upsert(varsel.copy(aktivTil = nowUTC()))
@@ -122,6 +122,16 @@ class VarselService(
             }
         }
     }
+
+    fun inaktiverBeskjed(varsel: Varsel) {
+        require(varsel.type == Varsel.Type.BESKJED) {
+            "Varsel er ikke av type ${Varsel.Type.BESKJED}, kan ikke inaktivere beskjed"
+        }
+        log.info("Inaktiverer beskjed ${varsel.id}")
+        repository.upsert(varsel.copy(aktivTil = nowUTC()))
+    }
+
+    fun get(varselId: UUID) = repository.get(varselId)
 }
 
 fun nowUTC(): ZonedDateTime = ZonedDateTime.now(ZoneId.of("Z"))

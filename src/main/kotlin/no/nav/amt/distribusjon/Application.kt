@@ -20,6 +20,7 @@ import no.nav.amt.distribusjon.hendelse.HendelseConsumer
 import no.nav.amt.distribusjon.varsel.VarselProducer
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
+import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 
 fun main() {
     val server = embeddedServer(Netty, port = 8080, module = Application::module)
@@ -64,6 +65,7 @@ fun Application.module() {
 
     val consumers = listOf(
         HendelseConsumer(varselService),
+        VarselHendelseConsumer(varselService),
     )
     consumers.forEach { it.run() }
 
