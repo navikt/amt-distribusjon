@@ -84,8 +84,6 @@ class VarselService(
     ) {
         val forrigeVarsel = repository.getSisteVarsel(hendelse.deltaker.id, type).getOrNull()
         if (forrigeVarsel?.erAktiv == true) {
-            // Nå kan det hende at en beskjed har blitt inaktivert av innbygger uten at vi har fått vite om det.
-            // For å vite dette kan vi lytte på aapen-varsel-hendelse-v1 for å få oppdateringer om status på varseler.
             log.info(
                 "Forrige varsel for deltaker ${hendelse.deltaker.id} av type $type er fortsatt aktivt. " +
                     "Oppretter ikke nytt varsel.",
