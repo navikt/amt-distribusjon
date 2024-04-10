@@ -84,8 +84,6 @@ class VarselService(
     ) {
         val forrigeVarsel = repository.getSisteVarsel(hendelse.deltaker.id, type).getOrNull()
         if (forrigeVarsel?.erAktiv == true) {
-            // Nå kan det hende at en beskjed har blitt inaktivert av innbygger uten at vi har fått vite om det.
-            // For å vite dette kan vi lytte på aapen-varsel-hendelse-v1 for å få oppdateringer om status på varseler.
             log.info(
                 "Forrige varsel for deltaker ${hendelse.deltaker.id} av type $type er fortsatt aktivt. " +
                     "Oppretter ikke nytt varsel.",
@@ -114,7 +112,7 @@ class VarselService(
         }
     }
 
-    fun inaktiverVarsel(deltaker: HendelseDeltaker, type: Varsel.Type) {
+    private fun inaktiverVarsel(deltaker: HendelseDeltaker, type: Varsel.Type) {
         repository.getSisteVarsel(deltaker.id, type).onSuccess { varsel ->
             if (varsel.erAktiv) {
                 repository.upsert(varsel.copy(aktivTil = nowUTC()))
@@ -122,6 +120,16 @@ class VarselService(
             }
         }
     }
+
+    fun inaktiverBeskjed(varsel: Varsel) {
+        require(varsel.type == Varsel.Type.BESKJED) {
+            "Varsel er ikke av type ${Varsel.Type.BESKJED}, kan ikke inaktivere beskjed"
+        }
+        log.info("Inaktiverer beskjed ${varsel.id}")
+        repository.upsert(varsel.copy(aktivTil = nowUTC()))
+    }
+
+    fun get(varselId: UUID) = repository.get(varselId)
 }
 
 fun nowUTC(): ZonedDateTime = ZonedDateTime.now(ZoneId.of("Z"))

@@ -13,6 +13,7 @@ import no.nav.amt.distribusjon.utils.SingletonPostgresContainer
 import no.nav.amt.distribusjon.varsel.VarselProducer
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
+import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 import java.util.UUID
 
 class TestApp {
@@ -30,8 +31,11 @@ class TestApp {
         varselRepository = VarselRepository()
         varselService = VarselService(varselRepository, VarselProducer(LocalKafkaConfig(SingletonKafkaProvider.getHost())), unleash)
 
+        val consumerId = UUID.randomUUID().toString()
+        val kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
         val consumers = listOf(
-            HendelseConsumer(varselService, UUID.randomUUID().toString(), kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())),
+            HendelseConsumer(varselService, consumerId, kafkaConfig),
+            VarselHendelseConsumer(varselService, consumerId, kafkaConfig),
         )
 
         consumers.forEach { it.run() }

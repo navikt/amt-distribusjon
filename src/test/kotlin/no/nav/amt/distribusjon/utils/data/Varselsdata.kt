@@ -9,7 +9,7 @@ object Varselsdata {
     fun varsel(
         type: Varsel.Type,
         id: UUID = UUID.randomUUID(),
-        aktivFra: ZonedDateTime = nowUTC().plusHours(1),
+        aktivFra: ZonedDateTime = nowUTC(),
         aktivTil: ZonedDateTime? = null,
         deltakerId: UUID = UUID.randomUUID(),
         personident: String = randomIdent(),
