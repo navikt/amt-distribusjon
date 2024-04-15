@@ -26,18 +26,18 @@ class VarselProducer(
 
         producer.produce(
             key = varsel.id.toString(),
-            value = varsel.toOppgaveDto(true),
+            value = varsel.toOppgaveDto(),
         )
     }
 
-    fun opprettBeskjed(varsel: Varsel, skalVarsleEksternt: Boolean) {
+    fun opprettBeskjed(varsel: Varsel) {
         require(varsel.type == Varsel.Type.BESKJED) {
             "Kan ikke opprette beskjed, feil varseltype ${varsel.type}"
         }
 
         producer.produce(
             key = varsel.id.toString(),
-            value = varsel.toBeskjedDto(skalVarsleEksternt),
+            value = varsel.toBeskjedDto(),
         )
     }
 }

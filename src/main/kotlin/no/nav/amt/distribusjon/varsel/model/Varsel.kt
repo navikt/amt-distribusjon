@@ -32,25 +32,12 @@ data class Varsel(
         OPPGAVE,
     }
 
-    fun toOppgaveDto(skalVarslesEksternt: Boolean) = VarselActionBuilder.opprett {
-        type = Varseltype.Oppgave
-        link = innbyggerDeltakerUrl(deltakerId)
-
-        commonVarselConfig()
-
-        if (skalVarslesEksternt) {
-            eksternVarsling = EksternVarslingBestilling(prefererteKanaler = listOf(EksternKanal.SMS))
-        }
+    fun toOppgaveDto() = VarselActionBuilder.opprett {
+        varselConfig(Varseltype.Oppgave)
     }
 
-    fun toBeskjedDto(skalVarslesEksternt: Boolean) = VarselActionBuilder.opprett {
-        type = Varseltype.Beskjed
-        link = innbyggerDeltakerUrl(deltakerId) // skal beskjeder ha link?
-        commonVarselConfig()
-
-        if (skalVarslesEksternt) {
-            eksternVarsling = EksternVarslingBestilling(prefererteKanaler = listOf(EksternKanal.SMS))
-        }
+    fun toBeskjedDto() = VarselActionBuilder.opprett {
+        varselConfig(Varseltype.Beskjed)
     }
 
     fun toInaktiverDto() = VarselActionBuilder.inaktiver {
@@ -58,8 +45,9 @@ data class Varsel(
         produsent = produsent()
     }
 
-    private fun VarselActionBuilder.OpprettVarselInstance.commonVarselConfig() {
+    private fun VarselActionBuilder.OpprettVarselInstance.varselConfig(varseltype: Varseltype) {
         varselId = this@Varsel.id.toString()
+        type = varseltype
         sensitivitet = Sensitivitet.High
         ident = personident
         tekster += Tekst(
@@ -68,7 +56,12 @@ data class Varsel(
             default = true,
         )
         aktivFremTil = aktivTil
+        link = innbyggerDeltakerUrl(deltakerId)
         produsent = produsent()
+
+        if (skalVarsleEksternt) {
+            eksternVarsling = EksternVarslingBestilling(prefererteKanaler = listOf(EksternKanal.SMS))
+        }
     }
 
     private fun produsent() = Produsent(

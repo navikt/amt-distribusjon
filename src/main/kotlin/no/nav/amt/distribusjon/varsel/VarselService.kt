@@ -33,21 +33,26 @@ class VarselService(
 
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> opprettPameldingsoppgave(hendelse)
+
+            // Forrige oppgave er bestandig aktiv hvis denne branchen treffer,
+            // så vi må avklare når og hvordan vi ønsker eventuellt "revarsle".
+            is HendelseType.EndreUtkast -> opprettPameldingsoppgave(hendelse)
+
             is HendelseType.AvbrytUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
             is HendelseType.InnbyggerGodkjennUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
             is HendelseType.NavGodkjennUtkast -> {
                 inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
-                opprettBeskjed(hendelse, true)
+                opprettBeskjed(hendelse)
             }
 
             is HendelseType.EndreSluttdato,
             is HendelseType.ForlengDeltakelse,
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.IkkeAktuell,
-            -> opprettBeskjed(hendelse, true)
+            -> opprettBeskjed(hendelse)
 
             is HendelseType.EndreStartdato,
-            -> opprettBeskjed(hendelse, false)
+            -> opprettBeskjed(hendelse)
 
             is HendelseType.EndreDeltakelsesmengde,
             is HendelseType.EndreBakgrunnsinformasjon,
@@ -59,12 +64,11 @@ class VarselService(
         }
     }
 
-    private fun opprettBeskjed(hendelse: Hendelse, skalVarsleEksternt: Boolean) = opprettVarsel(
+    private fun opprettBeskjed(hendelse: Hendelse) = opprettVarsel(
         hendelse = hendelse,
         type = Varsel.Type.BESKJED,
         aktivTil = nowUTC().plus(beskjedAktivLengde),
         tekst = PLACEHOLDER_BESKJED_TEKST,
-        skalVarsleEksternt = skalVarsleEksternt,
     )
 
     private fun opprettPameldingsoppgave(hendelse: Hendelse) = opprettVarsel(
@@ -72,7 +76,6 @@ class VarselService(
         type = Varsel.Type.OPPGAVE,
         aktivTil = null,
         tekst = PAMELDING_TEKST,
-        skalVarsleEksternt = true,
     )
 
     private fun opprettVarsel(
@@ -80,7 +83,6 @@ class VarselService(
         type: Varsel.Type,
         aktivTil: ZonedDateTime?,
         tekst: String,
-        skalVarsleEksternt: Boolean,
     ) {
         val forrigeVarsel = repository.getSisteVarsel(hendelse.deltaker.id, type).getOrNull()
         if (forrigeVarsel?.erAktiv == true) {
@@ -99,7 +101,7 @@ class VarselService(
             deltakerId = hendelse.deltaker.id,
             personident = hendelse.deltaker.personident,
             tekst = tekst,
-            skalVarsleEksternt = skalVarsleEksternt,
+            skalVarsleEksternt = hendelse.skalVarslesEksternt(),
         )
 
         repository.upsert(varsel)
@@ -108,7 +110,7 @@ class VarselService(
 
         when (type) {
             Varsel.Type.OPPGAVE -> producer.opprettOppgave(varsel)
-            Varsel.Type.BESKJED -> producer.opprettBeskjed(varsel, skalVarsleEksternt)
+            Varsel.Type.BESKJED -> producer.opprettBeskjed(varsel)
         }
     }
 
@@ -133,3 +135,23 @@ class VarselService(
 }
 
 fun nowUTC(): ZonedDateTime = ZonedDateTime.now(ZoneId.of("Z"))
+
+fun Hendelse.skalVarslesEksternt() = when (payload) {
+    is HendelseType.EndreBakgrunnsinformasjon,
+    is HendelseType.EndreDeltakelsesmengde,
+    is HendelseType.EndreInnhold,
+    is HendelseType.EndreSluttarsak,
+    is HendelseType.EndreStartdato,
+    is HendelseType.InnbyggerGodkjennUtkast,
+    -> false
+
+    is HendelseType.ForlengDeltakelse,
+    is HendelseType.AvbrytUtkast,
+    is HendelseType.EndreSluttdato,
+    is HendelseType.IkkeAktuell,
+    is HendelseType.NavGodkjennUtkast,
+    is HendelseType.OpprettUtkast,
+    is HendelseType.EndreUtkast,
+    is HendelseType.AvsluttDeltakelse,
+    -> true
+}

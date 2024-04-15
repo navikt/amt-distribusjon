@@ -6,7 +6,6 @@ import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.TestApp
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
-import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.AsyncUtils
 import no.nav.amt.distribusjon.utils.assertProduced
@@ -20,6 +19,7 @@ import no.nav.amt.distribusjon.varsel.model.PAMELDING_TEKST
 import no.nav.amt.distribusjon.varsel.model.PLACEHOLDER_BESKJED_TEKST
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.distribusjon.varsel.nowUTC
+import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.Test
 import java.time.Duration
@@ -206,23 +206,4 @@ private fun assertProducedBeskjed(id: UUID) = assertProduced(Environment.MINSIDE
         json["@event_name"].asText() shouldBe "opprett"
         json["type"].asText() shouldBe "beskjed"
     }
-}
-
-private fun Hendelse.skalVarslesEksternt() = when (payload) {
-    is HendelseType.EndreBakgrunnsinformasjon,
-    is HendelseType.EndreDeltakelsesmengde,
-    is HendelseType.EndreInnhold,
-    is HendelseType.EndreSluttarsak,
-    is HendelseType.EndreStartdato,
-    is HendelseType.InnbyggerGodkjennUtkast,
-    -> false
-
-    is HendelseType.ForlengDeltakelse,
-    is HendelseType.AvbrytUtkast,
-    is HendelseType.EndreSluttdato,
-    is HendelseType.IkkeAktuell,
-    is HendelseType.NavGodkjennUtkast,
-    is HendelseType.OpprettUtkast,
-    is HendelseType.AvsluttDeltakelse,
-    -> true
 }
