@@ -137,6 +137,7 @@ class VarselService(
 fun nowUTC(): ZonedDateTime = ZonedDateTime.now(ZoneId.of("Z"))
 
 fun Hendelse.skalVarslesEksternt() = when (payload) {
+    is HendelseType.AvbrytUtkast,
     is HendelseType.EndreBakgrunnsinformasjon,
     is HendelseType.EndreDeltakelsesmengde,
     is HendelseType.EndreInnhold,
@@ -146,7 +147,6 @@ fun Hendelse.skalVarslesEksternt() = when (payload) {
     -> false
 
     is HendelseType.ForlengDeltakelse,
-    is HendelseType.AvbrytUtkast,
     is HendelseType.EndreSluttdato,
     is HendelseType.IkkeAktuell,
     is HendelseType.NavGodkjennUtkast,
