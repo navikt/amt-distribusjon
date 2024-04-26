@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
+import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.kafka.Consumer
 import no.nav.amt.distribusjon.kafka.ManagedKafkaConsumer
 import no.nav.amt.distribusjon.kafka.config.KafkaConfig
@@ -16,6 +17,7 @@ import java.util.UUID
 
 class HendelseConsumer(
     private val varselService: VarselService,
+    private val journalforingService: JournalforingService,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
 ) : Consumer<UUID, String> {
@@ -32,6 +34,7 @@ class HendelseConsumer(
     override suspend fun consume(key: UUID, value: String) {
         val hendelse: Hendelse = objectMapper.readValue(value)
         varselService.handleHendelse(hendelse)
+        journalforingService.handleHendelse(hendelse)
     }
 
     override fun run() = consumer.run()

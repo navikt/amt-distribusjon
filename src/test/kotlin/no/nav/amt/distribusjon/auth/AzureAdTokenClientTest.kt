@@ -12,6 +12,7 @@ import io.ktor.http.headersOf
 import io.ktor.serialization.jackson.jackson
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.runBlocking
+import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
 import org.junit.Test
 
@@ -41,10 +42,8 @@ class AzureAdTokenClientTest {
         }
 
         val azureAdTokenClient = AzureAdTokenClient(
-            azureAdTokenUrl = "https://fake-url.com/token",
-            clientId = "fake-client-id",
-            clientSecret = "fake-client-secret",
             httpClient = httpClient,
+            environment = Environment(),
         )
 
         val token = azureAdTokenClient.getMachineToMachineToken("fake-scope")
@@ -80,10 +79,8 @@ class AzureAdTokenClientTest {
         }
 
         val azureAdTokenClient = AzureAdTokenClient(
-            azureAdTokenUrl = "https://fake-url.com/token",
-            clientId = "fake-client-id",
-            clientSecret = "fake-client-secret",
             httpClient = httpClient,
+            environment = Environment(),
         )
 
         val token1 = azureAdTokenClient.getMachineToMachineToken("fake-scope")

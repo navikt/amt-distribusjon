@@ -12,6 +12,7 @@ data class HendelseDeltaker(
         val navn: String,
         val arrangor: Arrangor,
         val tiltak: Tiltak,
+        val erKurs: Boolean = false,
     ) {
         data class Arrangor(
             val id: UUID,

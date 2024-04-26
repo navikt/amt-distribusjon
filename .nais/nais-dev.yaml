@@ -43,6 +43,9 @@ spec:
     pool: nav-dev
   accessPolicy:
     outbound:
+      rules:
+        - application: amt-pdfgen
+        - application: amt-person-service
       external:
         - host: amt-unleash-api.nav.cloud.nais.io
   envFrom:
@@ -63,3 +66,12 @@ spec:
       destinations:
         - id: elastic
         - id: loki
+  env:
+    - name: AMT_PERSONSERVICE_SCOPE
+      value: api://dev-gcp.amt.amt-person-service/.default
+    - name: AMT_PERSONSERVICE_URL
+      value: http://amt-person-service
+    - name: AMT_PDFGEN_SCOPE
+      value: api://dev-gcp.amt.amt-pdfgen/.default
+    - name: AMT_PDFGEN
+      value: http://amt-pdfgen
