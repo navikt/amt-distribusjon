@@ -15,8 +15,12 @@ import no.nav.amt.distribusjon.application.plugins.applicationConfig
 import no.nav.amt.distribusjon.application.plugins.configureMonitoring
 import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
+import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
+import no.nav.amt.distribusjon.journalforing.JournalforingService
+import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
+import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.varsel.VarselProducer
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
@@ -52,6 +56,10 @@ fun Application.module() {
         }
     }
 
+    val azureAdTokenClient = AzureAdTokenClient(httpClient, environment)
+    val pdfgenClient = PdfgenClient(httpClient, environment)
+    val amtPersonClient = AmtPersonClient(httpClient, azureAdTokenClient, environment)
+
     val unleash = DefaultUnleash(
         UnleashConfig.builder()
             .appName(Environment.appName)
@@ -62,9 +70,10 @@ fun Application.module() {
     )
 
     val varselService = VarselService(VarselRepository(), VarselProducer(), unleash)
+    val journalforingService = JournalforingService(amtPersonClient, pdfgenClient)
 
     val consumers = listOf(
-        HendelseConsumer(varselService),
+        HendelseConsumer(varselService, journalforingService),
         VarselHendelseConsumer(varselService),
     )
     consumers.forEach { it.run() }

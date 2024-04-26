@@ -11,6 +11,9 @@ data class Environment(
     val azureClientSecret: String = getEnvVar(AZURE_APP_CLIENT_SECRET_KEY),
     val azureJwkKeysUrl: String = getEnvVar(AZURE_OPENID_CONFIG_JWKS_URI_KEY),
     val azureJwtIssuer: String = getEnvVar(AZURE_OPENID_CONFIG_ISSUER_KEY),
+    val amtPdfgenUrl: String = getEnvVar(AMT_PDFGEN_URL_KEY),
+    val amtPersonUrl: String = getEnvVar(AMT_PERSONSERVICE_URL_KEY),
+    val amtPersonScope: String = getEnvVar(AMT_PERSONSERVICE_SCOPE_KEY),
 ) {
     companion object {
         const val DB_USERNAME_KEY = "DB_USERNAME"
@@ -26,6 +29,10 @@ data class Environment(
         const val AZURE_APP_CLIENT_ID_KEY = "AZURE_APP_CLIENT_ID"
         const val AZURE_OPENID_CONFIG_JWKS_URI_KEY = "AZURE_OPENID_CONFIG_JWKS_URI"
         const val AZURE_OPENID_CONFIG_ISSUER_KEY = "AZURE_OPENID_CONFIG_ISSUER"
+
+        const val AMT_PDFGEN_URL_KEY = "AMT_PDFGEN"
+        const val AMT_PERSONSERVICE_SCOPE_KEY = "AMT_PERSONSERVICE_SCOPE"
+        const val AMT_PERSONSERVICE_URL_KEY = "AMT_PERSONSERVICE_URL"
 
         const val HTTP_CLIENT_TIMEOUT_MS = 10_000
 

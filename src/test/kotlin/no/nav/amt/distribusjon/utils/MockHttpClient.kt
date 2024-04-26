@@ -11,9 +11,14 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.jackson.jackson
 import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.core.toByteArray
+import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
+import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
+import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
+import no.nav.amt.distribusjon.utils.data.Persondata
 
 fun mockHttpClient(defaultResponse: Any? = null): HttpClient {
     val mockEngine = MockEngine {
@@ -35,10 +40,7 @@ fun mockHttpClient(defaultResponse: Any? = null): HttpClient {
     }
 }
 
-fun mockAzureAdClient() = AzureAdTokenClient(
-    azureAdTokenUrl = "http://azure",
-    clientId = "clientId",
-    clientSecret = "secret",
+fun mockAzureAdClient(environment: Environment) = AzureAdTokenClient(
     httpClient = mockHttpClient(
         """
         {
@@ -48,6 +50,18 @@ fun mockAzureAdClient() = AzureAdTokenClient(
         }
         """.trimIndent(),
     ),
+    environment,
+)
+
+fun mockPdfgenClient(environment: Environment) = PdfgenClient(
+    mockHttpClient("%PDF-".toByteArray()),
+    environment,
+)
+
+fun mockAmtPersonClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = AmtPersonClient(
+    mockHttpClient(Persondata.lagNavBruker()),
+    azureAdTokenClient,
+    environment,
 )
 
 object MockResponseHandler {
