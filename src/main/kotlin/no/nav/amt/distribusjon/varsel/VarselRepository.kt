@@ -12,6 +12,7 @@ class VarselRepository {
     fun rowmapper(row: Row) = Varsel(
         id = row.uuid("id"),
         type = Varsel.Type.valueOf(row.string("type")),
+        hendelseId = row.uuid("hendelse_id"),
         aktivFra = row.zonedDateTime("aktiv_fra").withZoneSameInstant(ZoneId.of("Z")),
         aktivTil = row.zonedDateTimeOrNull("aktiv_til")?.withZoneSameInstant(ZoneId.of("Z")),
         deltakerId = row.uuid("deltaker_id"),
@@ -23,8 +24,8 @@ class VarselRepository {
     fun upsert(varsel: Varsel) = Database.query {
         val sql =
             """
-            insert into varsel (id, type, tekst, aktiv_fra, aktiv_til, deltaker_id, personident, skal_varsle_eksternt)
-            values(:id, :type, :tekst, :aktiv_fra, :aktiv_til, :deltaker_id, :personident, :skal_varsle_eksternt)
+            insert into varsel (id, type, hendelse_id, tekst, aktiv_fra, aktiv_til, deltaker_id, personident, skal_varsle_eksternt)
+            values(:id, :type, :hendelse_id, :tekst, :aktiv_fra, :aktiv_til, :deltaker_id, :personident, :skal_varsle_eksternt)
             on conflict (id) do update set
                 aktiv_fra = :aktiv_fra,
                 aktiv_til = :aktiv_til,
@@ -34,6 +35,7 @@ class VarselRepository {
         val params = mapOf(
             "id" to varsel.id,
             "type" to varsel.type.name,
+            "hendelse_id" to varsel.hendelseId,
             "tekst" to varsel.tekst,
             "aktiv_fra" to varsel.aktivFra,
             "aktiv_til" to varsel.aktivTil,
@@ -75,5 +77,20 @@ class VarselRepository {
         it.run(query.map(::rowmapper).asSingle)?.let { varsel ->
             Result.success(varsel)
         } ?: Result.failure(NoSuchElementException("Fant ikke varsel $id"))
+    }
+
+    fun getByHendelseId(hendelseId: UUID) = Database.query {
+        val sql =
+            """
+            select * 
+            from varsel
+            where hendelse_id = :hendelse_id
+            """.trimIndent()
+
+        val query = queryOf(sql, mapOf("hendelse_id" to hendelseId))
+
+        it.run(query.map(::rowmapper).asSingle)?.let { varsel ->
+            Result.success(varsel)
+        } ?: Result.failure(NoSuchElementException("Fant ikke varsel for hendelse $hendelseId"))
     }
 }

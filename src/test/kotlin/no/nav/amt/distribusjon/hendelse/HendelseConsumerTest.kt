@@ -74,6 +74,27 @@ class HendelseConsumerTest {
     }
 
     @Test
+    fun `opprettUtkast - hendelsen er håndtert tidligere - sender ikke nytt varsel`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
+        val forrigeVarsel = Varselsdata.varsel(
+            Varsel.Type.OPPGAVE,
+            hendelseId = hendelse.id,
+            aktivFra = nowUTC().minusMinutes(30),
+            aktivTil = nowUTC().minusMinutes(20),
+            deltakerId = hendelse.deltaker.id,
+        )
+        app.varselRepository.upsert(forrigeVarsel)
+
+        produce(hendelse)
+
+        AsyncUtils.eventually {
+            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
+            varsel.erAktiv shouldBe false
+            assertNotProduced(varsel.id)
+        }
+    }
+
+    @Test
     fun `avbrytUtkast - varsel er aktivt - inaktiverer varsel og produserer`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avbrytUtkast())
         val forrigeVarsel = Varselsdata.varsel(

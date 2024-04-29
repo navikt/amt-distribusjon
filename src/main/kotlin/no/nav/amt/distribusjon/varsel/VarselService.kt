@@ -22,7 +22,7 @@ class VarselService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     companion object {
-        val beskjedAktivLengde = Duration.ofDays(14)
+        val beskjedAktivLengde: Duration = Duration.ofDays(14)
     }
 
     fun handleHendelse(hendelse: Hendelse) {
@@ -84,6 +84,11 @@ class VarselService(
         aktivTil: ZonedDateTime?,
         tekst: String,
     ) {
+        repository.getByHendelseId(hendelse.id).onSuccess {
+            log.info("Varsel for hendelse ${hendelse.id} er allerede opprettet. Oppretter ikke nytt varsel.")
+            return
+        }
+
         val forrigeVarsel = repository.getSisteVarsel(hendelse.deltaker.id, type).getOrNull()
         if (forrigeVarsel?.erAktiv == true) {
             log.info(
@@ -96,6 +101,7 @@ class VarselService(
         val varsel = Varsel(
             id = UUID.randomUUID(),
             type = type,
+            hendelseId = hendelse.id,
             aktivFra = nowUTC(),
             aktivTil = aktivTil,
             deltakerId = hendelse.deltaker.id,

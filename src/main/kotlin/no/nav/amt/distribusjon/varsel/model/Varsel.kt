@@ -15,6 +15,7 @@ import java.util.UUID
 data class Varsel(
     val id: UUID,
     val type: Type,
+    val hendelseId: UUID,
     val aktivFra: ZonedDateTime,
     val aktivTil: ZonedDateTime?,
     val deltakerId: UUID,
