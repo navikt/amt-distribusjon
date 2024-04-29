@@ -15,6 +15,8 @@ import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
 import no.nav.amt.distribusjon.utils.SingletonKafkaProvider
 import no.nav.amt.distribusjon.utils.SingletonPostgresContainer
+import no.nav.amt.distribusjon.utils.data.Journalforingdata
+import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.mockAmtPersonClient
 import no.nav.amt.distribusjon.utils.mockAzureAdClient
 import no.nav.amt.distribusjon.utils.mockPdfgenClient
@@ -49,8 +51,13 @@ class TestApp {
 
         azureAdTokenClient = mockAzureAdClient(environment)
         pdfgenClient = mockPdfgenClient(environment)
-        amtPersonClient = mockAmtPersonClient(azureAdTokenClient, environment)
-        sakClient = mockSakClient(azureAdTokenClient, environment)
+        val navBruker = Persondata.lagNavBruker()
+        amtPersonClient = mockAmtPersonClient(azureAdTokenClient, environment, navBruker)
+        sakClient = mockSakClient(
+            azureAdTokenClient,
+            environment,
+            Journalforingdata.lagSak(oppfolgingsperiodeId = navBruker.getAktivOppfolgingsperiode()!!.id),
+        )
 
         varselRepository = VarselRepository()
         varselService = VarselService(varselRepository, VarselProducer(LocalKafkaConfig(SingletonKafkaProvider.getHost())), unleash)

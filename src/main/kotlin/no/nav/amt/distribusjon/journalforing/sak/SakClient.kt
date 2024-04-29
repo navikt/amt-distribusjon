@@ -17,8 +17,8 @@ class SakClient(
     private val azureAdTokenClient: AzureAdTokenClient,
     environment: Environment,
 ) {
-    private val scope = environment.amtPersonScope
-    private val url = environment.amtPersonUrl
+    private val scope = environment.sakScope
+    private val url = environment.sakUrl
 
     suspend fun opprettEllerHentSak(oppfolgingsperiodeId: UUID): Sak {
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
@@ -27,7 +27,7 @@ class SakClient(
             contentType(ContentType.Application.Json)
         }
         if (!response.status.isSuccess()) {
-            error("Kunne ikke hente sak fra veilarboppfolging")
+            error("Kunne ikke hente sak fra veilarboppfolging for oppfolgingsperiode $oppfolgingsperiodeId")
         }
         return response.body()
     }

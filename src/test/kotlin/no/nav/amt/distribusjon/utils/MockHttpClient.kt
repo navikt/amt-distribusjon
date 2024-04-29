@@ -18,6 +18,8 @@ import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
+import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
+import no.nav.amt.distribusjon.journalforing.sak.Sak
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import no.nav.amt.distribusjon.utils.data.Journalforingdata
 import no.nav.amt.distribusjon.utils.data.Persondata
@@ -60,14 +62,22 @@ fun mockPdfgenClient(environment: Environment) = PdfgenClient(
     environment,
 )
 
-fun mockAmtPersonClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = AmtPersonClient(
-    mockHttpClient(Persondata.lagNavBruker()),
+fun mockAmtPersonClient(
+    azureAdTokenClient: AzureAdTokenClient,
+    environment: Environment,
+    navBruker: NavBruker = Persondata.lagNavBruker(),
+) = AmtPersonClient(
+    mockHttpClient(navBruker),
     azureAdTokenClient,
     environment,
 )
 
-fun mockSakClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = SakClient(
-    mockHttpClient(Journalforingdata.lagSak()),
+fun mockSakClient(
+    azureAdTokenClient: AzureAdTokenClient,
+    environment: Environment,
+    sak: Sak = Journalforingdata.lagSak(),
+) = SakClient(
+    mockHttpClient(sak),
     azureAdTokenClient,
     environment,
 )
