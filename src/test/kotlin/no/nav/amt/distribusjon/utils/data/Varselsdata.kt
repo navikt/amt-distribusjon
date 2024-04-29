@@ -9,11 +9,12 @@ object Varselsdata {
     fun varsel(
         type: Varsel.Type,
         id: UUID = UUID.randomUUID(),
+        hendelseId: UUID = UUID.randomUUID(),
         aktivFra: ZonedDateTime = nowUTC(),
         aktivTil: ZonedDateTime? = null,
         deltakerId: UUID = UUID.randomUUID(),
         personident: String = randomIdent(),
         tekst: String = "Varselstekst",
         skalVarsleEksternt: Boolean = if (type == Varsel.Type.OPPGAVE) true else false,
-    ) = Varsel(id, type, aktivFra, aktivTil, deltakerId, personident, tekst, skalVarsleEksternt)
+    ) = Varsel(id, type, hendelseId, aktivFra, aktivTil, deltakerId, personident, tekst, skalVarsleEksternt)
 }

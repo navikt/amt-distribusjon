@@ -14,10 +14,12 @@ import java.util.UUID
 object Hendelsesdata {
     fun hendelse(
         payload: HendelseType,
+        id: UUID = UUID.randomUUID(),
         deltaker: HendelseDeltaker = deltaker(),
         ansvarlig: HendelseAnsvarlig = ansvarligNavVeileder(),
         opprettet: LocalDateTime = LocalDateTime.now(),
     ) = Hendelse(
+        id,
         opprettet,
         deltaker,
         ansvarlig,
