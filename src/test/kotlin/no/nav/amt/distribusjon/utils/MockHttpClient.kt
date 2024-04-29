@@ -16,6 +16,8 @@ import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
+import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
+import no.nav.amt.distribusjon.journalforing.dokarkiv.OpprettJournalpostResponse
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
@@ -78,6 +80,12 @@ fun mockSakClient(
     sak: Sak = Journalforingdata.lagSak(),
 ) = SakClient(
     mockHttpClient(sak),
+    azureAdTokenClient,
+    environment,
+)
+
+fun mockDokarkivClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = DokarkivClient(
+    mockHttpClient(OpprettJournalpostResponse("12345")),
     azureAdTokenClient,
     environment,
 )

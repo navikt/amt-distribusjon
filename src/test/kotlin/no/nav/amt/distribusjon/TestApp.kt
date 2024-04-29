@@ -9,6 +9,8 @@ import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
 import no.nav.amt.distribusjon.journalforing.JournalforingService
+import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
+import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
@@ -19,6 +21,7 @@ import no.nav.amt.distribusjon.utils.data.Journalforingdata
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.mockAmtPersonClient
 import no.nav.amt.distribusjon.utils.mockAzureAdClient
+import no.nav.amt.distribusjon.utils.mockDokarkivClient
 import no.nav.amt.distribusjon.utils.mockPdfgenClient
 import no.nav.amt.distribusjon.utils.mockSakClient
 import no.nav.amt.distribusjon.varsel.VarselProducer
@@ -33,9 +36,13 @@ class TestApp {
 
     val azureAdTokenClient: AzureAdTokenClient
 
+    val journalforingstatusRepository: JournalforingstatusRepository
+
     val pdfgenClient: PdfgenClient
     val amtPersonClient: AmtPersonClient
     val sakClient: SakClient
+    val dokarkivClient: DokarkivClient
+
     val journalforingService: JournalforingService
 
     val unleash: FakeUnleash
@@ -58,11 +65,14 @@ class TestApp {
             environment,
             Journalforingdata.lagSak(oppfolgingsperiodeId = navBruker.getAktivOppfolgingsperiode()!!.id),
         )
+        dokarkivClient = mockDokarkivClient(azureAdTokenClient, environment)
 
         varselRepository = VarselRepository()
         varselService = VarselService(varselRepository, VarselProducer(LocalKafkaConfig(SingletonKafkaProvider.getHost())), unleash)
 
-        journalforingService = JournalforingService(amtPersonClient, pdfgenClient, sakClient)
+        journalforingstatusRepository = JournalforingstatusRepository()
+
+        journalforingService = JournalforingService(journalforingstatusRepository, amtPersonClient, pdfgenClient, sakClient, dokarkivClient)
 
         val consumerId = UUID.randomUUID().toString()
         val kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
