@@ -19,9 +19,9 @@ object Persondata {
         oppfolgingsperioder: List<Oppfolgingsperiode> = listOf(lagOppfolgingsperiode()),
     ) = NavBruker(fornavn, mellomnavn, etternavn, adresse, navEnhet, oppfolgingsperioder)
 
-    private fun lagOppfolgingsperiode(
+    fun lagOppfolgingsperiode(
         id: UUID = UUID.randomUUID(),
-        startdato: LocalDateTime = LocalDateTime.now().plusMonths(1),
+        startdato: LocalDateTime = LocalDateTime.now().minusMonths(1),
         sluttdato: LocalDateTime? = null,
     ) = Oppfolgingsperiode(id, startdato, sluttdato)
 

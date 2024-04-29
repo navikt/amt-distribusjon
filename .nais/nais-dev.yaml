@@ -48,6 +48,7 @@ spec:
         - application: amt-person-service
       external:
         - host: amt-unleash-api.nav.cloud.nais.io
+        - host: veilarboppfolging.dev-fss-pub.nais.io
   envFrom:
     - secret: amt-distribusjon-unleash-api-token
   gcp:
@@ -75,3 +76,7 @@ spec:
       value: api://dev-gcp.amt.amt-pdfgen/.default
     - name: AMT_PDFGEN
       value: http://amt-pdfgen
+    - name: VEILARBOPPFOLGING_SCOPE
+      value: api://dev-fss.pto.veilarboppfolging/.default
+    - name: VEILARBOPPFOLGING_URL
+      value: https://veilarboppfolging.dev-fss-pub.nais.io
