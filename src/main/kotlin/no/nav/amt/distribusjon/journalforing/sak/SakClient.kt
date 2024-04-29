@@ -1,20 +1,18 @@
-package no.nav.amt.distribusjon.journalforing.person
+package no.nav.amt.distribusjon.journalforing.sak
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header
 import io.ktor.client.request.post
-import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import no.nav.amt.distribusjon.Environment
-import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
-import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
+import java.util.UUID
 
-class AmtPersonClient(
+class SakClient(
     private val httpClient: HttpClient,
     private val azureAdTokenClient: AzureAdTokenClient,
     environment: Environment,
@@ -22,18 +20,22 @@ class AmtPersonClient(
     private val scope = environment.amtPersonScope
     private val url = environment.amtPersonUrl
 
-    suspend fun hentNavBruker(personident: String): NavBruker {
+    suspend fun opprettEllerHentSak(oppfolgingsperiodeId: UUID): Sak {
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
-        val response = httpClient.post("$url/api/nav-bruker") {
+        val response = httpClient.post("$url/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId") {
             header(HttpHeaders.Authorization, token)
             contentType(ContentType.Application.Json)
-            setBody(objectMapper.writeValueAsString(NavBrukerRequest(personident)))
         }
         if (!response.status.isSuccess()) {
-            error("Kunne ikke hente nav-bruker fra amt-person-service")
+            error("Kunne ikke hente sak fra veilarboppfolging")
         }
         return response.body()
     }
 }
 
-data class NavBrukerRequest(val personident: String)
+data class Sak(
+    val oppfolgingsperiodeId: UUID,
+    val sakId: Long,
+    val fagsaksystem: String,
+    val tema: String,
+)

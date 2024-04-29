@@ -14,6 +14,8 @@ data class Environment(
     val amtPdfgenUrl: String = getEnvVar(AMT_PDFGEN_URL_KEY),
     val amtPersonUrl: String = getEnvVar(AMT_PERSONSERVICE_URL_KEY),
     val amtPersonScope: String = getEnvVar(AMT_PERSONSERVICE_SCOPE_KEY),
+    val sakUrl: String = getEnvVar(VEILARBOPPFOLGING_URL_KEY),
+    val sakScope: String = getEnvVar(VEILARBOPPFOLGING_SCOPE_KEY),
 ) {
     companion object {
         const val DB_USERNAME_KEY = "DB_USERNAME"
@@ -33,6 +35,8 @@ data class Environment(
         const val AMT_PDFGEN_URL_KEY = "AMT_PDFGEN"
         const val AMT_PERSONSERVICE_SCOPE_KEY = "AMT_PERSONSERVICE_SCOPE"
         const val AMT_PERSONSERVICE_URL_KEY = "AMT_PERSONSERVICE_URL"
+        const val VEILARBOPPFOLGING_SCOPE_KEY = "VEILARBOPPFOLGING_SCOPE"
+        const val VEILARBOPPFOLGING_URL_KEY = "VEILARBOPPFOLGING_URL"
 
         const val HTTP_CLIENT_TIMEOUT_MS = 10_000
 

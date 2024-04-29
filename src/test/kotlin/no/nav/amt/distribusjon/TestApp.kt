@@ -11,12 +11,14 @@ import no.nav.amt.distribusjon.hendelse.HendelseConsumer
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
+import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
 import no.nav.amt.distribusjon.utils.SingletonKafkaProvider
 import no.nav.amt.distribusjon.utils.SingletonPostgresContainer
 import no.nav.amt.distribusjon.utils.mockAmtPersonClient
 import no.nav.amt.distribusjon.utils.mockAzureAdClient
 import no.nav.amt.distribusjon.utils.mockPdfgenClient
+import no.nav.amt.distribusjon.utils.mockSakClient
 import no.nav.amt.distribusjon.varsel.VarselProducer
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
@@ -31,6 +33,7 @@ class TestApp {
 
     val pdfgenClient: PdfgenClient
     val amtPersonClient: AmtPersonClient
+    val sakClient: SakClient
     val journalforingService: JournalforingService
 
     val unleash: FakeUnleash
@@ -47,11 +50,12 @@ class TestApp {
         azureAdTokenClient = mockAzureAdClient(environment)
         pdfgenClient = mockPdfgenClient(environment)
         amtPersonClient = mockAmtPersonClient(azureAdTokenClient, environment)
+        sakClient = mockSakClient(azureAdTokenClient, environment)
 
         varselRepository = VarselRepository()
         varselService = VarselService(varselRepository, VarselProducer(LocalKafkaConfig(SingletonKafkaProvider.getHost())), unleash)
 
-        journalforingService = JournalforingService(amtPersonClient, pdfgenClient)
+        journalforingService = JournalforingService(amtPersonClient, pdfgenClient, sakClient)
 
         val consumerId = UUID.randomUUID().toString()
         val kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())

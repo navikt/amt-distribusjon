@@ -8,11 +8,13 @@ import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
+import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import org.slf4j.LoggerFactory
 
 class JournalforingService(
     private val amtPersonClient: AmtPersonClient,
     private val pdfgenClient: PdfgenClient,
+    private val sakClient: SakClient,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -48,6 +50,9 @@ class JournalforingService(
             is HendelseAnsvarlig.NavVeileder -> ansvarlig
         }
         val navBruker = amtPersonClient.hentNavBruker(deltaker.personident)
+        val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
+            ?: throw IllegalArgumentException("Kan ikke endre på deltaker ${deltaker.id} som ikke har aktiv oppfølgingsperiode")
+        val sak = sakClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
         val pdf = pdfgenClient.hovedvedtak(lagHovedvedtakPdfDto(deltaker, navBruker, utkast, veileder))
 
         log.info("Journalførte hovedvedtak for deltaker ${deltaker.id}")
