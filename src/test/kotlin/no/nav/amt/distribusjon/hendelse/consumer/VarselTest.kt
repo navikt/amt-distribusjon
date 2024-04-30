@@ -1,13 +1,16 @@
-package no.nav.amt.distribusjon.hendelse
+package no.nav.amt.distribusjon.hendelse.consumer
 
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.time.delay
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.TestApp
 import no.nav.amt.distribusjon.application.plugins.objectMapper
+import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.AsyncUtils
+import no.nav.amt.distribusjon.utils.MockResponseHandler
 import no.nav.amt.distribusjon.utils.assertProduced
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
@@ -25,7 +28,7 @@ import org.junit.Test
 import java.time.Duration
 import java.util.UUID
 
-class HendelseConsumerTest {
+class VarselTest {
     @Test
     fun `opprettUtkast - oppretter nytt varsel og produserer`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
@@ -92,6 +95,20 @@ class HendelseConsumerTest {
             varsel.erAktiv shouldBe false
             assertNotProduced(varsel.id)
         }
+    }
+
+    @Test
+    fun `navGodkjennUtkast - innbyggers distribusjonskanal er ikke digital - oppretter ikke varsel`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast())
+
+        MockResponseHandler.addDistribusjonskanalResponse(hendelse.deltaker.personident, Distribusjonskanal.PRINT)
+
+        produce(hendelse)
+
+        runBlocking { delay(Duration.ofMillis(1000)) }
+
+        val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrNull()
+        varsel shouldBe null
     }
 
     @Test
