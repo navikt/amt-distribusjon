@@ -5,23 +5,42 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Utkast
+import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
+import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 class JournalforingService(
+    private val journalforingstatusRepository: JournalforingstatusRepository,
     private val amtPersonClient: AmtPersonClient,
     private val pdfgenClient: PdfgenClient,
     private val sakClient: SakClient,
+    private val dokarkivClient: DokarkivClient,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
     suspend fun handleHendelse(hendelse: Hendelse) {
+        if (journalforingstatusRepository.get(hendelse.id) != null) {
+            log.info("Hendelse med id ${hendelse.id} for deltaker ${hendelse.deltaker.id} er allerede journalført")
+            return
+        }
         when (hendelse.payload) {
-            is HendelseType.InnbyggerGodkjennUtkast -> journalforHovedvedtak(hendelse.deltaker, hendelse.payload.utkast, hendelse.ansvarlig)
-            is HendelseType.NavGodkjennUtkast -> journalforHovedvedtak(hendelse.deltaker, hendelse.payload.utkast, hendelse.ansvarlig)
+            is HendelseType.InnbyggerGodkjennUtkast -> journalforHovedvedtak(
+                hendelse.id,
+                hendelse.deltaker,
+                hendelse.payload.utkast,
+                hendelse.ansvarlig,
+            )
+            is HendelseType.NavGodkjennUtkast -> journalforHovedvedtak(
+                hendelse.id,
+                hendelse.deltaker,
+                hendelse.payload.utkast,
+                hendelse.ansvarlig,
+            )
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.EndreDeltakelsesmengde,
@@ -42,6 +61,7 @@ class JournalforingService(
     }
 
     private suspend fun journalforHovedvedtak(
+        hendelseId: UUID,
         deltaker: HendelseDeltaker,
         utkast: Utkast,
         ansvarlig: HendelseAnsvarlig,
@@ -54,6 +74,23 @@ class JournalforingService(
             ?: throw IllegalArgumentException("Kan ikke endre på deltaker ${deltaker.id} som ikke har aktiv oppfølgingsperiode")
         val sak = sakClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
         val pdf = pdfgenClient.hovedvedtak(lagHovedvedtakPdfDto(deltaker, navBruker, utkast, veileder))
+
+        val journalpostId = dokarkivClient.opprettJournalpost(
+            hendelseId = hendelseId,
+            fnr = deltaker.personident,
+            sak = sak,
+            pdf = pdf,
+            journalforendeEnhet = veileder.enhet.enhetsnummer,
+            tiltakstype = deltaker.deltakerliste.tiltak,
+            endring = false,
+        )
+
+        journalforingstatusRepository.insert(
+            Journalforingstatus(
+                hendelseId = hendelseId,
+                journalpostId = journalpostId,
+            ),
+        )
 
         log.info("Journalførte hovedvedtak for deltaker ${deltaker.id}")
     }

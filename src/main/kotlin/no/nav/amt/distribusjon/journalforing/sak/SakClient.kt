@@ -19,11 +19,13 @@ class SakClient(
 ) {
     private val scope = environment.sakScope
     private val url = environment.sakUrl
+    private val consumerId: String = "amt-distribusjon"
 
     suspend fun opprettEllerHentSak(oppfolgingsperiodeId: UUID): Sak {
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
         val response = httpClient.post("$url/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId") {
             header(HttpHeaders.Authorization, token)
+            header("Nav-Consumer-Id", consumerId)
             contentType(ContentType.Application.Json)
         }
         if (!response.status.isSuccess()) {
