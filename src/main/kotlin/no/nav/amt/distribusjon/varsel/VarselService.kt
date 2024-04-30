@@ -33,11 +33,6 @@ class VarselService(
 
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> opprettPameldingsoppgave(hendelse)
-
-            // Forrige oppgave er bestandig aktiv hvis denne branchen treffer,
-            // så vi må avklare når og hvordan vi ønsker eventuellt "revarsle".
-            is HendelseType.EndreUtkast -> opprettPameldingsoppgave(hendelse)
-
             is HendelseType.AvbrytUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
             is HendelseType.InnbyggerGodkjennUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
             is HendelseType.NavGodkjennUtkast -> {
@@ -45,15 +40,14 @@ class VarselService(
                 opprettBeskjed(hendelse)
             }
 
+            is HendelseType.EndreStartdato,
             is HendelseType.EndreSluttdato,
             is HendelseType.ForlengDeltakelse,
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.IkkeAktuell,
             -> opprettBeskjed(hendelse)
 
-            is HendelseType.EndreStartdato,
-            -> opprettBeskjed(hendelse)
-
+            is HendelseType.EndreUtkast,
             is HendelseType.EndreDeltakelsesmengde,
             is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.EndreInnhold,
@@ -149,6 +143,7 @@ fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.EndreInnhold,
     is HendelseType.EndreSluttarsak,
     is HendelseType.EndreStartdato,
+    is HendelseType.EndreUtkast,
     is HendelseType.InnbyggerGodkjennUtkast,
     -> false
 
@@ -157,7 +152,6 @@ fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.IkkeAktuell,
     is HendelseType.NavGodkjennUtkast,
     is HendelseType.OpprettUtkast,
-    is HendelseType.EndreUtkast,
     is HendelseType.AvsluttDeltakelse,
     -> true
 }
