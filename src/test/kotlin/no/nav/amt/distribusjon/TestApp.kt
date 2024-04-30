@@ -7,6 +7,7 @@ import no.nav.amt.distribusjon.application.isReadyKey
 import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
+import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
 import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
@@ -23,6 +24,7 @@ import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.mockAmtPersonClient
 import no.nav.amt.distribusjon.utils.mockAzureAdClient
 import no.nav.amt.distribusjon.utils.mockDokarkivClient
+import no.nav.amt.distribusjon.utils.mockDokdistkanalClient
 import no.nav.amt.distribusjon.utils.mockPdfgenClient
 import no.nav.amt.distribusjon.utils.mockSakClient
 import no.nav.amt.distribusjon.varsel.VarselProducer
@@ -44,6 +46,7 @@ class TestApp {
     val amtPersonClient: AmtPersonClient
     val sakClient: SakClient
     val dokarkivClient: DokarkivClient
+    val dokdistkanalClient: DokdistkanalClient
 
     val journalforingService: JournalforingService
 
@@ -53,7 +56,7 @@ class TestApp {
         SingletonPostgresContainer.start()
         SingletonKafkaProvider.start()
 
-        val environment = Environment()
+        val environment = testEnvironment()
 
         unleash = FakeUnleash()
         unleash.enableAll()
@@ -68,6 +71,7 @@ class TestApp {
             Journalforingdata.lagSak(oppfolgingsperiodeId = navBruker.getAktivOppfolgingsperiode()!!.id),
         )
         dokarkivClient = mockDokarkivClient(azureAdTokenClient, environment)
+        dokdistkanalClient = mockDokdistkanalClient(azureAdTokenClient, environment)
 
         varselRepository = VarselRepository()
         varselService = VarselService(varselRepository, VarselProducer(LocalKafkaConfig(SingletonKafkaProvider.getHost())), unleash)
@@ -86,7 +90,7 @@ class TestApp {
         val consumerId = UUID.randomUUID().toString()
         val kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
         val consumers = listOf(
-            HendelseConsumer(varselService, journalforingService, hendelseRepository, consumerId, kafkaConfig),
+            HendelseConsumer(varselService, journalforingService, hendelseRepository, dokdistkanalClient, consumerId, kafkaConfig),
             VarselHendelseConsumer(varselService, consumerId, kafkaConfig),
         )
 
@@ -108,3 +112,8 @@ fun integrationTest(testBlock: suspend (app: TestApp, client: HttpClient) -> Uni
 
     testBlock(testApp, client)
 }
+
+fun testEnvironment() = Environment(
+    dokdistkanalScope = "dokdistkanal.scope",
+    dokdistkanalUrl = "http://dokdistkanal",
+)

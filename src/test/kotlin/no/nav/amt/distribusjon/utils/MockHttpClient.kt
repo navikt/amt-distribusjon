@@ -19,6 +19,10 @@ import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
+import no.nav.amt.distribusjon.distribusjonskanal.BestemDistribusjonskanalRequest
+import no.nav.amt.distribusjon.distribusjonskanal.BestemDistribusjonskanalResponse
+import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
+import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.dokarkiv.OpprettJournalpostResponse
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
@@ -26,6 +30,7 @@ import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.journalforing.sak.Sak
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
+import no.nav.amt.distribusjon.testEnvironment
 import no.nav.amt.distribusjon.utils.data.Journalforingdata
 import no.nav.amt.distribusjon.utils.data.Persondata
 
@@ -112,6 +117,12 @@ fun mockDokarkivClient(azureAdTokenClient: AzureAdTokenClient, environment: Envi
     environment,
 )
 
+fun mockDokdistkanalClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = DokdistkanalClient(
+    mockHttpClient(BestemDistribusjonskanalResponse(Distribusjonskanal.DITT_NAV)),
+    azureAdTokenClient,
+    environment,
+)
+
 object MockResponseHandler {
     data class Request(
         val url: String,
@@ -135,5 +146,11 @@ object MockResponseHandler {
             if (responseBody is String) responseBody else objectMapper.writeValueAsString(responseBody),
             responseCode,
         )
+    }
+
+    fun addDistribusjonskanalResponse(personident: String, distribusjonskanal: Distribusjonskanal) {
+        val url = "${testEnvironment().dokdistkanalUrl}/rest/bestemDistribusjonskanal"
+        val request = Request(url, HttpMethod.Post, objectMapper.writeValueAsString(BestemDistribusjonskanalRequest(personident)))
+        addResponse(request, BestemDistribusjonskanalResponse(distribusjonskanal))
     }
 }

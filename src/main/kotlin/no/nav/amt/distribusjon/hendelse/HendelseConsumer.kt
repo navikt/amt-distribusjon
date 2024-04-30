@@ -3,6 +3,7 @@ package no.nav.amt.distribusjon.hendelse
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
+import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.kafka.Consumer
@@ -20,6 +21,7 @@ class HendelseConsumer(
     private val varselService: VarselService,
     private val journalforingService: JournalforingService,
     private val hendelseRepository: HendelseRepository,
+    private val dokdistkanalClient: DokdistkanalClient,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
 ) : Consumer<UUID, String> {
@@ -39,6 +41,10 @@ class HendelseConsumer(
         val hendelse: Hendelse = objectMapper.readValue(value)
         log.info("Mottatt hendelse ${hendelse.id} for deltaker ${hendelse.deltaker.id}")
         hendelseRepository.insert(hendelse)
+
+        hendelse.distribusjonskanal = dokdistkanalClient.bestemDistribusjonskanal(hendelse)
+        println(hendelse.distribusjonskanal)
+
         varselService.handleHendelse(hendelse)
         journalforingService.handleHendelse(hendelse)
     }
