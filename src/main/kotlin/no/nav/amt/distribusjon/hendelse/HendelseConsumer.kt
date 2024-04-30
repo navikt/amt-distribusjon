@@ -13,6 +13,7 @@ import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
 import no.nav.amt.distribusjon.varsel.VarselService
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
+import org.slf4j.LoggerFactory
 import java.util.UUID
 
 class HendelseConsumer(
@@ -21,6 +22,8 @@ class HendelseConsumer(
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
 ) : Consumer<UUID, String> {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     private val consumer = ManagedKafkaConsumer(
         topic = Environment.DELTAKER_HENDELSE_TOPIC,
         config = kafkaConfig.consumerConfig(
@@ -33,6 +36,7 @@ class HendelseConsumer(
 
     override suspend fun consume(key: UUID, value: String) {
         val hendelse: Hendelse = objectMapper.readValue(value)
+        log.info("Mottatt hendelse ${hendelse.id} for deltaker ${hendelse.deltaker.id}")
         varselService.handleHendelse(hendelse)
         journalforingService.handleHendelse(hendelse)
     }
