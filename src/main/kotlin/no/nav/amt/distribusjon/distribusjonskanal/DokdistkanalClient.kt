@@ -12,7 +12,7 @@ import io.ktor.http.isSuccess
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
-import no.nav.amt.distribusjon.hendelse.model.Hendelse
+import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 
 class DokdistkanalClient(
     private val httpClient: HttpClient,
@@ -23,16 +23,16 @@ class DokdistkanalClient(
     private val url = environment.dokdistkanalUrl
     private val navCallId = "amt-distribusjon"
 
-    suspend fun bestemDistribusjonskanal(hendelse: Hendelse): Distribusjonskanal {
+    suspend fun bestemDistribusjonskanal(deltaker: HendelseDeltaker): Distribusjonskanal {
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
         val response = httpClient.post("$url/rest/bestemDistribusjonskanal") {
             header(HttpHeaders.Authorization, token)
             header("Nav-Callid", navCallId)
             contentType(ContentType.Application.Json)
-            setBody(objectMapper.writeValueAsString(BestemDistribusjonskanalRequest(hendelse.deltaker.personident)))
+            setBody(objectMapper.writeValueAsString(BestemDistribusjonskanalRequest(deltaker.personident)))
         }
         if (!response.status.isSuccess()) {
-            error("Kunne ikke hente distribusjonskanal journalpost for hendelseId ${hendelse.id}")
+            error("Kunne ikke hente distribusjonskanal for deltaker ${deltaker.id}")
         }
         return response.body<BestemDistribusjonskanalResponse>().distribusjonskanal
     }

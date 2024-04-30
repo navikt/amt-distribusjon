@@ -10,9 +10,8 @@ data class Hendelse(
     val deltaker: HendelseDeltaker,
     val ansvarlig: HendelseAnsvarlig,
     val payload: HendelseType,
+    val distribusjonskanal: Distribusjonskanal,
 ) {
-    var distribusjonskanal: Distribusjonskanal? = null
-
     fun erEndringsVedtakSomSkalJournalfores(): Boolean {
         return when (payload) {
             is HendelseType.AvsluttDeltakelse,

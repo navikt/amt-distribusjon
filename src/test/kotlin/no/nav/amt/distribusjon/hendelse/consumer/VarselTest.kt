@@ -7,7 +7,7 @@ import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.TestApp
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
-import no.nav.amt.distribusjon.hendelse.model.Hendelse
+import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.AsyncUtils
 import no.nav.amt.distribusjon.utils.MockResponseHandler
@@ -31,7 +31,7 @@ import java.util.UUID
 class VarselTest {
     @Test
     fun `opprettUtkast - oppretter nytt varsel og produserer`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.opprettUtkast())
 
         produce(hendelse)
 
@@ -51,7 +51,7 @@ class VarselTest {
 
     @Test
     fun `opprettUtkast - tidligere oppgave er aktiv - sender ikke nytt varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.opprettUtkast())
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusMinutes(30),
@@ -78,7 +78,7 @@ class VarselTest {
 
     @Test
     fun `opprettUtkast - hendelsen er håndtert tidligere - sender ikke nytt varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.opprettUtkast())
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
             hendelseId = hendelse.id,
@@ -99,7 +99,7 @@ class VarselTest {
 
     @Test
     fun `navGodkjennUtkast - innbyggers distribusjonskanal er ikke digital - oppretter ikke varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.navGodkjennUtkast())
 
         MockResponseHandler.addDistribusjonskanalResponse(hendelse.deltaker.personident, Distribusjonskanal.PRINT)
 
@@ -113,7 +113,7 @@ class VarselTest {
 
     @Test
     fun `avbrytUtkast - varsel er aktivt - inaktiverer varsel og produserer`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avbrytUtkast())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.avbrytUtkast())
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusDays(1),
@@ -134,7 +134,7 @@ class VarselTest {
 
     @Test
     fun `innbyggerGodkjennerUtkast - inaktiverer varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusDays(1),
@@ -155,14 +155,14 @@ class VarselTest {
 
     @Test
     fun `navGodkjennUtkast - ingen tidligere varsel - oppretter beskjed`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.navGodkjennUtkast())
         produce(hendelse)
         AsyncUtils.eventually { assertNyBeskjed(app, hendelse) }
     }
 
     @Test
     fun `navGodkjennUtkast - tidligere varsel - inaktiverer varsel og oppretter beskjed`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.navGodkjennUtkast())
 
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
@@ -184,19 +184,19 @@ class VarselTest {
 
     @Test
     fun `endreSluttdato - ingen tidligere varsel - oppretter varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreSluttdato())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreSluttdato())
         produce(hendelse)
         AsyncUtils.eventually { assertNyBeskjed(app, hendelse) }
     }
 
     @Test
     fun `endreStartdato - ingen tidligere varsel - oppretter varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreStartdato())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreStartdato())
         produce(hendelse)
         AsyncUtils.eventually { assertNyBeskjed(app, hendelse) }
     }
 
-    private fun assertNyBeskjed(app: TestApp, hendelse: Hendelse) {
+    private fun assertNyBeskjed(app: TestApp, hendelse: HendelseDto) {
         val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrThrow()
 
         varsel.aktivTil!! shouldBeCloseTo nowUTC().plus(VarselService.beskjedAktivLengde)
@@ -211,7 +211,7 @@ class VarselTest {
     }
 }
 
-private fun produce(hendelse: Hendelse) = produceStringString(
+private fun produce(hendelse: HendelseDto) = produceStringString(
     ProducerRecord(Environment.DELTAKER_HENDELSE_TOPIC, hendelse.deltaker.id.toString(), objectMapper.writeValueAsString(hendelse)),
 )
 
@@ -245,3 +245,5 @@ private fun assertProducedBeskjed(id: UUID) = assertProduced(Environment.MINSIDE
         json["type"].asText() shouldBe "beskjed"
     }
 }
+
+fun HendelseDto.skalVarslesEksternt() = this.toModel(Distribusjonskanal.DITT_NAV).skalVarslesEksternt()
