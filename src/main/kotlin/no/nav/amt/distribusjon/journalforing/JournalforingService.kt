@@ -117,7 +117,7 @@ class JournalforingService(
         // hent nødvendig info og journalfør
         val journalpostId = ""
         val hendelseIder = hendelser.map { it.id }
-        
+
         hendelseIder.forEach {
             journalforingstatusRepository.insert(
                 Journalforingstatus(
