@@ -1,4 +1,4 @@
-package no.nav.amt.distribusjon.hendelse.db
+package no.nav.amt.distribusjon.hendelse
 
 import io.kotest.matchers.shouldBe
 import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
@@ -33,17 +33,8 @@ class HendelseRepositoryTest {
 
     @Test
     fun `getIkkeJournalforteHendelser - hendelse er ikke journalfort - returnerer hendelse`() {
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse())
-        TestRepository.insert(
-            HendelseDbo(
-                hendelse.id,
-                hendelse.deltaker.id,
-                hendelse.deltaker,
-                hendelse.ansvarlig,
-                hendelse.payload,
-                LocalDateTime.now().minusHours(1),
-            ),
-        )
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
+        TestRepository.insert(hendelse)
 
         val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
 
@@ -53,17 +44,8 @@ class HendelseRepositoryTest {
 
     @Test
     fun `getIkkeJournalforteHendelser - hendelse er ikke journalfort, tidspunkt ikke passert - returnerer tom liste`() {
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse())
-        TestRepository.insert(
-            HendelseDbo(
-                hendelse.id,
-                hendelse.deltaker.id,
-                hendelse.deltaker,
-                hendelse.ansvarlig,
-                hendelse.payload,
-                LocalDateTime.now(),
-            ),
-        )
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now())
+        TestRepository.insert(hendelse)
 
         val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now().minusHours(1))
 
@@ -72,17 +54,8 @@ class HendelseRepositoryTest {
 
     @Test
     fun `getIkkeJournalforteHendelser - hendelse er journalfort - returnerer tom liste`() {
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse())
-        TestRepository.insert(
-            HendelseDbo(
-                hendelse.id,
-                hendelse.deltaker.id,
-                hendelse.deltaker,
-                hendelse.ansvarlig,
-                hendelse.payload,
-                LocalDateTime.now().minusHours(1),
-            ),
-        )
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
+        TestRepository.insert(hendelse)
         journalforingstatusRepository.insert(
             Journalforingstatus(
                 hendelse.id,

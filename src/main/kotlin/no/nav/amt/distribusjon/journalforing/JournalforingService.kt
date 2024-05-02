@@ -1,6 +1,5 @@
 package no.nav.amt.distribusjon.journalforing
 
-import no.nav.amt.distribusjon.hendelse.db.HendelseDbo
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
@@ -100,7 +99,7 @@ class JournalforingService(
         log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
     }
 
-    fun journalforEndringsvedtak(hendelser: List<HendelseDbo>) {
+    fun journalforEndringsvedtak(hendelser: List<Hendelse>) {
         if (hendelser.isEmpty()) {
             return
         }

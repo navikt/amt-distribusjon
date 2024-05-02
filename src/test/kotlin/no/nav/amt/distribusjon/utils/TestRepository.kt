@@ -3,7 +3,7 @@ package no.nav.amt.distribusjon.utils
 import kotliquery.queryOf
 import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.db.toPGObject
-import no.nav.amt.distribusjon.hendelse.db.HendelseDbo
+import no.nav.amt.distribusjon.hendelse.model.Hendelse
 
 object TestRepository {
     fun cleanDatabase() = Database.query { session ->
@@ -22,7 +22,7 @@ object TestRepository {
         }
     }
 
-    fun insert(hendelseDbo: HendelseDbo) = Database.query {
+    fun insert(hendelse: Hendelse) = Database.query {
         val sql =
             """
             insert into hendelse (id, deltaker_id, deltaker, ansvarlig, payload, created_at)
@@ -31,12 +31,12 @@ object TestRepository {
             """.trimIndent()
 
         val params = mapOf(
-            "id" to hendelseDbo.id,
-            "deltaker_id" to hendelseDbo.deltakerId,
-            "deltaker" to toPGObject(hendelseDbo.deltaker),
-            "ansvarlig" to toPGObject(hendelseDbo.ansvarlig),
-            "payload" to toPGObject(hendelseDbo.payload),
-            "created_at" to hendelseDbo.opprettet,
+            "id" to hendelse.id,
+            "deltaker_id" to hendelse.deltaker.id,
+            "deltaker" to toPGObject(hendelse.deltaker),
+            "ansvarlig" to toPGObject(hendelse.ansvarlig),
+            "payload" to toPGObject(hendelse.payload),
+            "created_at" to hendelse.opprettet,
         )
 
         it.update(queryOf(sql, params))

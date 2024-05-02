@@ -1,4 +1,4 @@
-package no.nav.amt.distribusjon.hendelse.db
+package no.nav.amt.distribusjon.hendelse
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotliquery.Row
@@ -6,19 +6,19 @@ import kotliquery.queryOf
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.db.toPGObject
+import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import java.time.LocalDateTime
 
 class HendelseRepository {
-    private fun rowmapper(row: Row) = HendelseDbo(
+    private fun rowmapper(row: Row) = Hendelse(
         id = row.uuid("id"),
-        deltakerId = row.uuid("deltaker_id"),
         deltaker = objectMapper.readValue(row.string("deltaker")),
         ansvarlig = objectMapper.readValue(row.string("ansvarlig")),
         payload = objectMapper.readValue(row.string("payload")),
         opprettet = row.localDateTime("h.created_at"),
     )
 
-    fun insert(hendelseDbo: HendelseDbo) = Database.query {
+    fun insert(hendelse: Hendelse) = Database.query {
         val sql =
             """
             insert into hendelse (id, deltaker_id, deltaker, ansvarlig, payload)
@@ -27,11 +27,11 @@ class HendelseRepository {
             """.trimIndent()
 
         val params = mapOf(
-            "id" to hendelseDbo.id,
-            "deltaker_id" to hendelseDbo.deltakerId,
-            "deltaker" to toPGObject(hendelseDbo.deltaker),
-            "ansvarlig" to toPGObject(hendelseDbo.ansvarlig),
-            "payload" to toPGObject(hendelseDbo.payload),
+            "id" to hendelse.id,
+            "deltaker_id" to hendelse.deltaker.id,
+            "deltaker" to toPGObject(hendelse.deltaker),
+            "ansvarlig" to toPGObject(hendelse.ansvarlig),
+            "payload" to toPGObject(hendelse.payload),
         )
 
         it.update(queryOf(sql, params))
@@ -41,7 +41,6 @@ class HendelseRepository {
         val sql =
             """
             select h.id as "id",
-            h.deltaker_id as "deltaker_id",
             h.deltaker as "deltaker",
             h.ansvarlig as "ansvarlig",
             h.payload as "payload",

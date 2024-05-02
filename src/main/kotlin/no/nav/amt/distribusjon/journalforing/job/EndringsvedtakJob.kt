@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import no.nav.amt.distribusjon.application.isReadyKey
-import no.nav.amt.distribusjon.hendelse.db.HendelseRepository
+import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import org.slf4j.Logger
@@ -39,7 +39,7 @@ class EndringsvedtakJob(
                         log.info("Kjører jobb for å behandle endringsvedtak")
                         val endringsvedtak = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now().minusMinutes(30))
                             .filter { it.erEndringsVedtakSomSkalJournalfores() }
-                        val endringsvedtakPrDeltaker = endringsvedtak.groupBy { it.deltakerId }
+                        val endringsvedtakPrDeltaker = endringsvedtak.groupBy { it.deltaker.id }
                         endringsvedtakPrDeltaker.forEach { entry ->
                             log.info("Behandler endringsvedtak for deltaker med id ${entry.key}")
                             journalforingService.journalforEndringsvedtak(entry.value)
