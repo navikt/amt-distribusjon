@@ -7,6 +7,7 @@ import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.db.toPGObject
 import no.nav.amt.distribusjon.journalforing.model.Endringshendelse
+import java.time.LocalDateTime
 import java.util.UUID
 
 class EndringshendelseRepository {
@@ -34,15 +35,15 @@ class EndringshendelseRepository {
         it.update(queryOf(sql, params))
     }
 
-    fun getHendelserForDeltaker(deltakerId: UUID) = Database.query {
+    fun getHendelser(opprettet: LocalDateTime) = Database.query {
         val sql =
             """
             select * 
             from endringshendelse
-            where deltaker_id = :deltaker_id
+            where created_at < :opprettet
             """.trimIndent()
 
-        val query = queryOf(sql, mapOf("deltaker_id" to deltakerId))
+        val query = queryOf(sql, mapOf("opprettet" to opprettet))
 
         it.run(query.map(::rowmapper).asList)
     }

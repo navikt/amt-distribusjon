@@ -22,6 +22,8 @@ import no.nav.amt.distribusjon.journalforing.EndringshendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
+import no.nav.amt.distribusjon.journalforing.job.EndringshendelseJob
+import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
@@ -60,6 +62,8 @@ fun Application.module() {
         }
     }
 
+    val leaderElection = LeaderElection(httpClient, environment.electorPath)
+
     val azureAdTokenClient = AzureAdTokenClient(httpClient, environment)
     val pdfgenClient = PdfgenClient(httpClient, environment)
     val amtPersonClient = AmtPersonClient(httpClient, azureAdTokenClient, environment)
@@ -75,10 +79,12 @@ fun Application.module() {
             .build(),
     )
 
+    val endringshendelseRepository = EndringshendelseRepository()
+
     val varselService = VarselService(VarselRepository(), VarselProducer(), unleash)
     val journalforingService = JournalforingService(
         JournalforingstatusRepository(),
-        EndringshendelseRepository(),
+        endringshendelseRepository,
         amtPersonClient,
         pdfgenClient,
         sakClient,
@@ -93,6 +99,9 @@ fun Application.module() {
 
     configureRouting()
     configureMonitoring()
+
+    val endringshendelseJob = EndringshendelseJob(leaderElection, attributes, endringshendelseRepository, journalforingService)
+    endringshendelseJob.startJob()
 
     attributes.put(isReadyKey, true)
 }
