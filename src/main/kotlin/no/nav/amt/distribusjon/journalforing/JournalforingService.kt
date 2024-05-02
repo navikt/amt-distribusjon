@@ -6,16 +6,19 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
+import no.nav.amt.distribusjon.journalforing.model.Endringshendelse
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import org.slf4j.LoggerFactory
+import java.time.LocalDateTime
 import java.util.UUID
 
 class JournalforingService(
     private val journalforingstatusRepository: JournalforingstatusRepository,
+    private val endringshendelseRepository: EndringshendelseRepository,
     private val amtPersonClient: AmtPersonClient,
     private val pdfgenClient: PdfgenClient,
     private val sakClient: SakClient,
@@ -48,7 +51,7 @@ class JournalforingService(
             is HendelseType.EndreStartdato,
             is HendelseType.ForlengDeltakelse,
             is HendelseType.IkkeAktuell,
-            -> journalforEndringsvedtak(hendelse)
+            -> handleEndringsvedtak(hendelse)
 
             is HendelseType.EndreSluttarsak,
             is HendelseType.EndreInnhold,
@@ -95,7 +98,34 @@ class JournalforingService(
         log.info("Journalførte hovedvedtak for deltaker ${deltaker.id}")
     }
 
-    private fun journalforEndringsvedtak(hendelse: Hendelse) {
-        log.info("Journalførte endringsvedtak for deltaker ${hendelse.deltaker.id}")
+    private fun handleEndringsvedtak(hendelse: Hendelse) {
+        endringshendelseRepository.insert(
+            Endringshendelse(
+                hendelseId = hendelse.id,
+                deltakerId = hendelse.deltaker.id,
+                hendelse = hendelse,
+                opprettet = LocalDateTime.now(),
+            ),
+        )
+        log.info("Lagret endringsvedtak for hendelse ${hendelse.id}")
+    }
+
+    fun journalforEndringsvedtak(hendelser: List<Hendelse>) {
+        if (hendelser.isEmpty()) {
+            return
+        }
+        // hent nødvendig info og journalfør
+        val journalpostId = ""
+        val hendelseIder = hendelser.map { it.id }
+        endringshendelseRepository.deleteHendelser(hendelseIder)
+        hendelseIder.forEach {
+            journalforingstatusRepository.insert(
+                Journalforingstatus(
+                    hendelseId = it,
+                    journalpostId = journalpostId,
+                ),
+            )
+        }
+        log.info("Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}")
     }
 }

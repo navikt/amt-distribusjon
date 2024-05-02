@@ -18,6 +18,7 @@ import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
+import no.nav.amt.distribusjon.journalforing.EndringshendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
@@ -77,6 +78,7 @@ fun Application.module() {
     val varselService = VarselService(VarselRepository(), VarselProducer(), unleash)
     val journalforingService = JournalforingService(
         JournalforingstatusRepository(),
+        EndringshendelseRepository(),
         amtPersonClient,
         pdfgenClient,
         sakClient,
