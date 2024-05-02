@@ -18,11 +18,11 @@ import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
-import no.nav.amt.distribusjon.journalforing.EndringshendelseRepository
+import no.nav.amt.distribusjon.journalforing.EndringsvedtakRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
-import no.nav.amt.distribusjon.journalforing.job.EndringshendelseJob
+import no.nav.amt.distribusjon.journalforing.job.EndringsvedtakJob
 import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
@@ -79,12 +79,12 @@ fun Application.module() {
             .build(),
     )
 
-    val endringshendelseRepository = EndringshendelseRepository()
+    val endringsvedtakRepository = EndringsvedtakRepository()
 
     val varselService = VarselService(VarselRepository(), VarselProducer(), unleash)
     val journalforingService = JournalforingService(
         JournalforingstatusRepository(),
-        endringshendelseRepository,
+        endringsvedtakRepository,
         amtPersonClient,
         pdfgenClient,
         sakClient,
@@ -100,8 +100,8 @@ fun Application.module() {
     configureRouting()
     configureMonitoring()
 
-    val endringshendelseJob = EndringshendelseJob(leaderElection, attributes, endringshendelseRepository, journalforingService)
-    endringshendelseJob.startJob()
+    val endringsvedtakJob = EndringsvedtakJob(leaderElection, attributes, endringsvedtakRepository, journalforingService)
+    endringsvedtakJob.startJob()
 
     attributes.put(isReadyKey, true)
 }

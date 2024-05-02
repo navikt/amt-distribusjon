@@ -6,7 +6,7 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
-import no.nav.amt.distribusjon.journalforing.model.Endringshendelse
+import no.nav.amt.distribusjon.journalforing.model.Endringsvedtak
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
@@ -18,7 +18,7 @@ import java.util.UUID
 
 class JournalforingService(
     private val journalforingstatusRepository: JournalforingstatusRepository,
-    private val endringshendelseRepository: EndringshendelseRepository,
+    private val endringsvedtakRepository: EndringsvedtakRepository,
     private val amtPersonClient: AmtPersonClient,
     private val pdfgenClient: PdfgenClient,
     private val sakClient: SakClient,
@@ -99,8 +99,8 @@ class JournalforingService(
     }
 
     private fun handleEndringsvedtak(hendelse: Hendelse) {
-        endringshendelseRepository.insert(
-            Endringshendelse(
+        endringsvedtakRepository.insert(
+            Endringsvedtak(
                 hendelseId = hendelse.id,
                 deltakerId = hendelse.deltaker.id,
                 hendelse = hendelse,
@@ -126,7 +126,7 @@ class JournalforingService(
                 ),
             )
         }
-        endringshendelseRepository.deleteHendelser(hendelseIder)
+        endringsvedtakRepository.deleteEndringsvedtak(hendelseIder)
         log.info("Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}")
     }
 }

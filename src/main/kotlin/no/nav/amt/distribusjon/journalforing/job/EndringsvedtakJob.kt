@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import no.nav.amt.distribusjon.application.isReadyKey
-import no.nav.amt.distribusjon.journalforing.EndringshendelseRepository
+import no.nav.amt.distribusjon.journalforing.EndringsvedtakRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import org.slf4j.Logger
@@ -17,10 +17,10 @@ import java.time.temporal.ChronoUnit
 import java.util.Timer
 import kotlin.concurrent.fixedRateTimer
 
-class EndringshendelseJob(
+class EndringsvedtakJob(
     private val leaderElection: LeaderElection,
     private val attributes: Attributes,
-    private val endringshendelseRepository: EndringshendelseRepository,
+    private val endringsvedtakRepository: EndringsvedtakRepository,
     private val journalforingService: JournalforingService,
 ) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -36,16 +36,16 @@ class EndringshendelseJob(
             scope.launch {
                 if (leaderElection.isLeader() && attributes.getOrNull(isReadyKey) == true) {
                     try {
-                        log.info("Kjører jobb for å behandle endringshendelser")
-                        val endringshendelser = endringshendelseRepository.getHendelser(LocalDateTime.now().minusMinutes(30))
-                        val hendelserPrDeltaker = endringshendelser.groupBy { it.deltakerId }
-                        hendelserPrDeltaker.forEach { entry ->
-                            log.info("Behandler endringshendelser for deltaker med id ${entry.key}")
+                        log.info("Kjører jobb for å behandle endringsvedtak")
+                        val endringsvedtak = endringsvedtakRepository.getEndringsvedtak(LocalDateTime.now().minusMinutes(30))
+                        val endringsvedtakPrDeltaker = endringsvedtak.groupBy { it.deltakerId }
+                        endringsvedtakPrDeltaker.forEach { entry ->
+                            log.info("Behandler endringsvedtak for deltaker med id ${entry.key}")
                             journalforingService.journalforEndringsvedtak(entry.value.map { it.hendelse })
                         }
-                        log.info("Ferdig med å behandle endringshendelser")
+                        log.info("Ferdig med å behandle endringsvedtak")
                     } catch (e: Exception) {
-                        log.error("Noe gikk galt ved behandling av endringshendelser", e)
+                        log.error("Noe gikk galt ved behandling av endringsvedtak", e)
                     }
                 }
             }

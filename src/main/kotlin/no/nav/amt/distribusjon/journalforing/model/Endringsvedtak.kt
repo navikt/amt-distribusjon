@@ -4,7 +4,7 @@ import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import java.time.LocalDateTime
 import java.util.UUID
 
-data class Endringshendelse(
+data class Endringsvedtak(
     val hendelseId: UUID,
     val deltakerId: UUID,
     val hendelse: Hendelse,
