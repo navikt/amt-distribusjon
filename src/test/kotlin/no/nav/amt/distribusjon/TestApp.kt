@@ -8,6 +8,7 @@ import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
+import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
@@ -37,6 +38,7 @@ class TestApp {
     val azureAdTokenClient: AzureAdTokenClient
 
     val journalforingstatusRepository: JournalforingstatusRepository
+    val hendelseRepository: HendelseRepository
 
     val pdfgenClient: PdfgenClient
     val amtPersonClient: AmtPersonClient
@@ -71,13 +73,20 @@ class TestApp {
         varselService = VarselService(varselRepository, VarselProducer(LocalKafkaConfig(SingletonKafkaProvider.getHost())), unleash)
 
         journalforingstatusRepository = JournalforingstatusRepository()
+        hendelseRepository = HendelseRepository()
 
-        journalforingService = JournalforingService(journalforingstatusRepository, amtPersonClient, pdfgenClient, sakClient, dokarkivClient)
+        journalforingService = JournalforingService(
+            journalforingstatusRepository,
+            amtPersonClient,
+            pdfgenClient,
+            sakClient,
+            dokarkivClient,
+        )
 
         val consumerId = UUID.randomUUID().toString()
         val kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
         val consumers = listOf(
-            HendelseConsumer(varselService, journalforingService, consumerId, kafkaConfig),
+            HendelseConsumer(varselService, journalforingService, hendelseRepository, consumerId, kafkaConfig),
             VarselHendelseConsumer(varselService, consumerId, kafkaConfig),
         )
 

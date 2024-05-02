@@ -18,9 +18,12 @@ import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
+import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
+import no.nav.amt.distribusjon.journalforing.job.EndringsvedtakJob
+import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
@@ -59,6 +62,8 @@ fun Application.module() {
         }
     }
 
+    val leaderElection = LeaderElection(httpClient, environment.electorPath)
+
     val azureAdTokenClient = AzureAdTokenClient(httpClient, environment)
     val pdfgenClient = PdfgenClient(httpClient, environment)
     val amtPersonClient = AmtPersonClient(httpClient, azureAdTokenClient, environment)
@@ -74,6 +79,8 @@ fun Application.module() {
             .build(),
     )
 
+    val hendelseRepository = HendelseRepository()
+
     val varselService = VarselService(VarselRepository(), VarselProducer(), unleash)
     val journalforingService = JournalforingService(
         JournalforingstatusRepository(),
@@ -84,13 +91,16 @@ fun Application.module() {
     )
 
     val consumers = listOf(
-        HendelseConsumer(varselService, journalforingService),
+        HendelseConsumer(varselService, journalforingService, hendelseRepository),
         VarselHendelseConsumer(varselService),
     )
     consumers.forEach { it.run() }
 
     configureRouting()
     configureMonitoring()
+
+    val endringsvedtakJob = EndringsvedtakJob(leaderElection, attributes, hendelseRepository, journalforingService)
+    endringsvedtakJob.startJob()
 
     attributes.put(isReadyKey, true)
 }

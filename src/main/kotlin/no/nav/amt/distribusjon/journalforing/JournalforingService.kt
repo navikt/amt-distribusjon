@@ -48,7 +48,7 @@ class JournalforingService(
             is HendelseType.EndreStartdato,
             is HendelseType.ForlengDeltakelse,
             is HendelseType.IkkeAktuell,
-            -> journalforEndringsvedtak(hendelse)
+            -> handleEndringsvedtak(hendelse)
 
             is HendelseType.EndreSluttarsak,
             is HendelseType.EndreInnhold,
@@ -95,7 +95,26 @@ class JournalforingService(
         log.info("Journalførte hovedvedtak for deltaker ${deltaker.id}")
     }
 
-    private fun journalforEndringsvedtak(hendelse: Hendelse) {
-        log.info("Journalførte endringsvedtak for deltaker ${hendelse.deltaker.id}")
+    private fun handleEndringsvedtak(hendelse: Hendelse) {
+        log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
+    }
+
+    fun journalforEndringsvedtak(hendelser: List<Hendelse>) {
+        if (hendelser.isEmpty()) {
+            return
+        }
+        // hent nødvendig info og journalfør
+        val journalpostId = ""
+        val hendelseIder = hendelser.map { it.id }
+
+        hendelseIder.forEach {
+            journalforingstatusRepository.insert(
+                Journalforingstatus(
+                    hendelseId = it,
+                    journalpostId = journalpostId,
+                ),
+            )
+        }
+        log.info("Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}")
     }
 }

@@ -19,6 +19,7 @@ import java.util.UUID
 class HendelseConsumer(
     private val varselService: VarselService,
     private val journalforingService: JournalforingService,
+    private val hendelseRepository: HendelseRepository,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
 ) : Consumer<UUID, String> {
@@ -37,6 +38,7 @@ class HendelseConsumer(
     override suspend fun consume(key: UUID, value: String) {
         val hendelse: Hendelse = objectMapper.readValue(value)
         log.info("Mottatt hendelse ${hendelse.id} for deltaker ${hendelse.deltaker.id}")
+        hendelseRepository.insert(hendelse)
         varselService.handleHendelse(hendelse)
         journalforingService.handleHendelse(hendelse)
     }
