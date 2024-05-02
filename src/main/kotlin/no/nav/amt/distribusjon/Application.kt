@@ -18,7 +18,7 @@ import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
-import no.nav.amt.distribusjon.journalforing.EndringsvedtakRepository
+import no.nav.amt.distribusjon.hendelse.db.HendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
@@ -79,12 +79,11 @@ fun Application.module() {
             .build(),
     )
 
-    val endringsvedtakRepository = EndringsvedtakRepository()
+    val hendelseRepository = HendelseRepository()
 
     val varselService = VarselService(VarselRepository(), VarselProducer(), unleash)
     val journalforingService = JournalforingService(
         JournalforingstatusRepository(),
-        endringsvedtakRepository,
         amtPersonClient,
         pdfgenClient,
         sakClient,
@@ -92,7 +91,7 @@ fun Application.module() {
     )
 
     val consumers = listOf(
-        HendelseConsumer(varselService, journalforingService),
+        HendelseConsumer(varselService, journalforingService, hendelseRepository),
         VarselHendelseConsumer(varselService),
     )
     consumers.forEach { it.run() }
@@ -100,7 +99,7 @@ fun Application.module() {
     configureRouting()
     configureMonitoring()
 
-    val endringsvedtakJob = EndringsvedtakJob(leaderElection, attributes, endringsvedtakRepository, journalforingService)
+    val endringsvedtakJob = EndringsvedtakJob(leaderElection, attributes, hendelseRepository, journalforingService)
     endringsvedtakJob.startJob()
 
     attributes.put(isReadyKey, true)

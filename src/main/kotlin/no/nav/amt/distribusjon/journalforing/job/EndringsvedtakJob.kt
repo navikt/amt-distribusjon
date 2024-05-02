@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import no.nav.amt.distribusjon.application.isReadyKey
-import no.nav.amt.distribusjon.journalforing.EndringsvedtakRepository
+import no.nav.amt.distribusjon.hendelse.db.HendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import org.slf4j.Logger
@@ -20,7 +20,7 @@ import kotlin.concurrent.fixedRateTimer
 class EndringsvedtakJob(
     private val leaderElection: LeaderElection,
     private val attributes: Attributes,
-    private val endringsvedtakRepository: EndringsvedtakRepository,
+    private val hendelseRepository: HendelseRepository,
     private val journalforingService: JournalforingService,
 ) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -37,11 +37,12 @@ class EndringsvedtakJob(
                 if (leaderElection.isLeader() && attributes.getOrNull(isReadyKey) == true) {
                     try {
                         log.info("Kjører jobb for å behandle endringsvedtak")
-                        val endringsvedtak = endringsvedtakRepository.getEndringsvedtak(LocalDateTime.now().minusMinutes(30))
+                        val endringsvedtak = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now().minusMinutes(30))
+                            .filter { it.erEndringsVedtakSomSkalJournalfores() }
                         val endringsvedtakPrDeltaker = endringsvedtak.groupBy { it.deltakerId }
                         endringsvedtakPrDeltaker.forEach { entry ->
                             log.info("Behandler endringsvedtak for deltaker med id ${entry.key}")
-                            journalforingService.journalforEndringsvedtak(entry.value.map { it.hendelse })
+                            journalforingService.journalforEndringsvedtak(entry.value)
                         }
                         log.info("Ferdig med å behandle endringsvedtak")
                     } catch (e: Exception) {

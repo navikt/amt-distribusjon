@@ -1,24 +1,22 @@
 package no.nav.amt.distribusjon.journalforing
 
+import no.nav.amt.distribusjon.hendelse.db.HendelseDbo
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
-import no.nav.amt.distribusjon.journalforing.model.Endringsvedtak
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import org.slf4j.LoggerFactory
-import java.time.LocalDateTime
 import java.util.UUID
 
 class JournalforingService(
     private val journalforingstatusRepository: JournalforingstatusRepository,
-    private val endringsvedtakRepository: EndringsvedtakRepository,
     private val amtPersonClient: AmtPersonClient,
     private val pdfgenClient: PdfgenClient,
     private val sakClient: SakClient,
@@ -99,18 +97,10 @@ class JournalforingService(
     }
 
     private fun handleEndringsvedtak(hendelse: Hendelse) {
-        endringsvedtakRepository.insert(
-            Endringsvedtak(
-                hendelseId = hendelse.id,
-                deltakerId = hendelse.deltaker.id,
-                hendelse = hendelse,
-                opprettet = LocalDateTime.now(),
-            ),
-        )
-        log.info("Lagret endringsvedtak for hendelse ${hendelse.id}")
+        log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
     }
 
-    fun journalforEndringsvedtak(hendelser: List<Hendelse>) {
+    fun journalforEndringsvedtak(hendelser: List<HendelseDbo>) {
         if (hendelser.isEmpty()) {
             return
         }
@@ -126,7 +116,6 @@ class JournalforingService(
                 ),
             )
         }
-        endringsvedtakRepository.deleteEndringsvedtak(hendelseIder)
         log.info("Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}")
     }
 }
