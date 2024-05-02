@@ -117,7 +117,7 @@ class JournalforingService(
         // hent nødvendig info og journalfør
         val journalpostId = ""
         val hendelseIder = hendelser.map { it.id }
-        endringshendelseRepository.deleteHendelser(hendelseIder)
+        
         hendelseIder.forEach {
             journalforingstatusRepository.insert(
                 Journalforingstatus(
@@ -126,6 +126,7 @@ class JournalforingService(
                 ),
             )
         }
+        endringshendelseRepository.deleteHendelser(hendelseIder)
         log.info("Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}")
     }
 }
