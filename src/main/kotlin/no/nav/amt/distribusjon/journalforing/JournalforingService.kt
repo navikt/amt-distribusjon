@@ -104,31 +104,36 @@ class JournalforingService(
         if (hendelser.isEmpty()) {
             return
         }
-        val forsteHendelse = hendelser.minByOrNull { it.opprettet }!!
+        val nyesteHendelse = hendelser.maxBy { it.opprettet }
 
-        if (hendelser.find { it.deltaker.id != forsteHendelse.deltaker.id } != null) {
+        if (hendelser.find { it.deltaker.id != nyesteHendelse.deltaker.id } != null) {
             throw IllegalArgumentException("Alle hendelser må tilhøre samme deltaker!")
         }
-        val veileder = when (forsteHendelse.ansvarlig) {
-            is HendelseAnsvarlig.NavVeileder -> forsteHendelse.ansvarlig
+        val veileder = when (nyesteHendelse.ansvarlig) {
+            is HendelseAnsvarlig.NavVeileder -> nyesteHendelse.ansvarlig
         }
-        val navBruker = amtPersonClient.hentNavBruker(forsteHendelse.deltaker.personident)
+        val navBruker = amtPersonClient.hentNavBruker(nyesteHendelse.deltaker.personident)
         val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
             ?: throw IllegalArgumentException(
-                "Kan ikke endre på deltaker ${forsteHendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
+                "Kan ikke endre på deltaker ${nyesteHendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
             )
         val sak = sakClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
         val pdf = pdfgenClient.endringsvedtak(
-            lagEndringsvedtakPdfDto(forsteHendelse.deltaker, navBruker, veileder, hendelser.map { it.payload }),
+            lagEndringsvedtakPdfDto(
+                nyesteHendelse.deltaker,
+                navBruker,
+                veileder,
+                fjernEldreHendelserAvSammeType(hendelser).map { it.payload },
+            ),
         )
 
         val journalpostId = dokarkivClient.opprettJournalpost(
-            hendelseId = forsteHendelse.id,
-            fnr = forsteHendelse.deltaker.personident,
+            hendelseId = nyesteHendelse.id,
+            fnr = nyesteHendelse.deltaker.personident,
             sak = sak,
             pdf = pdf,
             journalforendeEnhet = veileder.enhet.enhetsnummer,
-            tiltakstype = forsteHendelse.deltaker.deltakerliste.tiltak,
+            tiltakstype = nyesteHendelse.deltaker.deltakerliste.tiltak,
             endring = true,
         )
         val hendelseIder = hendelser.map { it.id }
@@ -145,5 +150,9 @@ class JournalforingService(
             "Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}, " +
                 "hendelser ${hendelser.map { it.id }.joinToString()}",
         )
+    }
+
+    private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> {
+        return hendelser.sortedByDescending { it.opprettet }.distinctBy { it.payload.javaClass }
     }
 }
