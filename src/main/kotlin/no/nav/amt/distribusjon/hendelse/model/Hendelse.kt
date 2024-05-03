@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.hendelse.model
 
+import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -9,6 +10,7 @@ data class Hendelse(
     val deltaker: HendelseDeltaker,
     val ansvarlig: HendelseAnsvarlig,
     val payload: HendelseType,
+    val distribusjonskanal: Distribusjonskanal,
 ) {
     fun erEndringsVedtakSomSkalJournalfores(): Boolean {
         return when (payload) {

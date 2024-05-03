@@ -15,6 +15,7 @@ object SingletonKafkaProvider {
     val topics = listOf(
         Environment.DELTAKER_HENDELSE_TOPIC,
         Environment.MINSIDE_VARSEL_TOPIC,
+        Environment.MINSIDE_VARSEL_HENDELSE_TOPIC,
     )
 
     fun start() {

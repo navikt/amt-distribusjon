@@ -3,7 +3,8 @@ package no.nav.amt.distribusjon.hendelse
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
-import no.nav.amt.distribusjon.hendelse.model.Hendelse
+import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
+import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.kafka.Consumer
 import no.nav.amt.distribusjon.kafka.ManagedKafkaConsumer
@@ -20,6 +21,7 @@ class HendelseConsumer(
     private val varselService: VarselService,
     private val journalforingService: JournalforingService,
     private val hendelseRepository: HendelseRepository,
+    private val dokdistkanalClient: DokdistkanalClient,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
 ) : Consumer<UUID, String> {
@@ -36,9 +38,14 @@ class HendelseConsumer(
     )
 
     override suspend fun consume(key: UUID, value: String) {
-        val hendelse: Hendelse = objectMapper.readValue(value)
-        log.info("Mottatt hendelse ${hendelse.id} for deltaker ${hendelse.deltaker.id}")
+        val hendelseDto: HendelseDto = objectMapper.readValue(value)
+        log.info("Mottatt hendelse ${hendelseDto.id} for deltaker ${hendelseDto.deltaker.id}")
+
+        val distribusjonskanal = dokdistkanalClient.bestemDistribusjonskanal(hendelseDto.deltaker)
+        val hendelse = hendelseDto.toModel(distribusjonskanal)
+
         hendelseRepository.insert(hendelse)
+
         varselService.handleHendelse(hendelse)
         journalforingService.handleHendelse(hendelse)
     }

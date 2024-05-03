@@ -17,6 +17,7 @@ import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.db.Database
+import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
 import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
@@ -69,6 +70,7 @@ fun Application.module() {
     val amtPersonClient = AmtPersonClient(httpClient, azureAdTokenClient, environment)
     val sakClient = SakClient(httpClient, azureAdTokenClient, environment)
     val dokarkivClient = DokarkivClient(httpClient, azureAdTokenClient, environment)
+    val dokdistkanalClient = DokdistkanalClient(httpClient, azureAdTokenClient, environment)
 
     val unleash = DefaultUnleash(
         UnleashConfig.builder()
@@ -91,7 +93,7 @@ fun Application.module() {
     )
 
     val consumers = listOf(
-        HendelseConsumer(varselService, journalforingService, hendelseRepository),
+        HendelseConsumer(varselService, journalforingService, hendelseRepository, dokdistkanalClient),
         VarselHendelseConsumer(varselService),
     )
     consumers.forEach { it.run() }
