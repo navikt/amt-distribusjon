@@ -20,7 +20,20 @@ class PdfgenClient(private val httpClient: HttpClient, private val environment: 
             setBody(objectMapper.writeValueAsString(hovedvedtakPdfDto))
         }
         if (!response.status.isSuccess()) {
-            error("Kunne ikke hente opprette pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}")
+            error("Kunne ikke hente opprette hovedvedtak-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}")
+        }
+        return response.body()
+    }
+
+    suspend fun endringsvedtak(endringsvedtakPdfDto: EndringsvedtakPdfDto): ByteArray {
+        val response = httpClient.post("$url/endringsvedtak") {
+            contentType(ContentType.Application.Json)
+            setBody(objectMapper.writeValueAsString(endringsvedtakPdfDto))
+        }
+        if (!response.status.isSuccess()) {
+            error(
+                "Kunne ikke hente opprette endringsvedtak-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}",
+            )
         }
         return response.body()
     }

@@ -44,7 +44,7 @@ class EndringsvedtakJob(
                             log.info("Behandler endringsvedtak for deltaker med id ${entry.key}")
                             journalforingService.journalforEndringsvedtak(entry.value)
                         }
-                        log.info("Ferdig med å behandle endringsvedtak")
+                        log.info("Ferdig med å behandle ${endringsvedtak.size} endringsvedtak")
                     } catch (e: Exception) {
                         log.error("Noe gikk galt ved behandling av endringsvedtak", e)
                     }
