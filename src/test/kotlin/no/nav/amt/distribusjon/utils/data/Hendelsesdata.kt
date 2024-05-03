@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.utils.data
 
+import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.Aarsak
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
@@ -25,6 +26,21 @@ object Hendelsesdata {
         ansvarlig,
         payload,
     )
+
+    fun hendelse(
+        payload: HendelseType,
+        id: UUID = UUID.randomUUID(),
+        deltaker: HendelseDeltaker = deltaker(),
+        ansvarlig: HendelseAnsvarlig = ansvarligNavVeileder(),
+        opprettet: LocalDateTime = LocalDateTime.now(),
+        distribusjonskanal: Distribusjonskanal = Distribusjonskanal.DITT_NAV,
+    ) = hendelseDto(
+        payload,
+        id,
+        deltaker,
+        ansvarlig,
+        opprettet,
+    ).toModel(distribusjonskanal)
 
     fun ansvarligNavVeileder(
         id: UUID = UUID.randomUUID(),

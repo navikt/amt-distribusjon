@@ -52,7 +52,7 @@ class TestApp {
 
     val unleash: FakeUnleash
 
-    val environment = testEnvironment
+    val environment: Environment = testEnvironment
 
     init {
         SingletonPostgresContainer.start()
@@ -112,8 +112,3 @@ fun integrationTest(testBlock: suspend (app: TestApp, client: HttpClient) -> Uni
 
     testBlock(testApp, client)
 }
-
-val testEnvironment = Environment(
-    dokdistkanalScope = "dokdistkanal.scope",
-    dokdistkanalUrl = "http://dokdistkanal",
-)
