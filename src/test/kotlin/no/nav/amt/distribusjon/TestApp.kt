@@ -52,11 +52,11 @@ class TestApp {
 
     val unleash: FakeUnleash
 
+    val environment = testEnvironment
+
     init {
         SingletonPostgresContainer.start()
         SingletonKafkaProvider.start()
-
-        val environment = testEnvironment()
 
         unleash = FakeUnleash()
         unleash.enableAll()
@@ -113,7 +113,7 @@ fun integrationTest(testBlock: suspend (app: TestApp, client: HttpClient) -> Uni
     testBlock(testApp, client)
 }
 
-fun testEnvironment() = Environment(
+val testEnvironment = Environment(
     dokdistkanalScope = "dokdistkanal.scope",
     dokdistkanalUrl = "http://dokdistkanal",
 )

@@ -149,7 +149,7 @@ object MockResponseHandler {
     }
 
     fun addDistribusjonskanalResponse(personident: String, distribusjonskanal: Distribusjonskanal) {
-        val url = "${testEnvironment().dokdistkanalUrl}/rest/bestemDistribusjonskanal"
+        val url = "${testEnvironment.dokdistkanalUrl}/rest/bestemDistribusjonskanal"
         val request = Request(url, HttpMethod.Post, objectMapper.writeValueAsString(BestemDistribusjonskanalRequest(personident)))
         addResponse(request, BestemDistribusjonskanalResponse(distribusjonskanal))
     }

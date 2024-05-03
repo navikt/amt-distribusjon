@@ -32,7 +32,7 @@ class VarselService(
             return
         }
 
-        if (!hendelse.distribusjonskanal!!.skalDistribueresDigitalt()) return
+        if (!hendelse.distribusjonskanal.skalDistribueresDigitalt()) return
 
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> opprettPameldingsoppgave(hendelse)
