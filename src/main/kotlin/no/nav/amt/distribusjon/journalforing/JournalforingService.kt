@@ -8,6 +8,7 @@ import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
+import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
@@ -42,7 +43,6 @@ class JournalforingService(
                 hendelse.ansvarlig,
             )
             is HendelseType.AvsluttDeltakelse,
-            is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.EndreDeltakelsesmengde,
             is HendelseType.EndreSluttdato,
             is HendelseType.EndreStartdato,
@@ -52,6 +52,7 @@ class JournalforingService(
 
             is HendelseType.EndreSluttarsak,
             is HendelseType.EndreInnhold,
+            is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.EndreUtkast,
             is HendelseType.OpprettUtkast,
             is HendelseType.AvbrytUtkast,
@@ -99,12 +100,42 @@ class JournalforingService(
         log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
     }
 
-    fun journalforEndringsvedtak(hendelser: List<Hendelse>) {
+    suspend fun journalforEndringsvedtak(hendelser: List<Hendelse>) {
         if (hendelser.isEmpty()) {
             return
         }
-        // hent nødvendig info og journalfør
-        val journalpostId = ""
+        val nyesteHendelse = hendelser.maxBy { it.opprettet }
+
+        if (hendelser.find { it.deltaker.id != nyesteHendelse.deltaker.id } != null) {
+            throw IllegalArgumentException("Alle hendelser må tilhøre samme deltaker!")
+        }
+        val veileder = when (nyesteHendelse.ansvarlig) {
+            is HendelseAnsvarlig.NavVeileder -> nyesteHendelse.ansvarlig
+        }
+        val navBruker = amtPersonClient.hentNavBruker(nyesteHendelse.deltaker.personident)
+        val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
+            ?: throw IllegalArgumentException(
+                "Kan ikke endre på deltaker ${nyesteHendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
+            )
+        val sak = sakClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
+        val pdf = pdfgenClient.endringsvedtak(
+            lagEndringsvedtakPdfDto(
+                nyesteHendelse.deltaker,
+                navBruker,
+                veileder,
+                fjernEldreHendelserAvSammeType(hendelser).map { it.payload },
+            ),
+        )
+
+        val journalpostId = dokarkivClient.opprettJournalpost(
+            hendelseId = nyesteHendelse.id,
+            fnr = nyesteHendelse.deltaker.personident,
+            sak = sak,
+            pdf = pdf,
+            journalforendeEnhet = veileder.enhet.enhetsnummer,
+            tiltakstype = nyesteHendelse.deltaker.deltakerliste.tiltak,
+            endring = true,
+        )
         val hendelseIder = hendelser.map { it.id }
 
         hendelseIder.forEach {
@@ -115,6 +146,13 @@ class JournalforingService(
                 ),
             )
         }
-        log.info("Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}")
+        log.info(
+            "Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}, " +
+                "hendelser ${hendelser.map { it.id }.joinToString()}",
+        )
+    }
+
+    private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> {
+        return hendelser.sortedByDescending { it.opprettet }.distinctBy { it.payload.javaClass }
     }
 }

@@ -2,6 +2,7 @@ package no.nav.amt.distribusjon.journalforing.pdf
 
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
+import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
@@ -42,6 +43,33 @@ fun lagHovedvedtakPdfDto(
     ),
 )
 
+fun lagEndringsvedtakPdfDto(
+    deltaker: HendelseDeltaker,
+    navBruker: NavBruker,
+    veileder: HendelseAnsvarlig.NavVeileder,
+    endringer: List<HendelseType>,
+) = EndringsvedtakPdfDto(
+    deltaker = EndringsvedtakPdfDto.DeltakerDto(
+        fornavn = navBruker.fornavn,
+        mellomnavn = navBruker.mellomnavn,
+        etternavn = navBruker.etternavn,
+        adresselinjer = navBruker.adresse?.toAdresselinjer() ?: emptyList(),
+    ),
+    deltakerliste = EndringsvedtakPdfDto.DeltakerlisteDto(
+        navn = deltaker.deltakerliste.visningsnavn(),
+        ledetekst = deltaker.deltakerliste.tiltak.ledetekst,
+        arrangor = EndringsvedtakPdfDto.ArrangorDto(
+            navn = deltaker.deltakerliste.arrangor.visningsnavn(),
+        ),
+        forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
+    ),
+    endringer = endringer.map { tilEndringDto(it) },
+    navVeileder = EndringsvedtakPdfDto.NavVeilederDto(
+        navn = veileder.navn,
+        enhet = navBruker.navEnhet?.navn ?: "",
+    ),
+)
+
 fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.type) {
     HendelseDeltaker.Deltakerliste.Tiltak.Type.INDOPPFAG -> 4
     HendelseDeltaker.Deltakerliste.Tiltak.Type.ARBFORB -> 13
@@ -74,4 +102,42 @@ fun HendelseDeltaker.Deltakerliste.Arrangor.visningsnavn(): String {
 
 private fun List<Innhold>.toVisingstekst() = this.map { innhold ->
     "${innhold.tekst}${innhold.beskrivelse?.let { ": $it" } ?: ""}"
+}
+
+private fun tilEndringDto(hendelseType: HendelseType): EndringsvedtakPdfDto.EndringDto {
+    return when (hendelseType) {
+        is HendelseType.InnbyggerGodkjennUtkast,
+        is HendelseType.NavGodkjennUtkast,
+        is HendelseType.EndreSluttarsak,
+        is HendelseType.EndreInnhold,
+        is HendelseType.EndreBakgrunnsinformasjon,
+        is HendelseType.EndreUtkast,
+        is HendelseType.OpprettUtkast,
+        is HendelseType.AvbrytUtkast,
+        -> throw IllegalArgumentException("Skal ikke journalføre $hendelseType som endringsvedtak")
+        is HendelseType.AvsluttDeltakelse -> EndringsvedtakPdfDto.EndringDto(
+            "Avslutt deltakelse",
+            hendelseType,
+        )
+        is HendelseType.EndreDeltakelsesmengde -> EndringsvedtakPdfDto.EndringDto(
+            "Deltakelsesmengde",
+            hendelseType,
+        )
+        is HendelseType.EndreSluttdato -> EndringsvedtakPdfDto.EndringDto(
+            "Endre sluttdato",
+            hendelseType,
+        )
+        is HendelseType.EndreStartdato -> EndringsvedtakPdfDto.EndringDto(
+            "Endre startdato",
+            hendelseType,
+        )
+        is HendelseType.ForlengDeltakelse -> EndringsvedtakPdfDto.EndringDto(
+            "Forlengelse",
+            hendelseType,
+        )
+        is HendelseType.IkkeAktuell -> EndringsvedtakPdfDto.EndringDto(
+            "Ikke aktuell",
+            hendelseType,
+        )
+    }
 }

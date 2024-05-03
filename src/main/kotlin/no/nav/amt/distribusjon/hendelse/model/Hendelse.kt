@@ -15,7 +15,6 @@ data class Hendelse(
     fun erEndringsVedtakSomSkalJournalfores(): Boolean {
         return when (payload) {
             is HendelseType.AvsluttDeltakelse,
-            is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.EndreDeltakelsesmengde,
             is HendelseType.EndreSluttdato,
             is HendelseType.EndreStartdato,
@@ -27,6 +26,7 @@ data class Hendelse(
             is HendelseType.NavGodkjennUtkast,
             is HendelseType.EndreSluttarsak,
             is HendelseType.EndreInnhold,
+            is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.EndreUtkast,
             is HendelseType.OpprettUtkast,
             is HendelseType.AvbrytUtkast,
