@@ -25,8 +25,8 @@ class JournalforingService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     suspend fun handleHendelse(hendelse: Hendelse) {
-        if (journalforingstatusRepository.get(hendelse.id) != null) {
-            log.info("Hendelse med id ${hendelse.id} for deltaker ${hendelse.deltaker.id} er allerede journalført")
+        if (hendelseErBehandlet(hendelse.id)) {
+            log.info("Hendelse med id ${hendelse.id} for deltaker ${hendelse.deltaker.id} er allerede behandlet")
             return
         }
         when (hendelse.payload) {
@@ -56,8 +56,7 @@ class JournalforingService(
             is HendelseType.EndreUtkast,
             is HendelseType.OpprettUtkast,
             is HendelseType.AvbrytUtkast,
-            -> {
-            }
+            -> handleEndringSomIkkeJournalfores(hendelse)
         }
     }
 
@@ -86,10 +85,11 @@ class JournalforingService(
             endring = false,
         )
 
-        journalforingstatusRepository.insert(
+        journalforingstatusRepository.upsert(
             Journalforingstatus(
                 hendelseId = hendelseId,
                 journalpostId = journalpostId,
+                skalJournalfores = true,
             ),
         )
 
@@ -97,7 +97,25 @@ class JournalforingService(
     }
 
     private fun handleEndringsvedtak(hendelse: Hendelse) {
+        journalforingstatusRepository.upsert(
+            Journalforingstatus(
+                hendelseId = hendelse.id,
+                journalpostId = null,
+                skalJournalfores = true,
+            ),
+        )
         log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
+    }
+
+    private fun handleEndringSomIkkeJournalfores(hendelse: Hendelse) {
+        journalforingstatusRepository.upsert(
+            Journalforingstatus(
+                hendelseId = hendelse.id,
+                journalpostId = null,
+                skalJournalfores = false,
+            ),
+        )
+        log.info("Hendelse ${hendelse.id} skal ikke journalføres")
     }
 
     suspend fun journalforEndringsvedtak(hendelser: List<Hendelse>) {
@@ -139,10 +157,11 @@ class JournalforingService(
         val hendelseIder = hendelser.map { it.id }
 
         hendelseIder.forEach {
-            journalforingstatusRepository.insert(
+            journalforingstatusRepository.upsert(
                 Journalforingstatus(
                     hendelseId = it,
                     journalpostId = journalpostId,
+                    skalJournalfores = true,
                 ),
             )
         }
@@ -150,6 +169,11 @@ class JournalforingService(
             "Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}, " +
                 "hendelser ${hendelser.map { it.id }.joinToString()}",
         )
+    }
+
+    private fun hendelseErBehandlet(hendelseId: UUID): Boolean {
+        val journalforingstatus = journalforingstatusRepository.get(hendelseId)
+        return journalforingstatus != null && (journalforingstatus.journalpostId != null || !journalforingstatus.skalJournalfores)
     }
 
     private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> {

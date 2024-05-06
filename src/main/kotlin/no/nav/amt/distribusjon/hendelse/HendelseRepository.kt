@@ -44,14 +44,16 @@ class HendelseRepository {
         val sql =
             """
             select h.id as "id",
-            h.deltaker as "deltaker",
-            h.ansvarlig as "ansvarlig",
-            h.payload as "payload",
-            h.created_at as "h.created_at",
-            h.distribusjonskanal as "distribusjonskanal"
+                h.deltaker as "deltaker",
+                h.ansvarlig as "ansvarlig",
+                h.payload as "payload",
+                h.created_at as "h.created_at",
+                h.distribusjonskanal as "distribusjonskanal"
             from hendelse h
-            left join journalforingstatus js on h.id = js.hendelse_id
-            where h.created_at < :opprettet and js.hendelse_id is null
+                left join journalforingstatus js on h.id = js.hendelse_id
+            where h.created_at < :opprettet 
+                and js.journalpost_id is null
+                and js.skal_journalfores = true
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("opprettet" to opprettet))
