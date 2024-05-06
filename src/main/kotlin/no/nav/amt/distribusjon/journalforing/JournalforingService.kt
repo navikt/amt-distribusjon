@@ -56,7 +56,8 @@ class JournalforingService(
             is HendelseType.EndreUtkast,
             is HendelseType.OpprettUtkast,
             is HendelseType.AvbrytUtkast,
-            -> handleEndringSomIkkeJournalfores(hendelse)
+            -> {
+            }
         }
     }
 
@@ -89,7 +90,6 @@ class JournalforingService(
             Journalforingstatus(
                 hendelseId = hendelseId,
                 journalpostId = journalpostId,
-                skalJournalfores = true,
             ),
         )
 
@@ -101,21 +101,9 @@ class JournalforingService(
             Journalforingstatus(
                 hendelseId = hendelse.id,
                 journalpostId = null,
-                skalJournalfores = true,
             ),
         )
         log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
-    }
-
-    private fun handleEndringSomIkkeJournalfores(hendelse: Hendelse) {
-        journalforingstatusRepository.upsert(
-            Journalforingstatus(
-                hendelseId = hendelse.id,
-                journalpostId = null,
-                skalJournalfores = false,
-            ),
-        )
-        log.info("Hendelse ${hendelse.id} skal ikke journalføres")
     }
 
     suspend fun journalforEndringsvedtak(hendelser: List<Hendelse>) {
@@ -161,7 +149,6 @@ class JournalforingService(
                 Journalforingstatus(
                     hendelseId = it,
                     journalpostId = journalpostId,
-                    skalJournalfores = true,
                 ),
             )
         }
@@ -173,7 +160,7 @@ class JournalforingService(
 
     private fun hendelseErBehandlet(hendelseId: UUID): Boolean {
         val journalforingstatus = journalforingstatusRepository.get(hendelseId)
-        return journalforingstatus != null && (journalforingstatus.journalpostId != null || !journalforingstatus.skalJournalfores)
+        return journalforingstatus?.journalpostId != null
     }
 
     private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> {

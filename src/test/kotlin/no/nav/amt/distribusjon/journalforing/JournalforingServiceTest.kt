@@ -64,7 +64,7 @@ class JournalforingServiceTest {
         runBlocking {
             journalforingService.handleHendelse(hendelse)
 
-            journalforingstatusRepository.get(hendelse.id) shouldBe Journalforingstatus(hendelse.id, "12345", true)
+            journalforingstatusRepository.get(hendelse.id) shouldBe Journalforingstatus(hendelse.id, "12345")
 
             coVerify {
                 dokarkivClient.opprettJournalpost(
@@ -83,7 +83,7 @@ class JournalforingServiceTest {
     @Test
     fun `handleHendelse - InnbyggerGodkjennUtkast, er allerede journalfort - ignorerer hendelse`() {
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast())
-        journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, "12345", true))
+        journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, "12345"))
 
         runBlocking {
             journalforingService.handleHendelse(hendelse)
@@ -119,7 +119,7 @@ class JournalforingServiceTest {
         runBlocking {
             journalforingService.handleHendelse(hendelse)
 
-            journalforingstatusRepository.get(hendelse.id) shouldBe Journalforingstatus(hendelse.id, null, false)
+            journalforingstatusRepository.get(hendelse.id) shouldBe null
 
             coVerify(exactly = 0) { dokarkivClient.opprettJournalpost(any(), any(), any(), any(), any(), any(), any()) }
         }
@@ -140,22 +140,22 @@ class JournalforingServiceTest {
             deltaker = deltaker,
             opprettet = LocalDateTime.now().minusMinutes(20),
         )
-        journalforingstatusRepository.upsert(Journalforingstatus(hendelseDeltakelsesmengde.id, null, true))
+        journalforingstatusRepository.upsert(Journalforingstatus(hendelseDeltakelsesmengde.id, null))
         val hendelseForleng = Hendelsesdata.hendelse(
             HendelseTypeData.forlengDeltakelse(),
             deltaker = deltaker,
             ansvarlig = ansvarligNavVeileder,
             opprettet = LocalDateTime.now(),
         )
-        journalforingstatusRepository.upsert(Journalforingstatus(hendelseForleng.id, null, true))
+        journalforingstatusRepository.upsert(Journalforingstatus(hendelseForleng.id, null))
 
         runBlocking {
             journalforingService.journalforEndringsvedtak(listOf(hendelseForleng, hendelseDeltakelsesmengde))
 
             journalforingstatusRepository.get(
                 hendelseDeltakelsesmengde.id,
-            ) shouldBe Journalforingstatus(hendelseDeltakelsesmengde.id, "12345", true)
-            journalforingstatusRepository.get(hendelseForleng.id) shouldBe Journalforingstatus(hendelseForleng.id, "12345", true)
+            ) shouldBe Journalforingstatus(hendelseDeltakelsesmengde.id, "12345")
+            journalforingstatusRepository.get(hendelseForleng.id) shouldBe Journalforingstatus(hendelseForleng.id, "12345")
 
             coVerify { pdfgenClient.endringsvedtak(match { it.endringer.size == 2 }) }
             coVerify {
@@ -188,20 +188,20 @@ class JournalforingServiceTest {
             ansvarlig = ansvarligNavVeileder,
             opprettet = LocalDateTime.now().minusMinutes(20),
         )
-        journalforingstatusRepository.upsert(Journalforingstatus(hendelse1.id, null, true))
+        journalforingstatusRepository.upsert(Journalforingstatus(hendelse1.id, null))
         val hendelse2 = Hendelsesdata.hendelse(
             HendelseTypeData.forlengDeltakelse(sluttdato = LocalDate.now().plusWeeks(4)),
             deltaker = deltaker,
             ansvarlig = ansvarligNavVeileder,
             opprettet = LocalDateTime.now(),
         )
-        journalforingstatusRepository.upsert(Journalforingstatus(hendelse2.id, null, true))
+        journalforingstatusRepository.upsert(Journalforingstatus(hendelse2.id, null))
 
         runBlocking {
             journalforingService.journalforEndringsvedtak(listOf(hendelse1, hendelse2))
 
-            journalforingstatusRepository.get(hendelse1.id) shouldBe Journalforingstatus(hendelse1.id, "12345", true)
-            journalforingstatusRepository.get(hendelse2.id) shouldBe Journalforingstatus(hendelse2.id, "12345", true)
+            journalforingstatusRepository.get(hendelse1.id) shouldBe Journalforingstatus(hendelse1.id, "12345")
+            journalforingstatusRepository.get(hendelse2.id) shouldBe Journalforingstatus(hendelse2.id, "12345")
 
             coVerify {
                 pdfgenClient.endringsvedtak(

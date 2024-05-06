@@ -52,8 +52,8 @@ class HendelseRepository {
             from hendelse h
                 left join journalforingstatus js on h.id = js.hendelse_id
             where h.created_at < :opprettet 
+                and js.hendelse_id is not null
                 and js.journalpost_id is null
-                and js.skal_journalfores = true
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("opprettet" to opprettet))

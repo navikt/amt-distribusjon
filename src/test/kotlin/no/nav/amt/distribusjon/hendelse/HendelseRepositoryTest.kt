@@ -39,7 +39,6 @@ class HendelseRepositoryTest {
             Journalforingstatus(
                 hendelse.id,
                 null,
-                true,
             ),
         )
 
@@ -57,7 +56,6 @@ class HendelseRepositoryTest {
             Journalforingstatus(
                 hendelse.id,
                 null,
-                true,
             ),
         )
 
@@ -74,24 +72,6 @@ class HendelseRepositoryTest {
             Journalforingstatus(
                 hendelse.id,
                 "12345",
-                true,
-            ),
-        )
-
-        val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
-
-        ikkeJournalforteHendelser.size shouldBe 0
-    }
-
-    @Test
-    fun `getIkkeJournalforteHendelser - hendelse skal ikke journalfores - returnerer tom liste`() {
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
-        TestRepository.insert(hendelse)
-        journalforingstatusRepository.upsert(
-            Journalforingstatus(
-                hendelse.id,
-                null,
-                false,
             ),
         )
 
