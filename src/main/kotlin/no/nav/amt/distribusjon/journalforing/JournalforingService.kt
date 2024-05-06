@@ -124,7 +124,7 @@ class JournalforingService(
                 nyesteHendelse.deltaker,
                 navBruker,
                 veileder,
-                fjernEldreHendelserAvSammeType(hendelser).map { it.payload },
+                hendelser,
             ),
         )
 
@@ -165,9 +165,5 @@ class JournalforingService(
     private fun hendelseErBehandlet(hendelseId: UUID): Boolean {
         val journalforingstatus = journalforingstatusRepository.get(hendelseId)
         return journalforingstatus?.journalpostId != null
-    }
-
-    private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> {
-        return hendelser.sortedByDescending { it.opprettet }.distinctBy { it.payload.javaClass }
     }
 }
