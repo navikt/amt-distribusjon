@@ -9,14 +9,17 @@ import java.util.UUID
 class JournalforingstatusRepository {
     private fun rowmapper(row: Row) = Journalforingstatus(
         hendelseId = row.uuid("hendelse_id"),
-        journalpostId = row.string("journalpost_id"),
+        journalpostId = row.stringOrNull("journalpost_id"),
     )
 
-    fun insert(journalforingstatus: Journalforingstatus) = Database.query {
+    fun upsert(journalforingstatus: Journalforingstatus) = Database.query {
         val sql =
             """
             insert into journalforingstatus (hendelse_id, journalpost_id)
             values(:hendelse_id, :journalpost_id)
+            on conflict (hendelse_id) do update set
+                journalpost_id = :journalpost_id,
+                modified_at = current_timestamp
             """.trimIndent()
 
         val params = mapOf(

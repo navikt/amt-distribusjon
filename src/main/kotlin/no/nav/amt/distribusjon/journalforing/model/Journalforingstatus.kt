@@ -4,5 +4,5 @@ import java.util.UUID
 
 data class Journalforingstatus(
     val hendelseId: UUID,
-    val journalpostId: String,
+    val journalpostId: String?,
 )

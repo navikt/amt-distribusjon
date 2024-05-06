@@ -25,8 +25,8 @@ class JournalforingService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     suspend fun handleHendelse(hendelse: Hendelse) {
-        if (journalforingstatusRepository.get(hendelse.id) != null) {
-            log.info("Hendelse med id ${hendelse.id} for deltaker ${hendelse.deltaker.id} er allerede journalført")
+        if (hendelseErBehandlet(hendelse.id)) {
+            log.info("Hendelse med id ${hendelse.id} for deltaker ${hendelse.deltaker.id} er allerede behandlet")
             return
         }
         when (hendelse.payload) {
@@ -86,7 +86,7 @@ class JournalforingService(
             endring = false,
         )
 
-        journalforingstatusRepository.insert(
+        journalforingstatusRepository.upsert(
             Journalforingstatus(
                 hendelseId = hendelseId,
                 journalpostId = journalpostId,
@@ -97,6 +97,12 @@ class JournalforingService(
     }
 
     private fun handleEndringsvedtak(hendelse: Hendelse) {
+        journalforingstatusRepository.upsert(
+            Journalforingstatus(
+                hendelseId = hendelse.id,
+                journalpostId = null,
+            ),
+        )
         log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
     }
 
@@ -139,7 +145,7 @@ class JournalforingService(
         val hendelseIder = hendelser.map { it.id }
 
         hendelseIder.forEach {
-            journalforingstatusRepository.insert(
+            journalforingstatusRepository.upsert(
                 Journalforingstatus(
                     hendelseId = it,
                     journalpostId = journalpostId,
@@ -150,6 +156,11 @@ class JournalforingService(
             "Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}, " +
                 "hendelser ${hendelser.map { it.id }.joinToString()}",
         )
+    }
+
+    private fun hendelseErBehandlet(hendelseId: UUID): Boolean {
+        val journalforingstatus = journalforingstatusRepository.get(hendelseId)
+        return journalforingstatus?.journalpostId != null
     }
 
     private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> {
