@@ -6,7 +6,7 @@ import java.util.UUID
 object Journalforingdata {
     fun lagSak(
         oppfolgingsperiodeId: UUID = UUID.randomUUID(),
-        sakId: Long = 1L,
+        sakId: Long = (1000L..99999L).random(),
         fagsaksystem: String = "ARBEIDSOPPFOLGING",
         tema: String = "OPP",
     ) = Sak(oppfolgingsperiodeId, sakId, fagsaksystem, tema)

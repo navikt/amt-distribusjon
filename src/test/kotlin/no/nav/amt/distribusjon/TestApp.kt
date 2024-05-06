@@ -20,8 +20,6 @@ import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
 import no.nav.amt.distribusjon.utils.SingletonKafkaProvider
 import no.nav.amt.distribusjon.utils.SingletonPostgresContainer
-import no.nav.amt.distribusjon.utils.data.Journalforingdata
-import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.mockAmtPersonClient
 import no.nav.amt.distribusjon.utils.mockAzureAdClient
 import no.nav.amt.distribusjon.utils.mockDokarkivClient
@@ -66,12 +64,10 @@ class TestApp {
 
         azureAdTokenClient = mockAzureAdClient(environment)
         pdfgenClient = mockPdfgenClient(environment)
-        val navBruker = Persondata.lagNavBruker()
-        amtPersonClient = mockAmtPersonClient(azureAdTokenClient, environment, navBruker)
+        amtPersonClient = mockAmtPersonClient(azureAdTokenClient, environment)
         sakClient = mockSakClient(
             azureAdTokenClient,
             environment,
-            Journalforingdata.lagSak(oppfolgingsperiodeId = navBruker.getAktivOppfolgingsperiode()!!.id),
         )
         dokarkivClient = mockDokarkivClient(azureAdTokenClient, environment)
         dokdistkanalClient = mockDokdistkanalClient(azureAdTokenClient, environment)

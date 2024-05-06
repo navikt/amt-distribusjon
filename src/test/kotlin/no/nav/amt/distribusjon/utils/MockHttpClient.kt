@@ -29,6 +29,7 @@ import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DistribuerJournalp
 import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
+import no.nav.amt.distribusjon.journalforing.person.NavBrukerRequest
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.journalforing.sak.Sak
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
@@ -94,28 +95,20 @@ fun mockPdfgenClient(environment: Environment) = PdfgenClient(
     environment,
 )
 
-fun mockAmtPersonClient(
-    azureAdTokenClient: AzureAdTokenClient,
-    environment: Environment,
-    navBruker: NavBruker = Persondata.lagNavBruker(),
-) = AmtPersonClient(
-    mockHttpClient(navBruker),
+fun mockAmtPersonClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = AmtPersonClient(
+    mockHttpClient(Persondata.lagNavBruker()),
     azureAdTokenClient,
     environment,
 )
 
-fun mockSakClient(
-    azureAdTokenClient: AzureAdTokenClient,
-    environment: Environment,
-    sak: Sak = Journalforingdata.lagSak(),
-) = SakClient(
-    mockHttpClient(sak),
+fun mockSakClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = SakClient(
+    mockHttpClient(Journalforingdata.lagSak()),
     azureAdTokenClient,
     environment,
 )
 
 fun mockDokarkivClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = DokarkivClient(
-    mockHttpClient(OpprettJournalpostResponse("12345")),
+    mockHttpClient(OpprettJournalpostResponse((100_000..999_999).random().toString())),
     azureAdTokenClient,
     environment,
 )
@@ -157,9 +150,30 @@ object MockResponseHandler {
         )
     }
 
-    fun addDistribusjonskanalResponse(personident: String, distribusjonskanal: Distribusjonskanal) {
-        val url = "${testEnvironment.dokdistkanalUrl}/rest/bestemDistribusjonskanal"
-        val request = Request(url, HttpMethod.Post, objectMapper.writeValueAsString(BestemDistribusjonskanalRequest(personident)))
-        addResponse(request, BestemDistribusjonskanalResponse(distribusjonskanal))
-    }
+    fun addDistribusjonskanalResponse(personident: String, distribusjonskanal: Distribusjonskanal) = post(
+        "${testEnvironment.dokdistkanalUrl}/rest/bestemDistribusjonskanal",
+        BestemDistribusjonskanalRequest(personident),
+        BestemDistribusjonskanalResponse(distribusjonskanal),
+    )
+
+    fun addNavBrukerResponse(personident: String, navBruker: NavBruker) = post(
+        "${testEnvironment.amtPersonUrl}/api/nav-bruker",
+        NavBrukerRequest(personident),
+        navBruker,
+    )
+
+    fun addSakResponse(oppfolgingsperiodeId: UUID, sak: Sak) = post(
+        "${testEnvironment.sakUrl}/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId",
+        null,
+        sak,
+    )
+
+    private fun post(
+        url: String,
+        requestBody: Any?,
+        responseBody: Any = "",
+    ) = addResponse(
+        Request(url, HttpMethod.Post, requestBody?.let { objectMapper.writeValueAsString(it) }),
+        responseBody,
+    )
 }
