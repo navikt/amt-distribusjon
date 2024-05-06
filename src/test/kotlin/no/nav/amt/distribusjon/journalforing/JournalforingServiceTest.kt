@@ -7,6 +7,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
+import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.EndringDto
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
@@ -24,6 +25,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.UUID
 
 class JournalforingServiceTest {
     companion object {
@@ -33,6 +35,7 @@ class JournalforingServiceTest {
         private val pdfgenClient = mockk<PdfgenClient>()
         private val sakClient = mockk<SakClient>()
         private val dokarkivClient = mockk<DokarkivClient>()
+        private val dokdistfordelingClient = mockk<DokdistfordelingClient>()
 
         @JvmStatic
         @BeforeClass
@@ -40,7 +43,16 @@ class JournalforingServiceTest {
             SingletonPostgresContainer.start()
             journalforingstatusRepository = JournalforingstatusRepository()
             journalforingService =
-                JournalforingService(journalforingstatusRepository, amtPersonClient, pdfgenClient, sakClient, dokarkivClient)
+                JournalforingService(
+                    journalforingstatusRepository,
+                    amtPersonClient,
+                    pdfgenClient,
+                    sakClient,
+                    dokarkivClient,
+                    dokdistfordelingClient,
+                )
+
+            coEvery { dokdistfordelingClient.distribuerJournalpost(any()) } returns UUID.randomUUID()
         }
     }
 

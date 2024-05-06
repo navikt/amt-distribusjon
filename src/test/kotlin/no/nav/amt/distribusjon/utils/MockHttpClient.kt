@@ -25,6 +25,8 @@ import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.dokarkiv.OpprettJournalpostResponse
+import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DistribuerJournalpostResponse
+import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
@@ -33,6 +35,7 @@ import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import no.nav.amt.distribusjon.testEnvironment
 import no.nav.amt.distribusjon.utils.data.Journalforingdata
 import no.nav.amt.distribusjon.utils.data.Persondata
+import java.util.UUID
 
 fun mockHttpClient(defaultResponse: Any? = null): HttpClient {
     val mockEngine = MockEngine {
@@ -119,6 +122,12 @@ fun mockDokarkivClient(azureAdTokenClient: AzureAdTokenClient, environment: Envi
 
 fun mockDokdistkanalClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = DokdistkanalClient(
     mockHttpClient(BestemDistribusjonskanalResponse(Distribusjonskanal.DITT_NAV)),
+    azureAdTokenClient,
+    environment,
+)
+
+fun mockDokdistfordelingClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = DokdistfordelingClient(
+    mockHttpClient(DistribuerJournalpostResponse(UUID.randomUUID())),
     azureAdTokenClient,
     environment,
 )
