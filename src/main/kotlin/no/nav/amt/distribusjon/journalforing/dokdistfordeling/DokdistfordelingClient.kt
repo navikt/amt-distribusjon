@@ -49,6 +49,7 @@ class DokdistfordelingClient(
 data class DistribuerJournalpostRequest(
     val journalpostId: String,
     val tvingSentralPrint: Boolean = false,
+    val bestillendeFagsystem: String = Environment.appName,
     val dokumentProdApp: String = Environment.appName,
     val distribusjonstype: Distribusjonstype = Distribusjonstype.VEDTAK,
     val distribusjonstidspunkt: Distribusjonstidspunkt = Distribusjonstidspunkt.KJERNETID,
