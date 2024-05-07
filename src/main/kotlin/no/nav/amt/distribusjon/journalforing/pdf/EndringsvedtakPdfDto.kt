@@ -1,6 +1,8 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
-import no.nav.amt.distribusjon.hendelse.model.HendelseType
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import java.time.LocalDate
 
 data class EndringsvedtakPdfDto(
     val deltaker: DeltakerDto,
@@ -28,9 +30,42 @@ data class EndringsvedtakPdfDto(
         val navn: String,
         val enhet: String,
     )
+}
 
-    data class EndringDto(
-        val navn: String,
-        val hendelseType: HendelseType,
-    )
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes(
+    JsonSubTypes.Type(value = EndringDto.EndreDeltakelsesmengde::class, name = "Deltakelsesmengde"),
+    JsonSubTypes.Type(value = EndringDto.EndreStartdato::class, name = "Endre startdato"),
+    JsonSubTypes.Type(value = EndringDto.EndreSluttdato::class, name = "Endre sluttdato"),
+    JsonSubTypes.Type(value = EndringDto.ForlengDeltakelse::class, name = "Forlengelse"),
+    JsonSubTypes.Type(value = EndringDto.IkkeAktuell::class, name = "Ikke aktuell"),
+    JsonSubTypes.Type(value = EndringDto.AvsluttDeltakelse::class, name = "Avslutt deltakelse"),
+)
+sealed interface EndringDto {
+    data class EndreDeltakelsesmengde(
+        val deltakelsesprosent: Float?,
+        val dagerPerUke: Float?,
+    ) : EndringDto
+
+    data class EndreStartdato(
+        val startdato: LocalDate?,
+        val sluttdato: LocalDate? = null,
+    ) : EndringDto
+
+    data class EndreSluttdato(
+        val sluttdato: LocalDate,
+    ) : EndringDto
+
+    data class ForlengDeltakelse(
+        val sluttdato: LocalDate,
+    ) : EndringDto
+
+    data class IkkeAktuell(
+        val aarsak: String,
+    ) : EndringDto
+
+    data class AvsluttDeltakelse(
+        val aarsak: String,
+        val sluttdato: LocalDate,
+    ) : EndringDto
 }

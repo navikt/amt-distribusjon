@@ -104,7 +104,7 @@ private fun List<Innhold>.toVisingstekst() = this.map { innhold ->
     "${innhold.tekst}${innhold.beskrivelse?.let { ": $it" } ?: ""}"
 }
 
-private fun tilEndringDto(hendelseType: HendelseType): EndringsvedtakPdfDto.EndringDto {
+private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
     return when (hendelseType) {
         is HendelseType.InnbyggerGodkjennUtkast,
         is HendelseType.NavGodkjennUtkast,
@@ -115,29 +115,26 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringsvedtakPdfDto.Endr
         is HendelseType.OpprettUtkast,
         is HendelseType.AvbrytUtkast,
         -> throw IllegalArgumentException("Skal ikke journalføre $hendelseType som endringsvedtak")
-        is HendelseType.AvsluttDeltakelse -> EndringsvedtakPdfDto.EndringDto(
-            "Avslutt deltakelse",
-            hendelseType,
+        is HendelseType.AvsluttDeltakelse -> EndringDto.AvsluttDeltakelse(
+            aarsak = hendelseType.aarsak.visningsnavn(),
+            sluttdato = hendelseType.sluttdato,
         )
-        is HendelseType.EndreDeltakelsesmengde -> EndringsvedtakPdfDto.EndringDto(
-            "Deltakelsesmengde",
-            hendelseType,
+        is HendelseType.EndreDeltakelsesmengde -> EndringDto.EndreDeltakelsesmengde(
+            deltakelsesprosent = hendelseType.deltakelsesprosent,
+            dagerPerUke = hendelseType.dagerPerUke,
         )
-        is HendelseType.EndreSluttdato -> EndringsvedtakPdfDto.EndringDto(
-            "Endre sluttdato",
-            hendelseType,
+        is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
+            sluttdato = hendelseType.sluttdato,
         )
-        is HendelseType.EndreStartdato -> EndringsvedtakPdfDto.EndringDto(
-            "Endre startdato",
-            hendelseType,
+        is HendelseType.EndreStartdato -> EndringDto.EndreStartdato(
+            startdato = hendelseType.startdato,
+            sluttdato = hendelseType.sluttdato,
         )
-        is HendelseType.ForlengDeltakelse -> EndringsvedtakPdfDto.EndringDto(
-            "Forlengelse",
-            hendelseType,
+        is HendelseType.ForlengDeltakelse -> EndringDto.ForlengDeltakelse(
+            sluttdato = hendelseType.sluttdato,
         )
-        is HendelseType.IkkeAktuell -> EndringsvedtakPdfDto.EndringDto(
-            "Ikke aktuell",
-            hendelseType,
+        is HendelseType.IkkeAktuell -> EndringDto.IkkeAktuell(
+            aarsak = hendelseType.aarsak.visningsnavn(),
         )
     }
 }

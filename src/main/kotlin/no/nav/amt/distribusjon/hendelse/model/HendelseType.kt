@@ -105,9 +105,27 @@ data class Aarsak(
         SYK,
         FATT_JOBB,
         TRENGER_ANNEN_STOTTE,
+        FIKK_IKKE_PLASS,
         UTDANNING,
         IKKE_MOTT,
+        AVLYST_KONTRAKT,
         ANNET,
+    }
+
+    fun visningsnavn(): String {
+        if (beskrivelse != null) {
+            return beskrivelse
+        }
+        return when (type) {
+            Type.SYK -> "syk"
+            Type.FATT_JOBB -> "fått jobb"
+            Type.TRENGER_ANNEN_STOTTE -> "trenger annen støtte"
+            Type.FIKK_IKKE_PLASS -> "fikk ikke plass"
+            Type.IKKE_MOTT -> "ikke møtt"
+            Type.ANNET -> "annet"
+            Type.AVLYST_KONTRAKT -> "avlyst kontrakt"
+            Type.UTDANNING -> "utdanning"
+        }
     }
 }
 
