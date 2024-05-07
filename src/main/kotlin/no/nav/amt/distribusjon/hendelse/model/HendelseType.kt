@@ -121,7 +121,7 @@ data class Aarsak(
             Type.FATT_JOBB -> "fått jobb"
             Type.TRENGER_ANNEN_STOTTE -> "trenger annen støtte"
             Type.FIKK_IKKE_PLASS -> "fikk ikke plass"
-            Type.IKKE_MOTT -> "ikke møtt"
+            Type.IKKE_MOTT -> "møter ikke opp"
             Type.ANNET -> "annet"
             Type.AVLYST_KONTRAKT -> "avlyst kontrakt"
             Type.UTDANNING -> "utdanning"
