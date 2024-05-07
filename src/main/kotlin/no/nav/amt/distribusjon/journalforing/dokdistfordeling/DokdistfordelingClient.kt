@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
@@ -35,7 +36,7 @@ class DokdistfordelingClient(
         }
 
         if (!response.status.isSuccess()) {
-            error("Distrubering av journalpost $journalpostId feilet: ${response.status}")
+            error("Distrubering av journalpost $journalpostId feilet: ${response.status} ${response.bodyAsText()}")
         }
 
         val bestillingsId = response.body<DistribuerJournalpostResponse>().bestillingsId
