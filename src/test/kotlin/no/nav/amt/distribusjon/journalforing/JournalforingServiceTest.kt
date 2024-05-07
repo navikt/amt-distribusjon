@@ -6,9 +6,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
+import no.nav.amt.distribusjon.journalforing.pdf.EndringDto
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
@@ -207,7 +207,7 @@ class JournalforingServiceTest {
                 pdfgenClient.endringsvedtak(
                     match {
                         it.endringer.size == 1 &&
-                            (it.endringer.first().hendelseType as HendelseType.ForlengDeltakelse).sluttdato == LocalDate.now().plusWeeks(4)
+                            (it.endringer.first() as EndringDto.ForlengDeltakelse).sluttdato == LocalDate.now().plusWeeks(4)
                     },
                 )
             }
