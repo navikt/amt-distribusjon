@@ -3,7 +3,6 @@ package no.nav.amt.distribusjon.journalforing
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.time.delay
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
@@ -19,7 +18,6 @@ import no.nav.amt.distribusjon.utils.produceStringString
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.Assert.assertThrows
 import org.junit.Test
-import java.time.Duration
 import java.time.LocalDateTime
 
 class JournalforingServiceTest {
@@ -36,20 +34,32 @@ class JournalforingServiceTest {
 
     @Test
     fun `handleHendelse - InnbyggerGodkjennUtkast, er allerede journalfort - ignorerer hendelse`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast())
 
         val journalpostId = "12345"
 
-        app.hendelseRepository.insert(hendelse.toModel(Distribusjonskanal.DITT_NAV))
+        app.hendelseRepository.insert(hendelse)
         app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId))
 
-        produce(hendelse)
-        runBlocking { delay(Duration.ofMillis(1000)) }
+        app.journalforingService.handleHendelse(hendelse)
 
-        AsyncUtils.eventually {
-            val status = app.journalforingstatusRepository.get(hendelse.id)
-            status!!.journalpostId shouldBe journalpostId
-        }
+        val status = app.journalforingstatusRepository.get(hendelse.id)
+        status!!.journalpostId shouldBe journalpostId
+    }
+
+    @Test
+    fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort - ignorerer hendelse`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse())
+
+        val journalpostId = "12345"
+
+        app.hendelseRepository.insert(hendelse)
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId))
+
+        app.journalforingService.handleHendelse(hendelse)
+
+        val status = app.journalforingstatusRepository.get(hendelse.id)
+        status!!.journalpostId shouldNotBe null
     }
 
     @Test

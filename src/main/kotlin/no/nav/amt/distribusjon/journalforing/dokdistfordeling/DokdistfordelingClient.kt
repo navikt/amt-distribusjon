@@ -51,7 +51,7 @@ data class DistribuerJournalpostRequest(
     val tvingSentralPrint: Boolean = false,
     val dokumentProdApp: String = Environment.appName,
     val distribusjonstype: Distribusjonstype = Distribusjonstype.VEDTAK,
-    val distribusjonstidspunkt: Distribusjonstidspunkt = Distribusjonstidspunkt.UMIDDELBART,
+    val distribusjonstidspunkt: Distribusjonstidspunkt = Distribusjonstidspunkt.KJERNETID,
 ) {
     enum class Distribusjonstidspunkt {
         UMIDDELBART,
