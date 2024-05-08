@@ -1,7 +1,6 @@
 package no.nav.amt.distribusjon.kafka.config
 
 import no.nav.amt.distribusjon.getEnvVar
-import no.nav.amt.distribusjon.kafka.ManagedKafkaConsumer
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -48,7 +47,6 @@ class KafkaConfigImpl(
         ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false,
         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to keyDeserializer::class.java,
         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to valueDeserializer::class.java,
-        ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG to ManagedKafkaConsumer.MAX_BACKOFF_MS * 2,
     ) + commonConfig()
 
     override fun producerConfig() = mapOf(
