@@ -23,6 +23,7 @@ import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
+import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.job.EndringsvedtakJob
 import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
@@ -71,6 +72,7 @@ fun Application.module() {
     val sakClient = SakClient(httpClient, azureAdTokenClient, environment)
     val dokarkivClient = DokarkivClient(httpClient, azureAdTokenClient, environment)
     val dokdistkanalClient = DokdistkanalClient(httpClient, azureAdTokenClient, environment)
+    val dokdistfordelingClient = DokdistfordelingClient(httpClient, azureAdTokenClient, environment)
 
     val unleash = DefaultUnleash(
         UnleashConfig.builder()
@@ -90,6 +92,7 @@ fun Application.module() {
         pdfgenClient,
         sakClient,
         dokarkivClient,
+        dokdistfordelingClient,
     )
 
     val consumers = listOf(
