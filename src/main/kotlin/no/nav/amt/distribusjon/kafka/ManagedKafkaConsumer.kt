@@ -22,7 +22,7 @@ class ManagedKafkaConsumer<K, V>(
     private var running = true
 
     companion object {
-        const val MAX_BACKOFF_MS = 275_000L
+        const val MAX_BACKOFF_MS = 300_000L
     }
 
     fun run() = scope.launch {
