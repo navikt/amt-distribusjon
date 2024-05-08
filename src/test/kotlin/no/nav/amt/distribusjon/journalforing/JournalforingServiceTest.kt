@@ -85,8 +85,8 @@ class JournalforingServiceTest {
     }
 
     @Test
-    fun `handleHendelse - EndreBakgrunnsinformasjon - journalforer ikke`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreBakgrunnsinformasjon())
+    fun `handleHendelse - EndreSluttarsak - journalforer ikke`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreSluttarsak())
 
         app.journalforingService.handleHendelse(hendelse)
         app.journalforingstatusRepository.get(hendelse.id) shouldBe null

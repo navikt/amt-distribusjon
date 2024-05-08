@@ -118,8 +118,6 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
         is HendelseType.InnbyggerGodkjennUtkast,
         is HendelseType.NavGodkjennUtkast,
         is HendelseType.EndreSluttarsak,
-        is HendelseType.EndreInnhold,
-        is HendelseType.EndreBakgrunnsinformasjon,
         is HendelseType.EndreUtkast,
         is HendelseType.OpprettUtkast,
         is HendelseType.AvbrytUtkast,
@@ -144,6 +142,12 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
         )
         is HendelseType.IkkeAktuell -> EndringDto.IkkeAktuell(
             aarsak = hendelseType.aarsak.visningsnavn(),
+        )
+        is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
+            innhold = hendelseType.innhold,
+        )
+        is HendelseType.EndreBakgrunnsinformasjon -> EndringDto.EndreBakgrunnsinformasjon(
+            bakgrunnsinformasjon = hendelseType.bakgrunnsinformasjon,
         )
     }
 }

@@ -2,6 +2,7 @@ package no.nav.amt.distribusjon.journalforing.pdf
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import no.nav.amt.distribusjon.hendelse.model.Innhold
 import java.time.LocalDate
 
 data class EndringsvedtakPdfDto(
@@ -40,6 +41,8 @@ data class EndringsvedtakPdfDto(
     JsonSubTypes.Type(value = EndringDto.ForlengDeltakelse::class, name = "Forlengelse"),
     JsonSubTypes.Type(value = EndringDto.IkkeAktuell::class, name = "Ikke aktuell"),
     JsonSubTypes.Type(value = EndringDto.AvsluttDeltakelse::class, name = "Avslutt deltakelse"),
+    JsonSubTypes.Type(value = EndringDto.EndreInnhold::class, name = "Endre innhold"),
+    JsonSubTypes.Type(value = EndringDto.EndreBakgrunnsinformasjon::class, name = "Endre bakgrunnsinformasjon"),
 )
 sealed interface EndringDto {
     data class EndreDeltakelsesmengde(
@@ -67,5 +70,13 @@ sealed interface EndringDto {
     data class AvsluttDeltakelse(
         val aarsak: String,
         val sluttdato: LocalDate,
+    ) : EndringDto
+
+    data class EndreBakgrunnsinformasjon(
+        val bakgrunnsinformasjon: String?,
+    ) : EndringDto
+
+    data class EndreInnhold(
+        val innhold: List<Innhold>,
     ) : EndringDto
 }
