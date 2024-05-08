@@ -20,13 +20,13 @@ data class Hendelse(
             is HendelseType.EndreStartdato,
             is HendelseType.ForlengDeltakelse,
             is HendelseType.IkkeAktuell,
+            is HendelseType.EndreInnhold,
+            is HendelseType.EndreBakgrunnsinformasjon,
             -> true
 
             is HendelseType.InnbyggerGodkjennUtkast,
             is HendelseType.NavGodkjennUtkast,
             is HendelseType.EndreSluttarsak,
-            is HendelseType.EndreInnhold,
-            is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.EndreUtkast,
             is HendelseType.OpprettUtkast,
             is HendelseType.AvbrytUtkast,

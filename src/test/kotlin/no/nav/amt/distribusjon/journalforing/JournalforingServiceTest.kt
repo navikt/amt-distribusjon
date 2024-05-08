@@ -113,8 +113,8 @@ class JournalforingServiceTest {
     }
 
     @Test
-    fun `handleHendelse - EndreBakgrunnsinformasjon - journalforer ikke`() {
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreBakgrunnsinformasjon())
+    fun `handleHendelse - EndreSluttarsak - journalforer ikke`() {
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreSluttarsak())
 
         runBlocking {
             journalforingService.handleHendelse(hendelse)
