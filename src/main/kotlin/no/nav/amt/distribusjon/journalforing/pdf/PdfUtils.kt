@@ -144,7 +144,7 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
             aarsak = hendelseType.aarsak.visningsnavn(),
         )
         is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
-            innhold = hendelseType.innhold,
+            innhold = hendelseType.innhold.map { it.tekst },
         )
         is HendelseType.EndreBakgrunnsinformasjon -> EndringDto.EndreBakgrunnsinformasjon(
             bakgrunnsinformasjon = hendelseType.bakgrunnsinformasjon,

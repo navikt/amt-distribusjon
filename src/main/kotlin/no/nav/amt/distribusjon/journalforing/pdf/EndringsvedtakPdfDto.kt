@@ -2,7 +2,6 @@ package no.nav.amt.distribusjon.journalforing.pdf
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import no.nav.amt.distribusjon.hendelse.model.Innhold
 import java.time.LocalDate
 
 data class EndringsvedtakPdfDto(
@@ -77,6 +76,6 @@ sealed interface EndringDto {
     ) : EndringDto
 
     data class EndreInnhold(
-        val innhold: List<Innhold>,
+        val innhold: List<String>,
     ) : EndringDto
 }
