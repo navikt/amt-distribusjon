@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
@@ -32,7 +33,7 @@ class DokdistkanalClient(
             setBody(objectMapper.writeValueAsString(BestemDistribusjonskanalRequest(deltaker.personident)))
         }
         if (!response.status.isSuccess()) {
-            error("Kunne ikke hente distribusjonskanal for deltaker ${deltaker.id}")
+            error("Kunne ikke hente distribusjonskanal for deltaker ${deltaker.id} status: ${response.status} ${response.bodyAsText()}")
         }
         return response.body<BestemDistribusjonskanalResponse>().distribusjonskanal
     }

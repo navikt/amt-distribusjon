@@ -21,6 +21,10 @@ class ManagedKafkaConsumer<K, V>(
 
     private var running = true
 
+    companion object {
+        const val MAX_BACKOFF_MS = 300_000L
+    }
+
     fun run() = scope.launch {
         log.info("Started consumer for topic: $topic")
         KafkaConsumer<K, V>(config).use { consumer ->
@@ -68,5 +72,5 @@ class ManagedKafkaConsumer<K, V>(
         job.cancel()
     }
 
-    private fun exponentialBackoff(retries: Int) = 1000L * (retries * retries)
+    private fun exponentialBackoff(retries: Int) = minOf(1000L * (retries * retries), MAX_BACKOFF_MS)
 }

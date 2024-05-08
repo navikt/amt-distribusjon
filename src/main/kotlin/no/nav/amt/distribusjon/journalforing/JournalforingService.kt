@@ -1,11 +1,12 @@
 package no.nav.amt.distribusjon.journalforing
 
+import no.nav.amt.distribusjon.distribusjonskanal.skalDistribueresDigitalt
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
-import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
+import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
@@ -21,6 +22,7 @@ class JournalforingService(
     private val pdfgenClient: PdfgenClient,
     private val sakClient: SakClient,
     private val dokarkivClient: DokarkivClient,
+    private val dokdistfordelingClient: DokdistfordelingClient,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -31,16 +33,12 @@ class JournalforingService(
         }
         when (hendelse.payload) {
             is HendelseType.InnbyggerGodkjennUtkast -> journalforHovedvedtak(
-                hendelse.id,
-                hendelse.deltaker,
+                hendelse,
                 hendelse.payload.utkast,
-                hendelse.ansvarlig,
             )
             is HendelseType.NavGodkjennUtkast -> journalforHovedvedtak(
-                hendelse.id,
-                hendelse.deltaker,
+                hendelse,
                 hendelse.payload.utkast,
-                hendelse.ansvarlig,
             )
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.EndreDeltakelsesmengde,
@@ -61,39 +59,36 @@ class JournalforingService(
         }
     }
 
-    private suspend fun journalforHovedvedtak(
-        hendelseId: UUID,
-        deltaker: HendelseDeltaker,
-        utkast: Utkast,
-        ansvarlig: HendelseAnsvarlig,
-    ) {
-        val veileder = when (ansvarlig) {
-            is HendelseAnsvarlig.NavVeileder -> ansvarlig
+    private suspend fun journalforHovedvedtak(hendelse: Hendelse, utkast: Utkast) {
+        val veileder = when (hendelse.ansvarlig) {
+            is HendelseAnsvarlig.NavVeileder -> hendelse.ansvarlig
         }
-        val navBruker = amtPersonClient.hentNavBruker(deltaker.personident)
+        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
         val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
-            ?: throw IllegalArgumentException("Kan ikke endre på deltaker ${deltaker.id} som ikke har aktiv oppfølgingsperiode")
+            ?: throw IllegalArgumentException("Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode")
         val sak = sakClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
-        val pdf = pdfgenClient.hovedvedtak(lagHovedvedtakPdfDto(deltaker, navBruker, utkast, veileder))
+        val pdf = pdfgenClient.hovedvedtak(lagHovedvedtakPdfDto(hendelse.deltaker, navBruker, utkast, veileder))
 
         val journalpostId = dokarkivClient.opprettJournalpost(
-            hendelseId = hendelseId,
-            fnr = deltaker.personident,
+            hendelseId = hendelse.id,
+            fnr = hendelse.deltaker.personident,
             sak = sak,
             pdf = pdf,
             journalforendeEnhet = veileder.enhet.enhetsnummer,
-            tiltakstype = deltaker.deltakerliste.tiltak,
+            tiltakstype = hendelse.deltaker.deltakerliste.tiltak,
             endring = false,
         )
 
         journalforingstatusRepository.upsert(
             Journalforingstatus(
-                hendelseId = hendelseId,
+                hendelseId = hendelse.id,
                 journalpostId = journalpostId,
             ),
         )
 
-        log.info("Journalførte hovedvedtak for deltaker ${deltaker.id}")
+        distribuer(hendelse, journalpostId)
+
+        log.info("Journalførte hovedvedtak for deltaker ${hendelse.deltaker.id}")
     }
 
     private fun handleEndringsvedtak(hendelse: Hendelse) {
@@ -129,7 +124,7 @@ class JournalforingService(
                 nyesteHendelse.deltaker,
                 navBruker,
                 veileder,
-                fjernEldreHendelserAvSammeType(hendelser).map { it.payload },
+                hendelser,
             ),
         )
 
@@ -152,18 +147,23 @@ class JournalforingService(
                 ),
             )
         }
+
+        distribuer(nyesteHendelse, journalpostId)
+
         log.info(
             "Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}, " +
                 "hendelser ${hendelser.map { it.id }.joinToString()}",
         )
     }
 
+    private suspend fun distribuer(hendelse: Hendelse, journalpostId: String) {
+        if (!hendelse.distribusjonskanal.skalDistribueresDigitalt()) {
+            dokdistfordelingClient.distribuerJournalpost(journalpostId)
+        }
+    }
+
     private fun hendelseErBehandlet(hendelseId: UUID): Boolean {
         val journalforingstatus = journalforingstatusRepository.get(hendelseId)
         return journalforingstatus?.journalpostId != null
-    }
-
-    private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> {
-        return hendelser.sortedByDescending { it.opprettet }.distinctBy { it.payload.javaClass }
     }
 }

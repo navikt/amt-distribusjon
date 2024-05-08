@@ -1,100 +1,70 @@
 package no.nav.amt.distribusjon.journalforing
 
 import io.kotest.matchers.shouldBe
-import io.mockk.clearMocks
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.runBlocking
-import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
+import no.nav.amt.distribusjon.Environment
+import no.nav.amt.distribusjon.application.plugins.objectMapper
+import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
+import no.nav.amt.distribusjon.hendelse.model.HendelseDto
+import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
-import no.nav.amt.distribusjon.journalforing.pdf.EndringDto
-import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
-import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
-import no.nav.amt.distribusjon.journalforing.sak.SakClient
-import no.nav.amt.distribusjon.utils.SingletonPostgresContainer
-import no.nav.amt.distribusjon.utils.TestRepository
+import no.nav.amt.distribusjon.utils.AsyncUtils
+import no.nav.amt.distribusjon.utils.MockResponseHandler
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
-import no.nav.amt.distribusjon.utils.data.Journalforingdata
 import no.nav.amt.distribusjon.utils.data.Persondata
+import no.nav.amt.distribusjon.utils.produceStringString
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.Assert.assertThrows
-import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 class JournalforingServiceTest {
-    companion object {
-        lateinit var journalforingstatusRepository: JournalforingstatusRepository
-        lateinit var journalforingService: JournalforingService
-        private val amtPersonClient = mockk<AmtPersonClient>()
-        private val pdfgenClient = mockk<PdfgenClient>()
-        private val sakClient = mockk<SakClient>()
-        private val dokarkivClient = mockk<DokarkivClient>()
-
-        @JvmStatic
-        @BeforeClass
-        fun setup() {
-            SingletonPostgresContainer.start()
-            journalforingstatusRepository = JournalforingstatusRepository()
-            journalforingService =
-                JournalforingService(journalforingstatusRepository, amtPersonClient, pdfgenClient, sakClient, dokarkivClient)
-        }
-    }
-
-    @Before
-    fun cleanDatabaseAndMocks() {
-        TestRepository.cleanDatabase()
-        clearMocks(amtPersonClient, pdfgenClient, sakClient, dokarkivClient)
-    }
-
     @Test
-    fun `handleHendelse - InnbyggerGodkjennUtkast - journalforer hovedvedtak`() {
-        val sak = Journalforingdata.lagSak()
-        val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()
-        coEvery { amtPersonClient.hentNavBruker(any()) } returns Persondata.lagNavBruker()
-        coEvery { sakClient.opprettEllerHentSak(any()) } returns sak
-        coEvery { pdfgenClient.hovedvedtak(any()) } returns "test".toByteArray()
-        coEvery { dokarkivClient.opprettJournalpost(any(), any(), any(), any(), any(), any(), any()) } returns "12345"
+    fun `handleHendelse - InnbyggerGodkjennUtkast - journalforer hovedvedtak`() = integrationTest { app, _ ->
+        val hendelseDto = Hendelsesdata.hendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
 
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast(), ansvarlig = ansvarligNavVeileder)
+        produce(hendelseDto)
 
-        runBlocking {
-            journalforingService.handleHendelse(hendelse)
-
-            journalforingstatusRepository.get(hendelse.id) shouldBe Journalforingstatus(hendelse.id, "12345")
-
-            coVerify {
-                dokarkivClient.opprettJournalpost(
-                    hendelse.id,
-                    hendelse.deltaker.personident,
-                    sak,
-                    any(),
-                    ansvarligNavVeileder.enhet.enhetsnummer,
-                    hendelse.deltaker.deltakerliste.tiltak,
-                    false,
-                )
-            }
+        AsyncUtils.eventually {
+            app.journalforingstatusRepository.get(hendelseDto.id)!!.journalpostId shouldNotBe null
         }
     }
 
     @Test
-    fun `handleHendelse - InnbyggerGodkjennUtkast, er allerede journalfort - ignorerer hendelse`() {
+    fun `handleHendelse - InnbyggerGodkjennUtkast, er allerede journalfort - ignorerer hendelse`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast())
-        journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, "12345"))
 
-        runBlocking {
-            journalforingService.handleHendelse(hendelse)
+        val journalpostId = "12345"
 
-            coVerify(exactly = 0) { dokarkivClient.opprettJournalpost(any(), any(), any(), any(), any(), any(), any()) }
-        }
+        app.hendelseRepository.insert(hendelse)
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId))
+
+        app.journalforingService.handleHendelse(hendelse)
+
+        val status = app.journalforingstatusRepository.get(hendelse.id)
+        status!!.journalpostId shouldBe journalpostId
     }
 
     @Test
-    fun `handleHendelse - InnbyggerGodkjennUtkast, har ikke aktiv oppfolgingsperiode - feiler`() {
-        coEvery { amtPersonClient.hentNavBruker(any()) } returns Persondata.lagNavBruker(
+    fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort - ignorerer hendelse`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse())
+
+        val journalpostId = "12345"
+
+        app.hendelseRepository.insert(hendelse)
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId))
+
+        app.journalforingService.handleHendelse(hendelse)
+
+        val status = app.journalforingstatusRepository.get(hendelse.id)
+        status!!.journalpostId shouldNotBe null
+    }
+
+    @Test
+    fun `handleHendelse - InnbyggerGodkjennUtkast, har ikke aktiv oppfolgingsperiode - feiler`() = integrationTest { app, _ ->
+        val navBruker = Persondata.lagNavBruker(
             oppfolgingsperioder = listOf(
                 Persondata.lagOppfolgingsperiode(
                     startdato = LocalDateTime.now().minusYears(2),
@@ -103,130 +73,54 @@ class JournalforingServiceTest {
             ),
         )
 
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast())
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
+
+        MockResponseHandler.addNavBrukerResponse(hendelse.deltaker.personident, navBruker)
 
         assertThrows(IllegalArgumentException::class.java) {
             runBlocking {
-                journalforingService.handleHendelse(hendelse)
+                app.journalforingService.handleHendelse(hendelse.toModel(Distribusjonskanal.DITT_NAV))
             }
         }
     }
 
     @Test
-    fun `handleHendelse - EndreBakgrunnsinformasjon - journalforer ikke`() {
+    fun `handleHendelse - EndreBakgrunnsinformasjon - journalforer ikke`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.endreBakgrunnsinformasjon())
 
-        runBlocking {
-            journalforingService.handleHendelse(hendelse)
-
-            journalforingstatusRepository.get(hendelse.id) shouldBe null
-
-            coVerify(exactly = 0) { dokarkivClient.opprettJournalpost(any(), any(), any(), any(), any(), any(), any()) }
-        }
+        app.journalforingService.handleHendelse(hendelse)
+        app.journalforingstatusRepository.get(hendelse.id) shouldBe null
     }
 
     @Test
-    fun `journalforEndringsvedtak - deltakelsesmengde og forleng - journalforer endringsvedtak`() {
-        val sak = Journalforingdata.lagSak()
-        val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()
-        coEvery { amtPersonClient.hentNavBruker(any()) } returns Persondata.lagNavBruker()
-        coEvery { sakClient.opprettEllerHentSak(any()) } returns sak
-        coEvery { pdfgenClient.endringsvedtak(any()) } returns "test".toByteArray()
-        coEvery { dokarkivClient.opprettJournalpost(any(), any(), any(), any(), any(), any(), any()) } returns "12345"
-
+    fun `journalforEndringsvedtak - deltakelsesmengde og forleng - journalforer endringsvedtak`() = integrationTest { app, _ ->
         val deltaker = Hendelsesdata.deltaker()
+
         val hendelseDeltakelsesmengde = Hendelsesdata.hendelse(
             HendelseTypeData.endreDeltakelsesmengde(),
             deltaker = deltaker,
             opprettet = LocalDateTime.now().minusMinutes(20),
         )
-        journalforingstatusRepository.upsert(Journalforingstatus(hendelseDeltakelsesmengde.id, null))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseDeltakelsesmengde.id, null))
         val hendelseForleng = Hendelsesdata.hendelse(
             HendelseTypeData.forlengDeltakelse(),
             deltaker = deltaker,
-            ansvarlig = ansvarligNavVeileder,
+            ansvarlig = hendelseDeltakelsesmengde.ansvarlig,
             opprettet = LocalDateTime.now(),
         )
-        journalforingstatusRepository.upsert(Journalforingstatus(hendelseForleng.id, null))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseForleng.id, null))
 
-        runBlocking {
-            journalforingService.journalforEndringsvedtak(listOf(hendelseForleng, hendelseDeltakelsesmengde))
+        app.journalforingService.journalforEndringsvedtak(listOf(hendelseForleng, hendelseDeltakelsesmengde))
 
-            journalforingstatusRepository.get(
-                hendelseDeltakelsesmengde.id,
-            ) shouldBe Journalforingstatus(hendelseDeltakelsesmengde.id, "12345")
-            journalforingstatusRepository.get(hendelseForleng.id) shouldBe Journalforingstatus(hendelseForleng.id, "12345")
+        val journalpostDeltakelsesmengde = app.journalforingstatusRepository.get(hendelseDeltakelsesmengde.id)!!
+        val journalpostForleng = app.journalforingstatusRepository.get(hendelseForleng.id)!!
 
-            coVerify { pdfgenClient.endringsvedtak(match { it.endringer.size == 2 }) }
-            coVerify {
-                dokarkivClient.opprettJournalpost(
-                    hendelseForleng.id,
-                    deltaker.personident,
-                    sak,
-                    any(),
-                    ansvarligNavVeileder.enhet.enhetsnummer,
-                    deltaker.deltakerliste.tiltak,
-                    true,
-                )
-            }
-        }
+        journalpostDeltakelsesmengde.journalpostId shouldNotBe null
+        journalpostDeltakelsesmengde.journalpostId shouldBe journalpostForleng.journalpostId
     }
 
     @Test
-    fun `journalforEndringsvedtak - to endringer av samme type - bruker nyeste endring`() {
-        val sak = Journalforingdata.lagSak()
-        val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()
-        coEvery { amtPersonClient.hentNavBruker(any()) } returns Persondata.lagNavBruker()
-        coEvery { sakClient.opprettEllerHentSak(any()) } returns sak
-        coEvery { pdfgenClient.endringsvedtak(any()) } returns "test".toByteArray()
-        coEvery { dokarkivClient.opprettJournalpost(any(), any(), any(), any(), any(), any(), any()) } returns "12345"
-
-        val deltaker = Hendelsesdata.deltaker()
-        val hendelse1 = Hendelsesdata.hendelse(
-            HendelseTypeData.forlengDeltakelse(sluttdato = LocalDate.now().plusWeeks(3)),
-            deltaker = deltaker,
-            ansvarlig = ansvarligNavVeileder,
-            opprettet = LocalDateTime.now().minusMinutes(20),
-        )
-        journalforingstatusRepository.upsert(Journalforingstatus(hendelse1.id, null))
-        val hendelse2 = Hendelsesdata.hendelse(
-            HendelseTypeData.forlengDeltakelse(sluttdato = LocalDate.now().plusWeeks(4)),
-            deltaker = deltaker,
-            ansvarlig = ansvarligNavVeileder,
-            opprettet = LocalDateTime.now(),
-        )
-        journalforingstatusRepository.upsert(Journalforingstatus(hendelse2.id, null))
-
-        runBlocking {
-            journalforingService.journalforEndringsvedtak(listOf(hendelse1, hendelse2))
-
-            journalforingstatusRepository.get(hendelse1.id) shouldBe Journalforingstatus(hendelse1.id, "12345")
-            journalforingstatusRepository.get(hendelse2.id) shouldBe Journalforingstatus(hendelse2.id, "12345")
-
-            coVerify {
-                pdfgenClient.endringsvedtak(
-                    match {
-                        it.endringer.size == 1 &&
-                            (it.endringer.first() as EndringDto.ForlengDeltakelse).sluttdato == LocalDate.now().plusWeeks(4)
-                    },
-                )
-            }
-            coVerify {
-                dokarkivClient.opprettJournalpost(
-                    hendelse2.id,
-                    deltaker.personident,
-                    sak,
-                    any(),
-                    ansvarligNavVeileder.enhet.enhetsnummer,
-                    deltaker.deltakerliste.tiltak,
-                    true,
-                )
-            }
-        }
-    }
-
-    @Test
-    fun `journalforEndringsvedtak - ulik deltakerid - feiler`() {
+    fun `journalforEndringsvedtak - ulik deltakerid - feiler`() = integrationTest { app, _ ->
         val hendelseDeltakelsesmengde = Hendelsesdata.hendelse(
             HendelseTypeData.endreDeltakelsesmengde(),
             opprettet = LocalDateTime.now().minusMinutes(20),
@@ -235,8 +129,12 @@ class JournalforingServiceTest {
 
         assertThrows(IllegalArgumentException::class.java) {
             runBlocking {
-                journalforingService.journalforEndringsvedtak(listOf(hendelseForleng, hendelseDeltakelsesmengde))
+                app.journalforingService.journalforEndringsvedtak(listOf(hendelseForleng, hendelseDeltakelsesmengde))
             }
         }
     }
 }
+
+private fun produce(hendelse: HendelseDto) = produceStringString(
+    ProducerRecord(Environment.DELTAKER_HENDELSE_TOPIC, hendelse.deltaker.id.toString(), objectMapper.writeValueAsString(hendelse)),
+)

@@ -1,7 +1,6 @@
 package no.nav.amt.distribusjon.hendelse.consumer
 
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.time.delay
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.TestApp
@@ -10,7 +9,6 @@ import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.AsyncUtils
-import no.nav.amt.distribusjon.utils.MockResponseHandler
 import no.nav.amt.distribusjon.utils.assertProduced
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
@@ -99,13 +97,9 @@ class VarselTest {
 
     @Test
     fun `navGodkjennUtkast - innbyggers distribusjonskanal er ikke digital - oppretter ikke varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.navGodkjennUtkast())
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast(), distribusjonskanal = Distribusjonskanal.PRINT)
 
-        MockResponseHandler.addDistribusjonskanalResponse(hendelse.deltaker.personident, Distribusjonskanal.PRINT)
-
-        produce(hendelse)
-
-        runBlocking { delay(Duration.ofMillis(1000)) }
+        app.varselService.handleHendelse(hendelse)
 
         val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrNull()
         varsel shouldBe null

@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
+import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
@@ -47,28 +48,36 @@ fun lagEndringsvedtakPdfDto(
     deltaker: HendelseDeltaker,
     navBruker: NavBruker,
     veileder: HendelseAnsvarlig.NavVeileder,
-    endringer: List<HendelseType>,
-) = EndringsvedtakPdfDto(
-    deltaker = EndringsvedtakPdfDto.DeltakerDto(
-        fornavn = navBruker.fornavn,
-        mellomnavn = navBruker.mellomnavn,
-        etternavn = navBruker.etternavn,
-        adresselinjer = navBruker.adresse?.toAdresselinjer() ?: emptyList(),
-    ),
-    deltakerliste = EndringsvedtakPdfDto.DeltakerlisteDto(
-        navn = deltaker.deltakerliste.visningsnavn(),
-        ledetekst = deltaker.deltakerliste.tiltak.ledetekst,
-        arrangor = EndringsvedtakPdfDto.ArrangorDto(
-            navn = deltaker.deltakerliste.arrangor.visningsnavn(),
+    hendelser: List<Hendelse>,
+): EndringsvedtakPdfDto {
+    val endringer = fjernEldreHendelserAvSammeType(hendelser).map { it.payload }
+
+    return EndringsvedtakPdfDto(
+        deltaker = EndringsvedtakPdfDto.DeltakerDto(
+            fornavn = navBruker.fornavn,
+            mellomnavn = navBruker.mellomnavn,
+            etternavn = navBruker.etternavn,
+            adresselinjer = navBruker.adresse?.toAdresselinjer() ?: emptyList(),
         ),
-        forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
-    ),
-    endringer = endringer.map { tilEndringDto(it) },
-    navVeileder = EndringsvedtakPdfDto.NavVeilederDto(
-        navn = veileder.navn,
-        enhet = navBruker.navEnhet?.navn ?: "",
-    ),
-)
+        deltakerliste = EndringsvedtakPdfDto.DeltakerlisteDto(
+            navn = deltaker.deltakerliste.visningsnavn(),
+            ledetekst = deltaker.deltakerliste.tiltak.ledetekst,
+            arrangor = EndringsvedtakPdfDto.ArrangorDto(
+                navn = deltaker.deltakerliste.arrangor.visningsnavn(),
+            ),
+            forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
+        ),
+        endringer = endringer.map { tilEndringDto(it) },
+        navVeileder = EndringsvedtakPdfDto.NavVeilederDto(
+            navn = veileder.navn,
+            enhet = navBruker.navEnhet?.navn ?: "",
+        ),
+    )
+}
+
+private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> {
+    return hendelser.sortedByDescending { it.opprettet }.distinctBy { it.payload.javaClass }
+}
 
 fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.type) {
     HendelseDeltaker.Deltakerliste.Tiltak.Type.INDOPPFAG -> 4
