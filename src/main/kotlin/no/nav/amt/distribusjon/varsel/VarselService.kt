@@ -23,7 +23,7 @@ class VarselService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     companion object {
-        val beskjedAktivLengde: Duration = Duration.ofDays(14)
+        val beskjedAktivLengde: Duration = Duration.ofDays(21)
     }
 
     fun handleHendelse(hendelse: Hendelse) {
