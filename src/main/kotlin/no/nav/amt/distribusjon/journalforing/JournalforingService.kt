@@ -67,7 +67,9 @@ class JournalforingService(
         val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
             ?: throw IllegalArgumentException("Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode")
         val sak = sakClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
-        val pdf = pdfgenClient.hovedvedtak(lagHovedvedtakPdfDto(hendelse.deltaker, navBruker, utkast, veileder))
+        val pdf = pdfgenClient.hovedvedtak(
+            lagHovedvedtakPdfDto(hendelse.deltaker, navBruker, utkast, veileder, hendelse.opprettet.toLocalDate()),
+        )
 
         val journalpostId = dokarkivClient.opprettJournalpost(
             hendelseId = hendelse.id,
@@ -125,6 +127,7 @@ class JournalforingService(
                 navBruker,
                 veileder,
                 hendelser,
+                nyesteHendelse.opprettet.toLocalDate(),
             ),
         )
 
