@@ -14,7 +14,7 @@ data class EndringsvedtakPdfDto(
         val fornavn: String,
         val mellomnavn: String?,
         val etternavn: String,
-        val adresselinjer: List<String>,
+        val personident: String,
     )
 
     data class DeltakerlisteDto(

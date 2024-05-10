@@ -7,7 +7,6 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
-import no.nav.amt.distribusjon.journalforing.person.model.toAdresselinjer
 import no.nav.amt.distribusjon.utils.toTitleCase
 
 fun lagHovedvedtakPdfDto(
@@ -20,7 +19,7 @@ fun lagHovedvedtakPdfDto(
         fornavn = navBruker.fornavn,
         mellomnavn = navBruker.mellomnavn,
         etternavn = navBruker.etternavn,
-        adresselinjer = navBruker.adresse?.toAdresselinjer() ?: emptyList(),
+        personident = deltaker.personident,
         innhold = utkast.innhold.toVisingstekst(),
         bakgrunnsinformasjon = utkast.bakgrunnsinformasjon,
         deltakelsesmengde = utkast.deltakelsesprosent?.let {
@@ -57,7 +56,7 @@ fun lagEndringsvedtakPdfDto(
             fornavn = navBruker.fornavn,
             mellomnavn = navBruker.mellomnavn,
             etternavn = navBruker.etternavn,
-            adresselinjer = navBruker.adresse?.toAdresselinjer() ?: emptyList(),
+            personident = deltaker.personident,
         ),
         deltakerliste = EndringsvedtakPdfDto.DeltakerlisteDto(
             navn = deltaker.deltakerliste.visningsnavn(),

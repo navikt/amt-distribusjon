@@ -8,7 +8,6 @@ data class NavBruker(
     val fornavn: String,
     val mellomnavn: String?,
     val etternavn: String,
-    val adresse: Adresse?,
     val navEnhet: NavEnhet?,
     val oppfolgingsperioder: List<Oppfolgingsperiode>,
 ) {
