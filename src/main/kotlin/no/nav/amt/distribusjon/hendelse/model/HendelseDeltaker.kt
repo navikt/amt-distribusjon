@@ -1,11 +1,13 @@
 package no.nav.amt.distribusjon.hendelse.model
 
+import java.time.LocalDate
 import java.util.UUID
 
 data class HendelseDeltaker(
     val id: UUID,
     val personident: String,
     val deltakerliste: Deltakerliste,
+    val forsteVedtakFattet: LocalDate?,
 ) {
     data class Deltakerliste(
         val id: UUID,

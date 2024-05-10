@@ -133,4 +133,8 @@ data class Innhold(
     val tekst: String,
     val innholdskode: String,
     val beskrivelse: String?,
-)
+) {
+    fun visningsnavn(): String {
+        return beskrivelse ?: tekst
+    }
+}

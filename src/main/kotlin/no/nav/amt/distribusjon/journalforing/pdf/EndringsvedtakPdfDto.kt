@@ -10,6 +10,7 @@ data class EndringsvedtakPdfDto(
     val endringer: List<EndringDto>,
     val navVeileder: NavVeilederDto,
     val vedtaksdato: LocalDate,
+    val forsteVedtakFattet: LocalDate,
 ) {
     data class DeltakerDto(
         val fornavn: String,
@@ -36,13 +37,13 @@ data class EndringsvedtakPdfDto(
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
     JsonSubTypes.Type(value = EndringDto.EndreDeltakelsesmengde::class, name = "Deltakelsesmengde"),
-    JsonSubTypes.Type(value = EndringDto.EndreStartdato::class, name = "Endre startdato"),
-    JsonSubTypes.Type(value = EndringDto.EndreSluttdato::class, name = "Endre sluttdato"),
+    JsonSubTypes.Type(value = EndringDto.EndreStartdato::class, name = "Oppstartsdato"),
+    JsonSubTypes.Type(value = EndringDto.EndreSluttdato::class, name = "Sluttdato"),
     JsonSubTypes.Type(value = EndringDto.ForlengDeltakelse::class, name = "Forlengelse"),
-    JsonSubTypes.Type(value = EndringDto.IkkeAktuell::class, name = "Ikke aktuell"),
+    JsonSubTypes.Type(value = EndringDto.IkkeAktuell::class, name = "Er ikke aktuell"),
     JsonSubTypes.Type(value = EndringDto.AvsluttDeltakelse::class, name = "Avslutt deltakelse"),
-    JsonSubTypes.Type(value = EndringDto.EndreInnhold::class, name = "Endre innhold"),
-    JsonSubTypes.Type(value = EndringDto.EndreBakgrunnsinformasjon::class, name = "Endre bakgrunnsinformasjon"),
+    JsonSubTypes.Type(value = EndringDto.EndreInnhold::class, name = "Innhold"),
+    JsonSubTypes.Type(value = EndringDto.EndreBakgrunnsinformasjon::class, name = "Bakgrunnsinfo"),
 )
 sealed interface EndringDto {
     data class EndreDeltakelsesmengde(

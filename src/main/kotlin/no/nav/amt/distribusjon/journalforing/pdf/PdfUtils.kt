@@ -76,6 +76,8 @@ fun lagEndringsvedtakPdfDto(
             enhet = navBruker.navEnhet?.navn ?: "",
         ),
         vedtaksdato = vedtaksdato,
+        forsteVedtakFattet = deltaker.forsteVedtakFattet
+            ?: throw IllegalStateException("Kan ikke journalføre endringsvedtak hvis opprinnelig vedtak ikke er fattet"),
     )
 }
 
@@ -148,7 +150,7 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
             aarsak = hendelseType.aarsak.visningsnavn(),
         )
         is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
-            innhold = hendelseType.innhold.map { it.tekst },
+            innhold = hendelseType.innhold.map { it.visningsnavn() },
         )
         is HendelseType.EndreBakgrunnsinformasjon -> EndringDto.EndreBakgrunnsinformasjon(
             bakgrunnsinformasjon = hendelseType.bakgrunnsinformasjon,
