@@ -6,9 +6,9 @@ import no.nav.amt.distribusjon.distribusjonskanal.skalDistribueresDigitalt
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
-import no.nav.amt.distribusjon.varsel.model.PAMELDING_TEKST
-import no.nav.amt.distribusjon.varsel.model.PLACEHOLDER_BESKJED_TEKST
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import no.nav.amt.distribusjon.varsel.model.beskjedTekst
+import no.nav.amt.distribusjon.varsel.model.oppgaveTekst
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.ZoneId
@@ -65,14 +65,14 @@ class VarselService(
         hendelse = hendelse,
         type = Varsel.Type.BESKJED,
         aktivTil = nowUTC().plus(beskjedAktivLengde),
-        tekst = PLACEHOLDER_BESKJED_TEKST,
+        tekst = beskjedTekst(hendelse),
     )
 
     private fun opprettPameldingsoppgave(hendelse: Hendelse) = opprettVarsel(
         hendelse = hendelse,
         type = Varsel.Type.OPPGAVE,
         aktivTil = null,
-        tekst = PAMELDING_TEKST,
+        tekst = oppgaveTekst(hendelse),
     )
 
     private fun opprettVarsel(

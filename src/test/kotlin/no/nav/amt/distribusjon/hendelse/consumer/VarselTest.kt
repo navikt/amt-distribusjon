@@ -16,9 +16,9 @@ import no.nav.amt.distribusjon.utils.data.Varselsdata
 import no.nav.amt.distribusjon.utils.produceStringString
 import no.nav.amt.distribusjon.utils.shouldBeCloseTo
 import no.nav.amt.distribusjon.varsel.VarselService
-import no.nav.amt.distribusjon.varsel.model.PAMELDING_TEKST
-import no.nav.amt.distribusjon.varsel.model.PLACEHOLDER_BESKJED_TEKST
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import no.nav.amt.distribusjon.varsel.model.beskjedTekst
+import no.nav.amt.distribusjon.varsel.model.oppgaveTekst
 import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -37,7 +37,7 @@ class VarselTest {
             val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
 
             varsel.aktivTil shouldBe null
-            varsel.tekst shouldBe PAMELDING_TEKST
+            varsel.tekst shouldBe oppgaveTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV))
             varsel.aktivFra shouldBeCloseTo nowUTC()
             varsel.deltakerId shouldBe hendelse.deltaker.id
             varsel.personident shouldBe hendelse.deltaker.personident
@@ -194,7 +194,7 @@ class VarselTest {
         val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrThrow()
 
         varsel.aktivTil!! shouldBeCloseTo nowUTC().plus(VarselService.beskjedAktivLengde)
-        varsel.tekst shouldBe PLACEHOLDER_BESKJED_TEKST
+        varsel.tekst shouldBe beskjedTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV))
         varsel.aktivFra shouldBeCloseTo nowUTC()
         varsel.deltakerId shouldBe hendelse.deltaker.id
         varsel.personident shouldBe hendelse.deltaker.personident
