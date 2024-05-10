@@ -1,9 +1,12 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
+import java.time.LocalDate
+
 data class HovedvedtakPdfDto(
     val deltaker: DeltakerDto,
     val deltakerliste: DeltakerlisteDto,
     val navVeileder: NavVeilederDto,
+    val vedtaksdato: LocalDate,
 ) {
     data class DeltakerDto(
         val fornavn: String,

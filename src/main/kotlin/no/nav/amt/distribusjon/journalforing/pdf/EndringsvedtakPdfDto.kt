@@ -9,6 +9,7 @@ data class EndringsvedtakPdfDto(
     val deltakerliste: DeltakerlisteDto,
     val endringer: List<EndringDto>,
     val navVeileder: NavVeilederDto,
+    val vedtaksdato: LocalDate,
 ) {
     data class DeltakerDto(
         val fornavn: String,

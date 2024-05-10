@@ -8,12 +8,14 @@ import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.toTitleCase
+import java.time.LocalDate
 
 fun lagHovedvedtakPdfDto(
     deltaker: HendelseDeltaker,
     navBruker: NavBruker,
     utkast: Utkast,
     veileder: HendelseAnsvarlig.NavVeileder,
+    vedtaksdato: LocalDate,
 ) = HovedvedtakPdfDto(
     deltaker = HovedvedtakPdfDto.DeltakerDto(
         fornavn = navBruker.fornavn,
@@ -41,6 +43,7 @@ fun lagHovedvedtakPdfDto(
         navn = veileder.navn,
         enhet = navBruker.navEnhet?.navn ?: "",
     ),
+    vedtaksdato = vedtaksdato,
 )
 
 fun lagEndringsvedtakPdfDto(
@@ -48,6 +51,7 @@ fun lagEndringsvedtakPdfDto(
     navBruker: NavBruker,
     veileder: HendelseAnsvarlig.NavVeileder,
     hendelser: List<Hendelse>,
+    vedtaksdato: LocalDate,
 ): EndringsvedtakPdfDto {
     val endringer = fjernEldreHendelserAvSammeType(hendelser).map { it.payload }
 
@@ -71,6 +75,7 @@ fun lagEndringsvedtakPdfDto(
             navn = veileder.navn,
             enhet = navBruker.navEnhet?.navn ?: "",
         ),
+        vedtaksdato = vedtaksdato,
     )
 }
 

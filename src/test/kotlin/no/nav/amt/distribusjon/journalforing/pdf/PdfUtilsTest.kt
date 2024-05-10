@@ -32,7 +32,7 @@ class PdfUtilsTest {
             ),
         )
 
-        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser)
+        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser, LocalDate.now())
 
         pdfDto.endringer.size shouldBe 1
         (pdfDto.endringer.first() as EndringDto.ForlengDeltakelse).sluttdato shouldBe LocalDate.now().plusWeeks(4)
@@ -53,7 +53,7 @@ class PdfUtilsTest {
             ),
         )
 
-        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser)
+        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser, LocalDate.now())
 
         pdfDto.endringer.size shouldBe 1
         (pdfDto.endringer.first() as EndringDto.IkkeAktuell).aarsak shouldBe arsak.visningsnavn()
@@ -77,7 +77,7 @@ class PdfUtilsTest {
             ),
         )
 
-        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser)
+        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser, LocalDate.now())
 
         pdfDto.endringer.size shouldBe 1
         (pdfDto.endringer.first() as EndringDto.EndreInnhold).innhold shouldBe listOf("tekst 1", "tekst 2")
