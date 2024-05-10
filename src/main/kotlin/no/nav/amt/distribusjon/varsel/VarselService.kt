@@ -43,6 +43,9 @@ class VarselService(
                 opprettBeskjed(hendelse)
             }
 
+            is HendelseType.EndreBakgrunnsinformasjon,
+            is HendelseType.EndreDeltakelsesmengde,
+            is HendelseType.EndreInnhold,
             is HendelseType.EndreStartdato,
             is HendelseType.EndreSluttdato,
             is HendelseType.ForlengDeltakelse,
@@ -51,9 +54,6 @@ class VarselService(
             -> opprettBeskjed(hendelse)
 
             is HendelseType.EndreUtkast,
-            is HendelseType.EndreDeltakelsesmengde,
-            is HendelseType.EndreBakgrunnsinformasjon,
-            is HendelseType.EndreInnhold,
             is HendelseType.EndreSluttarsak,
             -> {
                 log.info("Oppretter ikke varsel for hendelse ${hendelse.payload::class} for deltaker ${hendelse.deltaker.id}")
@@ -147,10 +147,10 @@ fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.EndreSluttarsak,
     is HendelseType.EndreStartdato,
     is HendelseType.EndreUtkast,
+    is HendelseType.ForlengDeltakelse,
     is HendelseType.InnbyggerGodkjennUtkast,
     -> false
 
-    is HendelseType.ForlengDeltakelse,
     is HendelseType.EndreSluttdato,
     is HendelseType.IkkeAktuell,
     is HendelseType.NavGodkjennUtkast,
