@@ -38,6 +38,7 @@ data class EndringsvedtakPdfDto(
 @JsonSubTypes(
     JsonSubTypes.Type(value = EndringDto.EndreDeltakelsesmengde::class, name = "Deltakelsesmengde"),
     JsonSubTypes.Type(value = EndringDto.EndreStartdato::class, name = "Oppstartsdato"),
+    JsonSubTypes.Type(value = EndringDto.EndreStartdatoOgVarighet::class, name = "Oppstartsdato og varighet"),
     JsonSubTypes.Type(value = EndringDto.EndreSluttdato::class, name = "Sluttdato"),
     JsonSubTypes.Type(value = EndringDto.ForlengDeltakelse::class, name = "Forlengelse"),
     JsonSubTypes.Type(value = EndringDto.IkkeAktuell::class, name = "Er ikke aktuell"),
@@ -53,7 +54,11 @@ sealed interface EndringDto {
 
     data class EndreStartdato(
         val startdato: LocalDate?,
-        val sluttdato: LocalDate? = null,
+    ) : EndringDto
+
+    data class EndreStartdatoOgVarighet(
+        val startdato: LocalDate?,
+        val sluttdato: LocalDate,
     ) : EndringDto
 
     data class EndreSluttdato(

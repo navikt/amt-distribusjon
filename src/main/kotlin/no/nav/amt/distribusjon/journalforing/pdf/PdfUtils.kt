@@ -157,10 +157,18 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
         is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
             sluttdato = hendelseType.sluttdato,
         )
-        is HendelseType.EndreStartdato -> EndringDto.EndreStartdato(
-            startdato = hendelseType.startdato,
-            sluttdato = hendelseType.sluttdato,
-        )
+        is HendelseType.EndreStartdato -> {
+            if (hendelseType.sluttdato != null) {
+                EndringDto.EndreStartdatoOgVarighet(
+                    startdato = hendelseType.startdato,
+                    sluttdato = hendelseType.sluttdato,
+                )
+            } else {
+                EndringDto.EndreStartdato(
+                    startdato = hendelseType.startdato,
+                )
+            }
+        }
         is HendelseType.ForlengDeltakelse -> EndringDto.ForlengDeltakelse(
             sluttdato = hendelseType.sluttdato,
         )
