@@ -31,13 +31,13 @@ class EndringsvedtakJob(
         return fixedRateTimer(
             name = this.javaClass.simpleName,
             initialDelay = Duration.of(5, ChronoUnit.MINUTES).toMillis(),
-            period = Duration.of(15, ChronoUnit.MINUTES).toMillis(),
+            period = Duration.of(10, ChronoUnit.MINUTES).toMillis(),
         ) {
             scope.launch {
                 if (leaderElection.isLeader() && attributes.getOrNull(isReadyKey) == true) {
                     try {
                         log.info("Kjører jobb for å behandle endringsvedtak")
-                        val endringsvedtak = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now().minusMinutes(30))
+                        val endringsvedtak = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now().minusMinutes(15))
                             .filter { it.erEndringsVedtakSomSkalJournalfores() }
                         val endringsvedtakPrDeltaker = endringsvedtak.groupBy { it.deltaker.id }
                         endringsvedtakPrDeltaker.forEach { entry ->
