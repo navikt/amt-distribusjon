@@ -23,13 +23,22 @@ fun lagHovedvedtakPdfDto(
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
         innhold = utkast.innhold.toVisingstekst(),
-        bakgrunnsinformasjon = utkast.bakgrunnsinformasjon,
-        deltakelsesmengde = utkast.deltakelsesprosent?.let {
-            HovedvedtakPdfDto.DeltakelsesmengdeDto(
-                deltakelsesprosent = it.toInt(),
-                dagerPerUke = utkast.dagerPerUke?.toInt(),
-            )
+        bakgrunnsinformasjon = if (utkast.bakgrunnsinformasjon.isNullOrEmpty()) {
+            "-"
+        } else {
+            utkast.bakgrunnsinformasjon
         },
+        deltakelsesmengde = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak.type)) {
+            utkast.deltakelsesprosent?.let {
+                HovedvedtakPdfDto.DeltakelsesmengdeDto(
+                    deltakelsesprosent = it.toInt(),
+                    dagerPerUke = utkast.dagerPerUke?.toInt(),
+                )
+            }
+        } else {
+            null
+        },
+        adresseDelesMedArrangor = adresseDelesMedArrangor(deltaker, navBruker),
     ),
     deltakerliste = HovedvedtakPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.visningsnavn(),
@@ -76,11 +85,18 @@ fun lagEndringsvedtakPdfDto(
             enhet = navBruker.navEnhet?.navn ?: "",
         ),
         vedtaksdato = vedtaksdato,
+        forsteVedtakFattet = deltaker.forsteVedtakFattet
+            ?: throw IllegalStateException("Kan ikke journalføre endringsvedtak hvis opprinnelig vedtak ikke er fattet"),
     )
 }
 
 private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> {
     return hendelser.sortedByDescending { it.opprettet }.distinctBy { it.payload.javaClass }
+}
+
+private fun skalViseDeltakelsesmengde(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak.Type): Boolean {
+    return tiltakstype == HendelseDeltaker.Deltakerliste.Tiltak.Type.VASV ||
+        tiltakstype == HendelseDeltaker.Deltakerliste.Tiltak.Type.ARBFORB
 }
 
 fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.type) {
@@ -113,6 +129,10 @@ fun HendelseDeltaker.Deltakerliste.Arrangor.visningsnavn(): String {
     return toTitleCase(visningsnavn)
 }
 
+private fun adresseDelesMedArrangor(deltaker: HendelseDeltaker, navBruker: NavBruker): Boolean {
+    return navBruker.adressebeskyttelse == null && deltaker.deltakerliste.deltakerAdresseDeles()
+}
+
 private fun List<Innhold>.toVisingstekst() = this.map { innhold ->
     "${innhold.tekst}${innhold.beskrivelse?.let { ": $it" } ?: ""}"
 }
@@ -137,10 +157,18 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
         is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
             sluttdato = hendelseType.sluttdato,
         )
-        is HendelseType.EndreStartdato -> EndringDto.EndreStartdato(
-            startdato = hendelseType.startdato,
-            sluttdato = hendelseType.sluttdato,
-        )
+        is HendelseType.EndreStartdato -> {
+            if (hendelseType.sluttdato != null) {
+                EndringDto.EndreStartdatoOgVarighet(
+                    startdato = hendelseType.startdato,
+                    sluttdato = hendelseType.sluttdato,
+                )
+            } else {
+                EndringDto.EndreStartdato(
+                    startdato = hendelseType.startdato,
+                )
+            }
+        }
         is HendelseType.ForlengDeltakelse -> EndringDto.ForlengDeltakelse(
             sluttdato = hendelseType.sluttdato,
         )
@@ -148,7 +176,7 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
             aarsak = hendelseType.aarsak.visningsnavn(),
         )
         is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
-            innhold = hendelseType.innhold.map { it.tekst },
+            innhold = hendelseType.innhold.map { it.visningsnavn() },
         )
         is HendelseType.EndreBakgrunnsinformasjon -> EndringDto.EndreBakgrunnsinformasjon(
             bakgrunnsinformasjon = hendelseType.bakgrunnsinformasjon,

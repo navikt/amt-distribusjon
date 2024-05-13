@@ -10,6 +10,7 @@ data class NavBruker(
     val etternavn: String,
     val navEnhet: NavEnhet?,
     val oppfolgingsperioder: List<Oppfolgingsperiode>,
+    val adressebeskyttelse: Adressebeskyttelse?,
 ) {
     fun getAktivOppfolgingsperiode(): Oppfolgingsperiode? = oppfolgingsperioder.find { it.erAktiv() }
 }
@@ -28,4 +29,10 @@ data class Oppfolgingsperiode(
             ) || (sluttdato != null && now.isAfter(sluttdato.toLocalDate().plusDays(antallDagerGracePeriod)))
         )
     }
+}
+
+enum class Adressebeskyttelse {
+    STRENGT_FORTROLIG,
+    FORTROLIG,
+    STRENGT_FORTROLIG_UTLAND,
 }

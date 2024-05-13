@@ -1,11 +1,13 @@
 package no.nav.amt.distribusjon.hendelse.model
 
+import java.time.LocalDate
 import java.util.UUID
 
 data class HendelseDeltaker(
     val id: UUID,
     val personident: String,
     val deltakerliste: Deltakerliste,
+    val forsteVedtakFattet: LocalDate?,
 ) {
     data class Deltakerliste(
         val id: UUID,
@@ -38,5 +40,14 @@ data class HendelseDeltaker(
                 GRUFAGYRKE,
             }
         }
+
+        fun deltakerAdresseDeles() = !tiltakUtenDeltakerAdresse.contains(this.tiltak.type)
     }
 }
+
+private val tiltakUtenDeltakerAdresse = setOf(
+    HendelseDeltaker.Deltakerliste.Tiltak.Type.DIGIOPPARB,
+    HendelseDeltaker.Deltakerliste.Tiltak.Type.JOBBK,
+    HendelseDeltaker.Deltakerliste.Tiltak.Type.GRUPPEAMO,
+    HendelseDeltaker.Deltakerliste.Tiltak.Type.GRUFAGYRKE,
+)
