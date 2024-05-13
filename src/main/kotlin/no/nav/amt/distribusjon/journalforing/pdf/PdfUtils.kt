@@ -24,7 +24,7 @@ fun lagHovedvedtakPdfDto(
         personident = deltaker.personident,
         innhold = utkast.innhold.toVisingstekst(),
         bakgrunnsinformasjon = if (utkast.bakgrunnsinformasjon.isNullOrEmpty()) {
-            "-"
+            "—"
         } else {
             utkast.bakgrunnsinformasjon
         },
