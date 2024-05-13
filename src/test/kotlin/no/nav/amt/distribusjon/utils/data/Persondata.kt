@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.utils.data
 
+import no.nav.amt.distribusjon.journalforing.person.model.Adressebeskyttelse
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.journalforing.person.model.NavEnhet
 import no.nav.amt.distribusjon.journalforing.person.model.Oppfolgingsperiode
@@ -13,7 +14,8 @@ object Persondata {
         etternavn: String = "Navnersen",
         navEnhet: NavEnhet? = lagNavEnhet(),
         oppfolgingsperioder: List<Oppfolgingsperiode> = listOf(lagOppfolgingsperiode()),
-    ) = NavBruker(fornavn, mellomnavn, etternavn, navEnhet, oppfolgingsperioder)
+        adressebeskyttelse: Adressebeskyttelse? = null,
+    ) = NavBruker(fornavn, mellomnavn, etternavn, navEnhet, oppfolgingsperioder, adressebeskyttelse)
 
     fun lagOppfolgingsperiode(
         id: UUID = UUID.randomUUID(),

@@ -117,14 +117,14 @@ data class Aarsak(
             return beskrivelse
         }
         return when (type) {
-            Type.SYK -> "syk"
-            Type.FATT_JOBB -> "fått jobb"
-            Type.TRENGER_ANNEN_STOTTE -> "trenger annen støtte"
-            Type.FIKK_IKKE_PLASS -> "fikk ikke plass"
-            Type.IKKE_MOTT -> "møter ikke opp"
-            Type.ANNET -> "annet"
-            Type.AVLYST_KONTRAKT -> "avlyst kontrakt"
-            Type.UTDANNING -> "utdanning"
+            Type.SYK -> "Syk"
+            Type.FATT_JOBB -> "Fått jobb"
+            Type.TRENGER_ANNEN_STOTTE -> "Trenger annen støtte"
+            Type.FIKK_IKKE_PLASS -> "Fikk ikke plass"
+            Type.IKKE_MOTT -> "Møter ikke opp"
+            Type.ANNET -> "Annet"
+            Type.AVLYST_KONTRAKT -> "Avlyst kontrakt"
+            Type.UTDANNING -> "Utdanning"
         }
     }
 }

@@ -40,5 +40,14 @@ data class HendelseDeltaker(
                 GRUFAGYRKE,
             }
         }
+
+        fun deltakerAdresseDeles() = !tiltakUtenDeltakerAdresse.contains(this.tiltak.type)
     }
 }
+
+private val tiltakUtenDeltakerAdresse = setOf(
+    HendelseDeltaker.Deltakerliste.Tiltak.Type.DIGIOPPARB,
+    HendelseDeltaker.Deltakerliste.Tiltak.Type.JOBBK,
+    HendelseDeltaker.Deltakerliste.Tiltak.Type.GRUPPEAMO,
+    HendelseDeltaker.Deltakerliste.Tiltak.Type.GRUFAGYRKE,
+)

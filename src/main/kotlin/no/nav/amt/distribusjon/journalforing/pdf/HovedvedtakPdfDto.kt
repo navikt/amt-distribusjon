@@ -16,6 +16,7 @@ data class HovedvedtakPdfDto(
         val innhold: List<String>,
         val bakgrunnsinformasjon: String?,
         val deltakelsesmengde: DeltakelsesmengdeDto?,
+        val adresseDelesMedArrangor: Boolean,
     )
 
     data class DeltakelsesmengdeDto(
