@@ -20,8 +20,7 @@ data class HovedvedtakPdfDto(
     )
 
     data class DeltakelsesmengdeDto(
-        val deltakelsesprosent: Int?,
-        val dagerPerUke: Int?,
+        val deltakelsesmengdeTekst: String,
     )
 
     data class DeltakerlisteDto(

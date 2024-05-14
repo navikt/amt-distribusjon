@@ -31,8 +31,10 @@ fun lagHovedvedtakPdfDto(
         deltakelsesmengde = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak.type)) {
             utkast.deltakelsesprosent?.let {
                 HovedvedtakPdfDto.DeltakelsesmengdeDto(
-                    deltakelsesprosent = it.toInt(),
-                    dagerPerUke = utkast.dagerPerUke?.toInt(),
+                    deltakelsesmengdeTekst = deltakelsesmengdeTekst(
+                        deltakelsesprosent = it.toInt(),
+                        dagerPerUke = utkast.dagerPerUke?.toInt(),
+                    ),
                 )
             }
         } else {
@@ -151,8 +153,10 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
             sluttdato = hendelseType.sluttdato,
         )
         is HendelseType.EndreDeltakelsesmengde -> EndringDto.EndreDeltakelsesmengde(
-            deltakelsesprosent = hendelseType.deltakelsesprosent,
-            dagerPerUke = hendelseType.dagerPerUke,
+            deltakelsesmengdeTekst = deltakelsesmengdeTekst(
+                deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
+                dagerPerUke = hendelseType.dagerPerUke?.toInt(),
+            ),
         )
         is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
             sluttdato = hendelseType.sluttdato,
@@ -179,7 +183,22 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
             innhold = hendelseType.innhold.map { it.visningsnavn() },
         )
         is HendelseType.EndreBakgrunnsinformasjon -> EndringDto.EndreBakgrunnsinformasjon(
-            bakgrunnsinformasjon = hendelseType.bakgrunnsinformasjon,
+            bakgrunnsinformasjon = if (hendelseType.bakgrunnsinformasjon.isNullOrEmpty()) {
+                "—"
+            } else {
+                hendelseType.bakgrunnsinformasjon
+            },
         )
     }
+}
+
+private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?): String {
+    if (dagerPerUke != null) {
+        return if (dagerPerUke == 1) {
+            "${deltakelsesprosent ?: 100} % $dagerPerUke dag i uka"
+        } else {
+            "${deltakelsesprosent ?: 100} % $dagerPerUke dager i uka"
+        }
+    }
+    return "${deltakelsesprosent ?: 100} %"
 }

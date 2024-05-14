@@ -48,8 +48,7 @@ data class EndringsvedtakPdfDto(
 )
 sealed interface EndringDto {
     data class EndreDeltakelsesmengde(
-        val deltakelsesprosent: Float?,
-        val dagerPerUke: Float?,
+        val deltakelsesmengdeTekst: String,
     ) : EndringDto
 
     data class EndreStartdato(
