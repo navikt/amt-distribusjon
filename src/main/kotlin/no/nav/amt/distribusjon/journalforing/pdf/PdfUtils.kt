@@ -151,10 +151,8 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
             sluttdato = hendelseType.sluttdato,
         )
         is HendelseType.EndreDeltakelsesmengde -> EndringDto.EndreDeltakelsesmengde(
-            deltakelsesmengdeTekst = deltakelsesmengdeTekst(
-                deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
-                dagerPerUke = hendelseType.dagerPerUke?.toInt(),
-            ),
+            deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
+            dagerPerUkeTekst = dagerPerUkeTekst(hendelseType.dagerPerUke?.toInt()),
         )
         is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
             sluttdato = hendelseType.sluttdato,
@@ -191,12 +189,20 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
 }
 
 private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?): String {
-    if (dagerPerUke != null) {
-        return if (dagerPerUke == 1) {
-            "${deltakelsesprosent ?: 100} % $dagerPerUke dag i uka"
-        } else {
-            "${deltakelsesprosent ?: 100} % $dagerPerUke dager i uka"
-        }
+    val dagerPerUkeTekst = dagerPerUkeTekst(dagerPerUke)
+    if (dagerPerUkeTekst != null) {
+        return "${deltakelsesprosent ?: 100} % $dagerPerUkeTekst"
     }
     return "${deltakelsesprosent ?: 100} %"
+}
+
+private fun dagerPerUkeTekst(dagerPerUke: Int?): String? {
+    if (dagerPerUke != null) {
+        return if (dagerPerUke == 1) {
+            "$dagerPerUke dag i uka"
+        } else {
+            "$dagerPerUke dager i uka"
+        }
+    }
+    return null
 }
