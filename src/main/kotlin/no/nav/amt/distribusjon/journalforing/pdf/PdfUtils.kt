@@ -28,13 +28,11 @@ fun lagHovedvedtakPdfDto(
         } else {
             utkast.bakgrunnsinformasjon
         },
-        deltakelsesmengde = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak.type)) {
+        deltakelsesmengdeTekst = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak.type)) {
             utkast.deltakelsesprosent?.let {
-                HovedvedtakPdfDto.DeltakelsesmengdeDto(
-                    deltakelsesmengdeTekst = deltakelsesmengdeTekst(
-                        deltakelsesprosent = it.toInt(),
-                        dagerPerUke = utkast.dagerPerUke?.toInt(),
-                    ),
+                deltakelsesmengdeTekst(
+                    deltakelsesprosent = it.toInt(),
+                    dagerPerUke = utkast.dagerPerUke?.toInt(),
                 )
             }
         } else {
