@@ -28,9 +28,9 @@ fun lagHovedvedtakPdfDto(
         } else {
             utkast.bakgrunnsinformasjon
         },
-        deltakelsesmengde = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak.type)) {
+        deltakelsesmengdeTekst = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak.type)) {
             utkast.deltakelsesprosent?.let {
-                HovedvedtakPdfDto.DeltakelsesmengdeDto(
+                deltakelsesmengdeTekst(
                     deltakelsesprosent = it.toInt(),
                     dagerPerUke = utkast.dagerPerUke?.toInt(),
                 )
@@ -151,8 +151,8 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
             sluttdato = hendelseType.sluttdato,
         )
         is HendelseType.EndreDeltakelsesmengde -> EndringDto.EndreDeltakelsesmengde(
-            deltakelsesprosent = hendelseType.deltakelsesprosent,
-            dagerPerUke = hendelseType.dagerPerUke,
+            deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
+            dagerPerUkeTekst = dagerPerUkeTekst(hendelseType.dagerPerUke?.toInt()),
         )
         is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
             sluttdato = hendelseType.sluttdato,
@@ -179,7 +179,30 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
             innhold = hendelseType.innhold.map { it.visningsnavn() },
         )
         is HendelseType.EndreBakgrunnsinformasjon -> EndringDto.EndreBakgrunnsinformasjon(
-            bakgrunnsinformasjon = hendelseType.bakgrunnsinformasjon,
+            bakgrunnsinformasjon = if (hendelseType.bakgrunnsinformasjon.isNullOrEmpty()) {
+                "—"
+            } else {
+                hendelseType.bakgrunnsinformasjon
+            },
         )
     }
+}
+
+private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?): String {
+    val dagerPerUkeTekst = dagerPerUkeTekst(dagerPerUke)
+    if (dagerPerUkeTekst != null) {
+        return "${deltakelsesprosent ?: 100} % $dagerPerUkeTekst"
+    }
+    return "${deltakelsesprosent ?: 100} %"
+}
+
+private fun dagerPerUkeTekst(dagerPerUke: Int?): String? {
+    if (dagerPerUke != null) {
+        return if (dagerPerUke == 1) {
+            "$dagerPerUke dag i uka"
+        } else {
+            "$dagerPerUke dager i uka"
+        }
+    }
+    return null
 }

@@ -15,13 +15,8 @@ data class HovedvedtakPdfDto(
         val personident: String,
         val innhold: List<String>,
         val bakgrunnsinformasjon: String?,
-        val deltakelsesmengde: DeltakelsesmengdeDto?,
+        val deltakelsesmengdeTekst: String?,
         val adresseDelesMedArrangor: Boolean,
-    )
-
-    data class DeltakelsesmengdeDto(
-        val deltakelsesprosent: Int?,
-        val dagerPerUke: Int?,
     )
 
     data class DeltakerlisteDto(
