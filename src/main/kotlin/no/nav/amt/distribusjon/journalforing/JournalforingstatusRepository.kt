@@ -10,18 +10,16 @@ class JournalforingstatusRepository {
     private fun rowmapper(row: Row) = Journalforingstatus(
         hendelseId = row.uuid("hendelse_id"),
         journalpostId = row.stringOrNull("journalpost_id"),
-        skalSendeBrev = row.boolean("skal_sende_brev"),
         bestillingsId = row.uuidOrNull("bestillingsid"),
     )
 
     fun upsert(journalforingstatus: Journalforingstatus) = Database.query {
         val sql =
             """
-            insert into journalforingstatus (hendelse_id, journalpost_id, skal_sende_brev, bestillingsid)
-            values(:hendelse_id, :journalpost_id, :skal_sende_brev, :bestillingsid)
+            insert into journalforingstatus (hendelse_id, journalpost_id, bestillingsid)
+            values(:hendelse_id, :journalpost_id, :bestillingsid)
             on conflict (hendelse_id) do update set
                 journalpost_id = :journalpost_id,
-                skal_sende_brev = :skal_sende_brev,
                 bestillingsid = :bestillingsid,
                 modified_at = current_timestamp
             """.trimIndent()
@@ -29,7 +27,6 @@ class JournalforingstatusRepository {
         val params = mapOf(
             "hendelse_id" to journalforingstatus.hendelseId,
             "journalpost_id" to journalforingstatus.journalpostId,
-            "skal_sende_brev" to journalforingstatus.skalSendeBrev,
             "bestillingsid" to journalforingstatus.bestillingsId,
         )
 

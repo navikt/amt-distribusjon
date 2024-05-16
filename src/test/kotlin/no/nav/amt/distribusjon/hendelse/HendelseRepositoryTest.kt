@@ -1,6 +1,7 @@
 package no.nav.amt.distribusjon.hendelse
 
 import io.kotest.matchers.shouldBe
+import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.utils.SingletonPostgresContainer
@@ -40,7 +41,6 @@ class HendelseRepositoryTest {
             Journalforingstatus(
                 hendelseId = hendelse.id,
                 journalpostId = null,
-                skalSendeBrev = false,
                 bestillingsId = null,
             ),
         )
@@ -59,7 +59,6 @@ class HendelseRepositoryTest {
             Journalforingstatus(
                 hendelseId = hendelse.id,
                 journalpostId = null,
-                skalSendeBrev = false,
                 bestillingsId = null,
             ),
         )
@@ -77,7 +76,6 @@ class HendelseRepositoryTest {
             Journalforingstatus(
                 hendelseId = hendelse.id,
                 journalpostId = "12345",
-                skalSendeBrev = false,
                 bestillingsId = null,
             ),
         )
@@ -89,13 +87,16 @@ class HendelseRepositoryTest {
 
     @Test
     fun `getIkkeJournalforteHendelser - hendelse er journalfort, brev skal sendes, er ikke sendt - returnerer hendelse`() {
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
+        val hendelse = Hendelsesdata.hendelse(
+            HendelseTypeData.forlengDeltakelse(),
+            opprettet = LocalDateTime.now().minusHours(1),
+            distribusjonskanal = Distribusjonskanal.PRINT,
+        )
         TestRepository.insert(hendelse)
         journalforingstatusRepository.upsert(
             Journalforingstatus(
                 hendelseId = hendelse.id,
                 journalpostId = "12345",
-                skalSendeBrev = true,
                 bestillingsId = null,
             ),
         )
@@ -114,7 +115,6 @@ class HendelseRepositoryTest {
             Journalforingstatus(
                 hendelseId = hendelse.id,
                 journalpostId = "12345",
-                skalSendeBrev = true,
                 bestillingsId = UUID.randomUUID(),
             ),
         )

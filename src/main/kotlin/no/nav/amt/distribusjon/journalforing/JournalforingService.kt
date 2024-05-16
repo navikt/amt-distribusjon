@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.journalforing
 
+import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.distribusjonskanal.skalDistribueresDigitalt
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
@@ -28,7 +29,7 @@ class JournalforingService(
 
     suspend fun handleHendelse(hendelse: Hendelse) {
         val journalforingstatus = journalforingstatusRepository.get(hendelse.id)
-        if (hendelseErBehandlet(journalforingstatus)) {
+        if (hendelseErBehandlet(journalforingstatus, hendelse.distribusjonskanal)) {
             log.info("Hendelse med id ${hendelse.id} for deltaker ${hendelse.deltaker.id} er allerede behandlet")
             return
         }
@@ -94,7 +95,6 @@ class JournalforingService(
             val nyJournalforingstatus = Journalforingstatus(
                 hendelseId = hendelse.id,
                 journalpostId = journalpostId,
-                skalSendeBrev = !hendelse.distribusjonskanal.skalDistribueresDigitalt(),
                 bestillingsId = null,
             )
             journalforingstatusRepository.upsert(nyJournalforingstatus)
@@ -116,7 +116,6 @@ class JournalforingService(
             Journalforingstatus(
                 hendelseId = hendelse.id,
                 journalpostId = journalforingstatus?.journalpostId,
-                skalSendeBrev = journalforingstatus?.skalSendeBrev ?: !hendelse.distribusjonskanal.skalDistribueresDigitalt(),
                 bestillingsId = journalforingstatus?.bestillingsId,
             ),
         )
@@ -169,7 +168,6 @@ class JournalforingService(
                 Journalforingstatus(
                     hendelseId = it,
                     journalpostId = journalpostId,
-                    skalSendeBrev = !nyesteHendelse.distribusjonskanal.skalDistribueresDigitalt(),
                     bestillingsId = bestillingsId,
                 ),
             )
@@ -188,7 +186,6 @@ class JournalforingService(
                 Journalforingstatus(
                     hendelseId = hendelse.id,
                     journalpostId = journalpostId,
-                    skalSendeBrev = true,
                     bestillingsId = bestillingsId,
                 ),
             )
@@ -197,7 +194,7 @@ class JournalforingService(
         return null
     }
 
-    private fun hendelseErBehandlet(journalforingstatus: Journalforingstatus?): Boolean {
-        return journalforingstatus != null && journalforingstatus.erJournalfort() && journalforingstatus.erDistribuert()
+    private fun hendelseErBehandlet(journalforingstatus: Journalforingstatus?, distribusjonskanal: Distribusjonskanal): Boolean {
+        return journalforingstatus != null && journalforingstatus.erJournalfort() && journalforingstatus.erDistribuert(distribusjonskanal)
     }
 }

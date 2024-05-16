@@ -42,7 +42,7 @@ class JournalforingServiceTest {
         val journalpostId = "12345"
 
         app.hendelseRepository.insert(hendelse)
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, false, null))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, null))
 
         app.journalforingService.handleHendelse(hendelse)
 
@@ -57,7 +57,7 @@ class JournalforingServiceTest {
         val journalpostId = "12345"
 
         app.hendelseRepository.insert(hendelse)
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, true, null))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, null))
 
         app.journalforingService.handleHendelse(hendelse)
 
@@ -76,7 +76,7 @@ class JournalforingServiceTest {
         val journalpostId = "12345"
 
         app.hendelseRepository.insert(hendelse)
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, false, null))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, null))
 
         app.journalforingService.handleHendelse(hendelse)
 
@@ -123,14 +123,14 @@ class JournalforingServiceTest {
             deltaker = deltaker,
             opprettet = LocalDateTime.now().minusMinutes(20),
         )
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseDeltakelsesmengde.id, null, false, null))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseDeltakelsesmengde.id, null, null))
         val hendelseForleng = Hendelsesdata.hendelse(
             HendelseTypeData.forlengDeltakelse(),
             deltaker = deltaker,
             ansvarlig = hendelseDeltakelsesmengde.ansvarlig,
             opprettet = LocalDateTime.now(),
         )
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseForleng.id, null, false, null))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseForleng.id, null, null))
 
         app.journalforingService.journalforEndringsvedtak(listOf(hendelseForleng, hendelseDeltakelsesmengde))
 

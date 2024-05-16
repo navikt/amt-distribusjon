@@ -53,7 +53,7 @@ class HendelseRepository {
                 left join journalforingstatus js on h.id = js.hendelse_id
             where h.created_at < :opprettet 
                 and js.hendelse_id is not null
-                and (js.journalpost_id is null or (js.bestillingsid is null and js.skal_sende_brev = true))
+                and (js.journalpost_id is null or (js.bestillingsid is null and h.distribusjonskanal not in ('DITT_NAV','SDP')))
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("opprettet" to opprettet))
