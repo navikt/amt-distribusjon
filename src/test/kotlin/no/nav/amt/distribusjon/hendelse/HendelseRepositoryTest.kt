@@ -11,6 +11,7 @@ import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 import java.time.LocalDateTime
+import java.util.UUID
 
 class HendelseRepositoryTest {
     companion object {
@@ -37,8 +38,10 @@ class HendelseRepositoryTest {
         TestRepository.insert(hendelse)
         journalforingstatusRepository.upsert(
             Journalforingstatus(
-                hendelse.id,
-                null,
+                hendelseId = hendelse.id,
+                journalpostId = null,
+                skalSendeBrev = false,
+                bestillingsId = null,
             ),
         )
 
@@ -54,8 +57,10 @@ class HendelseRepositoryTest {
         TestRepository.insert(hendelse)
         journalforingstatusRepository.upsert(
             Journalforingstatus(
-                hendelse.id,
-                null,
+                hendelseId = hendelse.id,
+                journalpostId = null,
+                skalSendeBrev = false,
+                bestillingsId = null,
             ),
         )
 
@@ -65,13 +70,52 @@ class HendelseRepositoryTest {
     }
 
     @Test
-    fun `getIkkeJournalforteHendelser - hendelse er journalfort - returnerer tom liste`() {
+    fun `getIkkeJournalforteHendelser - hendelse er journalfort og skal ikke sendes brev - returnerer tom liste`() {
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
         TestRepository.insert(hendelse)
         journalforingstatusRepository.upsert(
             Journalforingstatus(
-                hendelse.id,
-                "12345",
+                hendelseId = hendelse.id,
+                journalpostId = "12345",
+                skalSendeBrev = false,
+                bestillingsId = null,
+            ),
+        )
+
+        val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
+
+        ikkeJournalforteHendelser.size shouldBe 0
+    }
+
+    @Test
+    fun `getIkkeJournalforteHendelser - hendelse er journalfort, brev skal sendes, er ikke sendt - returnerer hendelse`() {
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
+        TestRepository.insert(hendelse)
+        journalforingstatusRepository.upsert(
+            Journalforingstatus(
+                hendelseId = hendelse.id,
+                journalpostId = "12345",
+                skalSendeBrev = true,
+                bestillingsId = null,
+            ),
+        )
+
+        val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
+
+        ikkeJournalforteHendelser.size shouldBe 1
+        ikkeJournalforteHendelser.first().id shouldBe hendelse.id
+    }
+
+    @Test
+    fun `getIkkeJournalforteHendelser - hendelse er journalfort og brev er sendt - returnerer tom liste`() {
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
+        TestRepository.insert(hendelse)
+        journalforingstatusRepository.upsert(
+            Journalforingstatus(
+                hendelseId = hendelse.id,
+                journalpostId = "12345",
+                skalSendeBrev = true,
+                bestillingsId = UUID.randomUUID(),
             ),
         )
 

@@ -33,13 +33,16 @@ class JournalforingServiceTest {
     }
 
     @Test
-    fun `handleHendelse - InnbyggerGodkjennUtkast, er allerede journalfort - ignorerer hendelse`() = integrationTest { app, _ ->
+    fun `handleHendelse - InnbyggerGodkjennUtkast, er allerede journalfort, skal ikke sende brev - ignorerer hendelse`() = integrationTest {
+            app,
+            _,
+        ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast())
 
         val journalpostId = "12345"
 
         app.hendelseRepository.insert(hendelse)
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, false, null))
 
         app.journalforingService.handleHendelse(hendelse)
 
@@ -48,13 +51,32 @@ class JournalforingServiceTest {
     }
 
     @Test
-    fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort - ignorerer hendelse`() = integrationTest { app, _ ->
+    fun `handleHendelse - NavGodkjennUtkast, er journalfort, ikke sendt brev - sender brev`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast(), distribusjonskanal = Distribusjonskanal.PRINT)
+
+        val journalpostId = "12345"
+
+        app.hendelseRepository.insert(hendelse)
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, true, null))
+
+        app.journalforingService.handleHendelse(hendelse)
+
+        val status = app.journalforingstatusRepository.get(hendelse.id)
+        status!!.journalpostId shouldBe journalpostId
+        status.bestillingsId shouldNotBe null
+    }
+
+    @Test
+    fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort, skal ikke sende brev - ignorerer hendelse`() = integrationTest {
+            app,
+            _,
+        ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse())
 
         val journalpostId = "12345"
 
         app.hendelseRepository.insert(hendelse)
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, false, null))
 
         app.journalforingService.handleHendelse(hendelse)
 
@@ -101,14 +123,14 @@ class JournalforingServiceTest {
             deltaker = deltaker,
             opprettet = LocalDateTime.now().minusMinutes(20),
         )
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseDeltakelsesmengde.id, null))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseDeltakelsesmengde.id, null, false, null))
         val hendelseForleng = Hendelsesdata.hendelse(
             HendelseTypeData.forlengDeltakelse(),
             deltaker = deltaker,
             ansvarlig = hendelseDeltakelsesmengde.ansvarlig,
             opprettet = LocalDateTime.now(),
         )
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseForleng.id, null))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseForleng.id, null, false, null))
 
         app.journalforingService.journalforEndringsvedtak(listOf(hendelseForleng, hendelseDeltakelsesmengde))
 
