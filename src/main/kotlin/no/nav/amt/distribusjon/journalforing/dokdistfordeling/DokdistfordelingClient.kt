@@ -8,6 +8,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import no.nav.amt.distribusjon.Environment
@@ -36,6 +37,10 @@ class DokdistfordelingClient(
         }
 
         if (!response.status.isSuccess()) {
+            if (response.status == HttpStatusCode.Conflict) {
+                log.warn("Journalpost $journalpostId er allerede distribuert")
+                return response.body<DistribuerJournalpostResponse>().bestillingsId
+            }
             error("Distrubering av journalpost $journalpostId feilet: ${response.status} ${response.bodyAsText()}")
         }
 
