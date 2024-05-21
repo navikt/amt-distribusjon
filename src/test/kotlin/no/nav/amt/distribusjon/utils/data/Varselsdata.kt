@@ -9,12 +9,13 @@ object Varselsdata {
     fun varsel(
         type: Varsel.Type,
         id: UUID = UUID.randomUUID(),
-        hendelseId: UUID = UUID.randomUUID(),
+        hendelser: List<UUID> = listOf(UUID.randomUUID()),
         aktivFra: ZonedDateTime = nowUTC(),
         aktivTil: ZonedDateTime? = null,
         deltakerId: UUID = UUID.randomUUID(),
         personident: String = randomIdent(),
         tekst: String = "Varselstekst",
         skalVarsleEksternt: Boolean = if (type == Varsel.Type.OPPGAVE) true else false,
-    ) = Varsel(id, type, hendelseId, aktivFra, aktivTil, deltakerId, personident, tekst, skalVarsleEksternt)
+        erSendt: Boolean = false,
+    ) = Varsel(id, type, hendelser, aktivFra, aktivTil, deltakerId, personident, tekst, skalVarsleEksternt, erSendt)
 }

@@ -15,13 +15,14 @@ import java.util.UUID
 data class Varsel(
     val id: UUID,
     val type: Type,
-    val hendelseId: UUID,
+    val hendelser: List<UUID>,
     val aktivFra: ZonedDateTime,
     val aktivTil: ZonedDateTime?,
     val deltakerId: UUID,
     val personident: String,
     val tekst: String,
     val skalVarsleEksternt: Boolean,
+    val erSendt: Boolean,
 ) {
     val erAktiv: Boolean get() {
         val now = nowUTC()

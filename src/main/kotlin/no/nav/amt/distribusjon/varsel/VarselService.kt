@@ -23,7 +23,7 @@ class VarselService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     companion object {
-        val beskjedAktivLengde: Duration = Duration.ofDays(21)
+        val beskjedAktivLengde: Duration = Duration.ofDays(21).plusMinutes(30)
     }
 
     fun handleHendelse(hendelse: Hendelse) {
@@ -36,11 +36,13 @@ class VarselService(
 
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> opprettPameldingsoppgave(hendelse)
-            is HendelseType.AvbrytUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
-            is HendelseType.InnbyggerGodkjennUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
+                .onSuccess { sendVarsel(it) }
+            is HendelseType.AvbrytUtkast -> inaktiverOppgave(hendelse.deltaker)
+            is HendelseType.InnbyggerGodkjennUtkast -> inaktiverOppgave(hendelse.deltaker)
             is HendelseType.NavGodkjennUtkast -> {
-                inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
+                inaktiverOppgave(hendelse.deltaker)
                 opprettBeskjed(hendelse)
+                    .onSuccess { sendVarsel(it) }
             }
 
             is HendelseType.EndreBakgrunnsinformasjon,
@@ -64,61 +66,83 @@ class VarselService(
     private fun opprettBeskjed(hendelse: Hendelse) = opprettVarsel(
         hendelse = hendelse,
         type = Varsel.Type.BESKJED,
-        aktivTil = nowUTC().plus(beskjedAktivLengde),
-        tekst = beskjedTekst(hendelse),
     )
 
     private fun opprettPameldingsoppgave(hendelse: Hendelse) = opprettVarsel(
         hendelse = hendelse,
         type = Varsel.Type.OPPGAVE,
-        aktivTil = null,
-        tekst = oppgaveTekst(hendelse),
     )
 
-    private fun opprettVarsel(
-        hendelse: Hendelse,
-        type: Varsel.Type,
-        aktivTil: ZonedDateTime?,
-        tekst: String,
-    ) {
-        repository.getByHendelseId(hendelse.id).onSuccess {
-            log.info("Varsel for hendelse ${hendelse.id} er allerede opprettet. Oppretter ikke nytt varsel.")
-            return
-        }
-
-        val forrigeVarsel = repository.getSisteVarsel(hendelse.deltaker.id, type).getOrNull()
+    private fun sendVarsel(varsel: Varsel) {
+        val forrigeVarsel = repository.getSisteVarsel(varsel.deltakerId, varsel.type).getOrNull()
         if (forrigeVarsel?.erAktiv == true) {
             log.info(
-                "Forrige varsel for deltaker ${hendelse.deltaker.id} av type $type er fortsatt aktivt. " +
+                "Forrige varsel for deltaker ${varsel.deltakerId} av type $varsel.type er fortsatt aktivt. " +
                     "Oppretter ikke nytt varsel.",
             )
             return
         }
-
-        val varsel = Varsel(
-            id = UUID.randomUUID(),
-            type = type,
-            hendelseId = hendelse.id,
-            aktivFra = nowUTC(),
-            aktivTil = aktivTil,
-            deltakerId = hendelse.deltaker.id,
-            personident = hendelse.deltaker.personident,
-            tekst = tekst,
-            skalVarsleEksternt = hendelse.skalVarslesEksternt(),
-        )
-
-        repository.upsert(varsel)
-
-        log.info("Opprettet varsel for deltaker ${hendelse.deltaker.id} av type $type")
-
-        when (type) {
-            Varsel.Type.OPPGAVE -> producer.opprettOppgave(varsel)
+        when (varsel.type) {
             Varsel.Type.BESKJED -> producer.opprettBeskjed(varsel)
+            Varsel.Type.OPPGAVE -> producer.opprettOppgave(varsel)
         }
+
+        repository.upsert(varsel.copy(aktivFra = nowUTC(), erSendt = true))
     }
 
-    private fun inaktiverVarsel(deltaker: HendelseDeltaker, type: Varsel.Type) {
-        repository.getSisteVarsel(deltaker.id, type).onSuccess { varsel ->
+    private fun opprettVarsel(hendelse: Hendelse, type: Varsel.Type): Result<Varsel> {
+        repository.getByHendelseId(hendelse.id).onSuccess {
+            val msg = "Varsel for hendelse ${hendelse.id} er allerede opprettet. Oppretter ikke nytt varsel."
+            log.info(msg)
+            return Result.failure(IllegalStateException(msg))
+        }
+
+        val forrigeVarsel = repository.getIkkeSendt(hendelse.deltaker.id).getOrNull()
+
+        val varsel = if (forrigeVarsel != null) {
+            val nyType = if (type == Varsel.Type.OPPGAVE) Varsel.Type.OPPGAVE else forrigeVarsel.type
+            val eksternVarsling = forrigeVarsel.skalVarsleEksternt || hendelse.skalVarslesEksternt()
+
+            forrigeVarsel.copy(
+                type = nyType,
+                hendelser = forrigeVarsel.hendelser.plus(hendelse.id),
+                tekst = varselTekst(nyType, hendelse),
+                skalVarsleEksternt = eksternVarsling,
+                aktivFra = nesteUtsendingstidspunkt(),
+                aktivTil = aktivTilTidspunkt(nyType),
+            )
+        } else {
+            Varsel(
+                id = UUID.randomUUID(),
+                type = type,
+                hendelser = listOf(hendelse.id),
+                aktivFra = nesteUtsendingstidspunkt(),
+                aktivTil = aktivTilTidspunkt(type),
+                deltakerId = hendelse.deltaker.id,
+                personident = hendelse.deltaker.personident,
+                tekst = varselTekst(type, hendelse),
+                skalVarsleEksternt = hendelse.skalVarslesEksternt(),
+                erSendt = false,
+            )
+        }
+
+        repository.upsert(varsel)
+        log.info("Lagret varsel ${varsel.id} for hendelse ${hendelse.id}")
+        return Result.success(varsel)
+    }
+
+    private fun varselTekst(type: Varsel.Type, hendelse: Hendelse) = when (type) {
+        Varsel.Type.BESKJED -> beskjedTekst(hendelse)
+        Varsel.Type.OPPGAVE -> oppgaveTekst(hendelse)
+    }
+
+    private fun aktivTilTidspunkt(type: Varsel.Type) = when (type) {
+        Varsel.Type.BESKJED -> nowUTC().plus(beskjedAktivLengde)
+        Varsel.Type.OPPGAVE -> null
+    }
+
+    private fun inaktiverOppgave(deltaker: HendelseDeltaker) {
+        repository.getSisteVarsel(deltaker.id, Varsel.Type.OPPGAVE).onSuccess { varsel ->
             if (varsel.erAktiv) {
                 repository.upsert(varsel.copy(aktivTil = nowUTC()))
                 producer.inaktiver(varsel)
@@ -138,6 +162,8 @@ class VarselService(
 }
 
 fun nowUTC(): ZonedDateTime = ZonedDateTime.now(ZoneId.of("Z"))
+
+fun nesteUtsendingstidspunkt() = nowUTC().plusMinutes(30)
 
 fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.AvbrytUtkast,
