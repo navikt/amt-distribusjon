@@ -8,6 +8,7 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
+import no.nav.amt.distribusjon.journalforing.model.HendelseMedJournalforingstatus
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
@@ -15,7 +16,6 @@ import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 class JournalforingService(
     private val journalforingstatusRepository: JournalforingstatusRepository,
@@ -99,9 +99,9 @@ class JournalforingService(
             )
             journalforingstatusRepository.upsert(nyJournalforingstatus)
 
-            distribuer(hendelse, journalpostId)
+            distribuer(listOf(hendelse), journalpostId)
         } else {
-            distribuer(hendelse, journalforingstatus.journalpostId!!)
+            distribuer(listOf(hendelse), journalforingstatus.journalpostId!!)
         }
 
         log.info("Journalførte hovedvedtak for deltaker ${hendelse.deltaker.id}")
@@ -122,15 +122,47 @@ class JournalforingService(
         log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
     }
 
-    suspend fun journalforEndringsvedtak(hendelser: List<Hendelse>) {
-        if (hendelser.isEmpty()) {
+    suspend fun journalforOgDistribuerEndringsvedtak(hendelseMedJournalforingstatuser: List<HendelseMedJournalforingstatus>) {
+        if (hendelseMedJournalforingstatuser.isEmpty()) {
             return
         }
-        val nyesteHendelse = hendelser.maxBy { it.opprettet }
 
-        if (hendelser.find { it.deltaker.id != nyesteHendelse.deltaker.id } != null) {
+        val sisteHendelse = hendelseMedJournalforingstatuser.maxBy { it.hendelse.opprettet }
+        if (hendelseMedJournalforingstatuser.find { it.hendelse.deltaker.id != sisteHendelse.hendelse.deltaker.id } != null) {
             throw IllegalArgumentException("Alle hendelser må tilhøre samme deltaker!")
         }
+
+        val journalforteHendelser = hendelseMedJournalforingstatuser.filter { it.journalforingstatus.erJournalfort() }
+        val ikkeJournalforteHendelser = hendelseMedJournalforingstatuser.filter { !it.journalforingstatus.erJournalfort() }
+            .map { it.hendelse }
+
+        if (ikkeJournalforteHendelser.isNotEmpty()) {
+            val journalpostId = journalforEndringsvedtak(ikkeJournalforteHendelser)
+            distribuer(ikkeJournalforteHendelser, journalpostId)
+        }
+
+        if (journalforteHendelser.isNotEmpty()) {
+            val unikeJournalpostIder = journalforteHendelser.distinctBy { it.journalforingstatus.journalpostId }
+                .mapNotNull { it.journalforingstatus.journalpostId }
+            val journalpostHendelseMap =
+                unikeJournalpostIder.associateWith {
+                        journalpostid ->
+                    journalforteHendelser.filter { it.journalforingstatus.journalpostId == journalpostid }
+                }
+            journalpostHendelseMap.entries.forEach { entry ->
+                distribuer(journalpostId = entry.key, hendelser = entry.value.map { it.hendelse })
+            }
+        }
+
+        log.info(
+            "Journalførte og distribuerte endringsvedtak for deltaker ${hendelseMedJournalforingstatuser.first().hendelse.deltaker.id}, " +
+                "hendelser ${hendelseMedJournalforingstatuser.map { it.hendelse.id }.joinToString()}",
+        )
+    }
+
+    private suspend fun journalforEndringsvedtak(ikkeJournalforteHendelser: List<Hendelse>): String {
+        val nyesteHendelse = ikkeJournalforteHendelser.maxBy { it.opprettet }
+
         val veileder = when (nyesteHendelse.ansvarlig) {
             is HendelseAnsvarlig.NavVeileder -> nyesteHendelse.ansvarlig
         }
@@ -145,7 +177,7 @@ class JournalforingService(
                 nyesteHendelse.deltaker,
                 navBruker,
                 veileder,
-                hendelser,
+                ikkeJournalforteHendelser,
                 nyesteHendelse.opprettet.toLocalDate(),
             ),
         )
@@ -159,39 +191,40 @@ class JournalforingService(
             tiltakstype = nyesteHendelse.deltaker.deltakerliste.tiltak,
             endring = true,
         )
-        val hendelseIder = hendelser.map { it.id }
 
-        val bestillingsId = distribuer(nyesteHendelse, journalpostId)
-
-        hendelseIder.forEach {
+        ikkeJournalforteHendelser.forEach {
             journalforingstatusRepository.upsert(
                 Journalforingstatus(
-                    hendelseId = it,
+                    hendelseId = it.id,
                     journalpostId = journalpostId,
-                    bestillingsId = bestillingsId,
+                    bestillingsId = null,
                 ),
             )
         }
-
         log.info(
-            "Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}, " +
-                "hendelser ${hendelser.map { it.id }.joinToString()}",
+            "Journalførte endringsvedtak for deltaker ${ikkeJournalforteHendelser.first().deltaker.id}, " +
+                "hendelser ${ikkeJournalforteHendelser.map { it.id }.joinToString()}",
         )
+        return journalpostId
     }
 
-    private suspend fun distribuer(hendelse: Hendelse, journalpostId: String): UUID? {
-        if (!hendelse.distribusjonskanal.skalDistribueresDigitalt()) {
-            val bestillingsId = dokdistfordelingClient.distribuerJournalpost(journalpostId)
-            journalforingstatusRepository.upsert(
-                Journalforingstatus(
-                    hendelseId = hendelse.id,
-                    journalpostId = journalpostId,
-                    bestillingsId = bestillingsId,
-                ),
-            )
-            return bestillingsId
+    private suspend fun distribuer(hendelser: List<Hendelse>, journalpostId: String) {
+        if (hendelser.isEmpty()) {
+            return
         }
-        return null
+        val nyesteHendelse = hendelser.maxBy { it.opprettet }
+        if (!nyesteHendelse.distribusjonskanal.skalDistribueresDigitalt()) {
+            val bestillingsId = dokdistfordelingClient.distribuerJournalpost(journalpostId)
+            hendelser.forEach {
+                journalforingstatusRepository.upsert(
+                    Journalforingstatus(
+                        hendelseId = it.id,
+                        journalpostId = journalpostId,
+                        bestillingsId = bestillingsId,
+                    ),
+                )
+            }
+        }
     }
 
     private fun hendelseErBehandlet(journalforingstatus: Journalforingstatus?, distribusjonskanal: Distribusjonskanal): Boolean {

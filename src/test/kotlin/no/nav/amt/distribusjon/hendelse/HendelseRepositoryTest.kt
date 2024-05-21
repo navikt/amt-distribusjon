@@ -48,7 +48,7 @@ class HendelseRepositoryTest {
         val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
 
         ikkeJournalforteHendelser.size shouldBe 1
-        ikkeJournalforteHendelser.first().id shouldBe hendelse.id
+        ikkeJournalforteHendelser.first().hendelse.id shouldBe hendelse.id
     }
 
     @Test
@@ -104,7 +104,7 @@ class HendelseRepositoryTest {
         val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
 
         ikkeJournalforteHendelser.size shouldBe 1
-        ikkeJournalforteHendelser.first().id shouldBe hendelse.id
+        ikkeJournalforteHendelser.first().hendelse.id shouldBe hendelse.id
     }
 
     @Test
