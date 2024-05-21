@@ -88,6 +88,7 @@ class VarselService(
         }
 
         repository.upsert(varsel.copy(aktivFra = nowUTC(), erSendt = true))
+        log.info("Sendte varsel ${varsel.id} for deltaker ${varsel.deltakerId}")
     }
 
     private fun opprettVarsel(hendelse: Hendelse, type: Varsel.Type): Result<Varsel> {
@@ -159,6 +160,16 @@ class VarselService(
     }
 
     fun get(varselId: UUID) = repository.get(varselId)
+
+    fun sendVentendeVarsler() {
+        val varsler = repository.getVentende()
+        require(varsler.size == varsler.distinctBy { it.deltakerId }.size) {
+            "Det finnes flere enn et ventende varsel for en eller flere deltakere"
+        }
+        varsler.forEach {
+            sendVarsel(it)
+        }
+    }
 }
 
 fun nowUTC(): ZonedDateTime = ZonedDateTime.now(ZoneId.of("Z"))

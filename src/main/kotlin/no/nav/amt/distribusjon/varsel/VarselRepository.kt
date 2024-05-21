@@ -114,4 +114,15 @@ class VarselRepository {
             Result.success(varsel)
         } ?: Result.failure(NoSuchElementException("Fant ikke varsel som ikke var sendt for deltaker $deltakerId"))
     }
+
+    fun getVentende() = Database.query {
+        val sql =
+            """
+            select * 
+            from varsel
+            where er_sendt = false and aktiv_fra at time zone 'UTC' < current_timestamp at time zone 'UTC'
+            """.trimIndent()
+
+        it.run(queryOf(sql).map(::rowmapper).asList)
+    }
 }

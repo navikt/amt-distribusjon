@@ -26,7 +26,7 @@ data class Varsel(
 ) {
     val erAktiv: Boolean get() {
         val now = nowUTC()
-        return aktivFra <= now && (aktivTil == null || aktivTil >= now)
+        return erSendt && (aktivTil == null || aktivTil >= now)
     }
 
     enum class Type {

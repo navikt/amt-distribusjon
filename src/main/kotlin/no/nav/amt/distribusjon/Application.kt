@@ -29,6 +29,7 @@ import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
+import no.nav.amt.distribusjon.varsel.VarselJob
 import no.nav.amt.distribusjon.varsel.VarselProducer
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
@@ -106,6 +107,9 @@ fun Application.module() {
 
     val endringsvedtakJob = EndringsvedtakJob(leaderElection, attributes, hendelseRepository, journalforingService)
     endringsvedtakJob.startJob()
+
+    val varselJob = VarselJob(leaderElection, attributes, varselService)
+    varselJob.startJob()
 
     attributes.put(isReadyKey, true)
 }

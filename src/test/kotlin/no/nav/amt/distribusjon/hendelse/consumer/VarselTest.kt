@@ -40,6 +40,7 @@ class VarselTest {
 
             varsel.aktivTil shouldBe null
             varsel.tekst shouldBe oppgaveTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV))
+            varsel.erSendt shouldBe true
             varsel.aktivFra shouldBeCloseTo nowUTC()
             varsel.deltakerId shouldBe hendelse.deltaker.id
             varsel.personident shouldBe hendelse.deltaker.personident
@@ -115,6 +116,7 @@ class VarselTest {
             Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
+            erSendt = true,
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
@@ -136,6 +138,7 @@ class VarselTest {
             Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
+            erSendt = true,
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
@@ -235,7 +238,7 @@ private fun assertProducedInaktiver(id: UUID) = assertProduced(Environment.MINSI
     }
 }
 
-private fun assertProducedOppgave(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
+fun assertProducedOppgave(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
     AsyncUtils.eventually {
         val json = objectMapper.readTree(it[id])
         json["varselId"].asText() shouldBe id.toString()
@@ -244,7 +247,7 @@ private fun assertProducedOppgave(id: UUID) = assertProduced(Environment.MINSIDE
     }
 }
 
-private fun assertProducedBeskjed(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
+fun assertProducedBeskjed(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
     AsyncUtils.eventually {
         val json = objectMapper.readTree(it[id])
         json["varselId"].asText() shouldBe id.toString()
