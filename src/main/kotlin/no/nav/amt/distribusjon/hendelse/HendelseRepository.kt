@@ -8,6 +8,8 @@ import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.db.toPGObject
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
+import no.nav.amt.distribusjon.journalforing.model.HendelseMedJournalforingstatus
+import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import java.time.LocalDateTime
 
 class HendelseRepository {
@@ -18,6 +20,22 @@ class HendelseRepository {
         payload = objectMapper.readValue(row.string("payload")),
         opprettet = row.localDateTime("h.created_at"),
         distribusjonskanal = row.string("distribusjonskanal").let { Distribusjonskanal.valueOf(it) },
+    )
+
+    private fun rowmapperHendelseMedJournalforingstatus(row: Row) = HendelseMedJournalforingstatus(
+        hendelse = Hendelse(
+            id = row.uuid("id"),
+            deltaker = objectMapper.readValue(row.string("deltaker")),
+            ansvarlig = objectMapper.readValue(row.string("ansvarlig")),
+            payload = objectMapper.readValue(row.string("payload")),
+            opprettet = row.localDateTime("h.created_at"),
+            distribusjonskanal = row.string("distribusjonskanal").let { Distribusjonskanal.valueOf(it) },
+        ),
+        journalforingstatus = Journalforingstatus(
+            hendelseId = row.uuid("id"),
+            journalpostId = row.stringOrNull("journalpost_id"),
+            bestillingsId = row.uuidOrNull("bestillingsid"),
+        ),
     )
 
     fun insert(hendelse: Hendelse) = Database.query {
@@ -48,16 +66,18 @@ class HendelseRepository {
                 h.ansvarlig as "ansvarlig",
                 h.payload as "payload",
                 h.created_at as "h.created_at",
-                h.distribusjonskanal as "distribusjonskanal"
+                h.distribusjonskanal as "distribusjonskanal",
+                js.journalpost_id as "journalpost_id",
+                js.bestillingsid as "bestillingsid"
             from hendelse h
                 left join journalforingstatus js on h.id = js.hendelse_id
             where h.created_at < :opprettet 
                 and js.hendelse_id is not null
-                and js.journalpost_id is null
+                and (js.journalpost_id is null or (js.bestillingsid is null and h.distribusjonskanal not in ('DITT_NAV','SDP')))
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("opprettet" to opprettet))
 
-        it.run(query.map(::rowmapper).asList)
+        it.run(query.map(::rowmapperHendelseMedJournalforingstatus).asList)
     }
 }

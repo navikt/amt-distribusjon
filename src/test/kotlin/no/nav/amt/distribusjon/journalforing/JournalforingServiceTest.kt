@@ -8,6 +8,7 @@ import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.integrationTest
+import no.nav.amt.distribusjon.journalforing.model.HendelseMedJournalforingstatus
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.utils.AsyncUtils
 import no.nav.amt.distribusjon.utils.MockResponseHandler
@@ -33,13 +34,16 @@ class JournalforingServiceTest {
     }
 
     @Test
-    fun `handleHendelse - InnbyggerGodkjennUtkast, er allerede journalfort - ignorerer hendelse`() = integrationTest { app, _ ->
+    fun `handleHendelse - InnbyggerGodkjennUtkast, er allerede journalfort, skal ikke sende brev - ignorerer hendelse`() = integrationTest {
+            app,
+            _,
+        ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast())
 
         val journalpostId = "12345"
 
         app.hendelseRepository.insert(hendelse)
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, null))
 
         app.journalforingService.handleHendelse(hendelse)
 
@@ -48,13 +52,32 @@ class JournalforingServiceTest {
     }
 
     @Test
-    fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort - ignorerer hendelse`() = integrationTest { app, _ ->
+    fun `handleHendelse - NavGodkjennUtkast, er journalfort, ikke sendt brev - sender brev`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast(), distribusjonskanal = Distribusjonskanal.PRINT)
+
+        val journalpostId = "12345"
+
+        app.hendelseRepository.insert(hendelse)
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, null))
+
+        app.journalforingService.handleHendelse(hendelse)
+
+        val status = app.journalforingstatusRepository.get(hendelse.id)
+        status!!.journalpostId shouldBe journalpostId
+        status.bestillingsId shouldNotBe null
+    }
+
+    @Test
+    fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort, skal ikke sende brev - ignorerer hendelse`() = integrationTest {
+            app,
+            _,
+        ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse())
 
         val journalpostId = "12345"
 
         app.hendelseRepository.insert(hendelse)
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId))
+        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, null))
 
         app.journalforingService.handleHendelse(hendelse)
 
@@ -93,7 +116,7 @@ class JournalforingServiceTest {
     }
 
     @Test
-    fun `journalforEndringsvedtak - deltakelsesmengde og forleng - journalforer endringsvedtak`() = integrationTest { app, _ ->
+    fun `journalforOgDistribuerEndringsvedtak - deltakelsesmengde og forleng - journalforer endringsvedtak`() = integrationTest { app, _ ->
         val deltaker = Hendelsesdata.deltaker()
 
         val hendelseDeltakelsesmengde = Hendelsesdata.hendelse(
@@ -101,16 +124,23 @@ class JournalforingServiceTest {
             deltaker = deltaker,
             opprettet = LocalDateTime.now().minusMinutes(20),
         )
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseDeltakelsesmengde.id, null))
+        val journalforingstatusDeltakelsesmengde = Journalforingstatus(hendelseDeltakelsesmengde.id, null, null)
+        app.journalforingstatusRepository.upsert(journalforingstatusDeltakelsesmengde)
         val hendelseForleng = Hendelsesdata.hendelse(
             HendelseTypeData.forlengDeltakelse(),
             deltaker = deltaker,
             ansvarlig = hendelseDeltakelsesmengde.ansvarlig,
             opprettet = LocalDateTime.now(),
         )
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelseForleng.id, null))
+        val journalforingstatusForleng = Journalforingstatus(hendelseForleng.id, null, null)
+        app.journalforingstatusRepository.upsert(journalforingstatusForleng)
 
-        app.journalforingService.journalforEndringsvedtak(listOf(hendelseForleng, hendelseDeltakelsesmengde))
+        app.journalforingService.journalforOgDistribuerEndringsvedtak(
+            listOf(
+                HendelseMedJournalforingstatus(hendelseForleng, journalforingstatusForleng),
+                HendelseMedJournalforingstatus(hendelseDeltakelsesmengde, journalforingstatusDeltakelsesmengde),
+            ),
+        )
 
         val journalpostDeltakelsesmengde = app.journalforingstatusRepository.get(hendelseDeltakelsesmengde.id)!!
         val journalpostForleng = app.journalforingstatusRepository.get(hendelseForleng.id)!!
@@ -120,7 +150,51 @@ class JournalforingServiceTest {
     }
 
     @Test
-    fun `journalforEndringsvedtak - ulik deltakerid - feiler`() = integrationTest { app, _ ->
+    fun `journalforOgDistribuerEndringsvedtak - to endringer, en allerede journalfort - journalforer 1, distribuerer 2`() =
+        integrationTest {
+                app,
+                _,
+            ->
+            val deltaker = Hendelsesdata.deltaker()
+
+            val hendelseDeltakelsesmengde = Hendelsesdata.hendelse(
+                HendelseTypeData.endreDeltakelsesmengde(),
+                deltaker = deltaker,
+                opprettet = LocalDateTime.now().minusMinutes(20),
+                distribusjonskanal = Distribusjonskanal.PRINT,
+            )
+            val journalforingstatusDeltakelsesmengde = Journalforingstatus(hendelseDeltakelsesmengde.id, "99887", null)
+            app.journalforingstatusRepository.upsert(journalforingstatusDeltakelsesmengde)
+
+            val hendelseForleng = Hendelsesdata.hendelse(
+                HendelseTypeData.forlengDeltakelse(),
+                deltaker = deltaker,
+                ansvarlig = hendelseDeltakelsesmengde.ansvarlig,
+                opprettet = LocalDateTime.now(),
+                distribusjonskanal = Distribusjonskanal.PRINT,
+            )
+            val journalforingstatusForleng = Journalforingstatus(hendelseForleng.id, null, null)
+            app.journalforingstatusRepository.upsert(journalforingstatusForleng)
+
+            app.journalforingService.journalforOgDistribuerEndringsvedtak(
+                listOf(
+                    HendelseMedJournalforingstatus(hendelseForleng, journalforingstatusForleng),
+                    HendelseMedJournalforingstatus(hendelseDeltakelsesmengde, journalforingstatusDeltakelsesmengde),
+                ),
+            )
+
+            val journalpostDeltakelsesmengde = app.journalforingstatusRepository.get(hendelseDeltakelsesmengde.id)!!
+            val journalpostForleng = app.journalforingstatusRepository.get(hendelseForleng.id)!!
+
+            journalpostDeltakelsesmengde.journalpostId shouldBe journalforingstatusDeltakelsesmengde.journalpostId
+            journalpostDeltakelsesmengde.bestillingsId shouldNotBe null
+            journalpostForleng.journalpostId shouldNotBe null
+            journalpostForleng.journalpostId shouldNotBe journalpostDeltakelsesmengde.journalpostId
+            journalpostForleng.bestillingsId shouldNotBe null
+        }
+
+    @Test
+    fun `journalforOgDistribuerEndringsvedtak - ulik deltakerid - feiler`() = integrationTest { app, _ ->
         val hendelseDeltakelsesmengde = Hendelsesdata.hendelse(
             HendelseTypeData.endreDeltakelsesmengde(),
             opprettet = LocalDateTime.now().minusMinutes(20),
@@ -129,7 +203,18 @@ class JournalforingServiceTest {
 
         assertThrows(IllegalArgumentException::class.java) {
             runBlocking {
-                app.journalforingService.journalforEndringsvedtak(listOf(hendelseForleng, hendelseDeltakelsesmengde))
+                app.journalforingService.journalforOgDistribuerEndringsvedtak(
+                    listOf(
+                        HendelseMedJournalforingstatus(
+                            hendelse = hendelseForleng,
+                            journalforingstatus = Journalforingstatus(hendelseForleng.id, null, null),
+                        ),
+                        HendelseMedJournalforingstatus(
+                            hendelse = hendelseDeltakelsesmengde,
+                            journalforingstatus = Journalforingstatus(hendelseDeltakelsesmengde.id, null, null),
+                        ),
+                    ),
+                )
             }
         }
     }

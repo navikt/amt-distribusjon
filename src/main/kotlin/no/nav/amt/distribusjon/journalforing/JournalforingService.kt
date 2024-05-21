@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.journalforing
 
+import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.distribusjonskanal.skalDistribueresDigitalt
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
@@ -7,6 +8,7 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
+import no.nav.amt.distribusjon.journalforing.model.HendelseMedJournalforingstatus
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
@@ -14,7 +16,6 @@ import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 class JournalforingService(
     private val journalforingstatusRepository: JournalforingstatusRepository,
@@ -27,7 +28,8 @@ class JournalforingService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     suspend fun handleHendelse(hendelse: Hendelse) {
-        if (hendelseErBehandlet(hendelse.id)) {
+        val journalforingstatus = journalforingstatusRepository.get(hendelse.id)
+        if (hendelseErBehandlet(journalforingstatus, hendelse.distribusjonskanal)) {
             log.info("Hendelse med id ${hendelse.id} for deltaker ${hendelse.deltaker.id} er allerede behandlet")
             return
         }
@@ -35,10 +37,12 @@ class JournalforingService(
             is HendelseType.InnbyggerGodkjennUtkast -> journalforHovedvedtak(
                 hendelse,
                 hendelse.payload.utkast,
+                journalforingstatus,
             )
             is HendelseType.NavGodkjennUtkast -> journalforHovedvedtak(
                 hendelse,
                 hendelse.payload.utkast,
+                journalforingstatus,
             )
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.EndreDeltakelsesmengde,
@@ -48,7 +52,7 @@ class JournalforingService(
             is HendelseType.IkkeAktuell,
             is HendelseType.EndreInnhold,
             is HendelseType.EndreBakgrunnsinformasjon,
-            -> handleEndringsvedtak(hendelse)
+            -> handleEndringsvedtak(hendelse, journalforingstatus)
 
             is HendelseType.EndreSluttarsak,
             is HendelseType.EndreUtkast,
@@ -59,41 +63,51 @@ class JournalforingService(
         }
     }
 
-    private suspend fun journalforHovedvedtak(hendelse: Hendelse, utkast: Utkast) {
-        val veileder = when (hendelse.ansvarlig) {
-            is HendelseAnsvarlig.NavVeileder -> hendelse.ansvarlig
-        }
-        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
-        val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
-            ?: throw IllegalArgumentException("Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode")
-        val sak = sakClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
-        val pdf = pdfgenClient.hovedvedtak(
-            lagHovedvedtakPdfDto(hendelse.deltaker, navBruker, utkast, veileder, hendelse.opprettet.toLocalDate()),
-        )
+    private suspend fun journalforHovedvedtak(
+        hendelse: Hendelse,
+        utkast: Utkast,
+        journalforingstatus: Journalforingstatus?,
+    ) {
+        if (journalforingstatus == null || !journalforingstatus.erJournalfort()) {
+            val veileder = when (hendelse.ansvarlig) {
+                is HendelseAnsvarlig.NavVeileder -> hendelse.ansvarlig
+            }
+            val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
+            val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
+                ?: throw IllegalArgumentException(
+                    "Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
+                )
+            val sak = sakClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
+            val pdf = pdfgenClient.hovedvedtak(
+                lagHovedvedtakPdfDto(hendelse.deltaker, navBruker, utkast, veileder, hendelse.opprettet.toLocalDate()),
+            )
 
-        val journalpostId = dokarkivClient.opprettJournalpost(
-            hendelseId = hendelse.id,
-            fnr = hendelse.deltaker.personident,
-            sak = sak,
-            pdf = pdf,
-            journalforendeEnhet = veileder.enhet.enhetsnummer,
-            tiltakstype = hendelse.deltaker.deltakerliste.tiltak,
-            endring = false,
-        )
+            val journalpostId = dokarkivClient.opprettJournalpost(
+                hendelseId = hendelse.id,
+                fnr = hendelse.deltaker.personident,
+                sak = sak,
+                pdf = pdf,
+                journalforendeEnhet = veileder.enhet.enhetsnummer,
+                tiltakstype = hendelse.deltaker.deltakerliste.tiltak,
+                endring = false,
+            )
 
-        journalforingstatusRepository.upsert(
-            Journalforingstatus(
+            val nyJournalforingstatus = Journalforingstatus(
                 hendelseId = hendelse.id,
                 journalpostId = journalpostId,
-            ),
-        )
+                bestillingsId = null,
+            )
+            journalforingstatusRepository.upsert(nyJournalforingstatus)
 
-        distribuer(hendelse, journalpostId)
+            distribuer(listOf(hendelse), journalpostId)
+        } else {
+            distribuer(listOf(hendelse), journalforingstatus.journalpostId!!)
+        }
 
         log.info("Journalførte hovedvedtak for deltaker ${hendelse.deltaker.id}")
     }
 
-    private fun handleEndringsvedtak(hendelse: Hendelse) {
+    private fun handleEndringsvedtak(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
         if (hendelse.deltaker.forsteVedtakFattet == null) {
             log.error("Deltaker med id ${hendelse.deltaker.id} mangler fattet-dato for første vedtak")
             throw IllegalStateException("Kan ikke journalføre endringsvedtak hvis opprinnelig vedtak ikke er fattet")
@@ -101,21 +115,54 @@ class JournalforingService(
         journalforingstatusRepository.upsert(
             Journalforingstatus(
                 hendelseId = hendelse.id,
-                journalpostId = null,
+                journalpostId = journalforingstatus?.journalpostId,
+                bestillingsId = journalforingstatus?.bestillingsId,
             ),
         )
         log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
     }
 
-    suspend fun journalforEndringsvedtak(hendelser: List<Hendelse>) {
-        if (hendelser.isEmpty()) {
+    suspend fun journalforOgDistribuerEndringsvedtak(hendelseMedJournalforingstatuser: List<HendelseMedJournalforingstatus>) {
+        if (hendelseMedJournalforingstatuser.isEmpty()) {
             return
         }
-        val nyesteHendelse = hendelser.maxBy { it.opprettet }
 
-        if (hendelser.find { it.deltaker.id != nyesteHendelse.deltaker.id } != null) {
+        val sisteHendelse = hendelseMedJournalforingstatuser.maxBy { it.hendelse.opprettet }
+        if (hendelseMedJournalforingstatuser.find { it.hendelse.deltaker.id != sisteHendelse.hendelse.deltaker.id } != null) {
             throw IllegalArgumentException("Alle hendelser må tilhøre samme deltaker!")
         }
+
+        val journalforteHendelser = hendelseMedJournalforingstatuser.filter { it.journalforingstatus.erJournalfort() }
+        val ikkeJournalforteHendelser = hendelseMedJournalforingstatuser.filter { !it.journalforingstatus.erJournalfort() }
+            .map { it.hendelse }
+
+        if (ikkeJournalforteHendelser.isNotEmpty()) {
+            val journalpostId = journalforEndringsvedtak(ikkeJournalforteHendelser)
+            distribuer(ikkeJournalforteHendelser, journalpostId)
+        }
+
+        if (journalforteHendelser.isNotEmpty()) {
+            val unikeJournalpostIder = journalforteHendelser.distinctBy { it.journalforingstatus.journalpostId }
+                .mapNotNull { it.journalforingstatus.journalpostId }
+            val journalpostHendelseMap =
+                unikeJournalpostIder.associateWith {
+                        journalpostid ->
+                    journalforteHendelser.filter { it.journalforingstatus.journalpostId == journalpostid }
+                }
+            journalpostHendelseMap.entries.forEach { entry ->
+                distribuer(journalpostId = entry.key, hendelser = entry.value.map { it.hendelse })
+            }
+        }
+
+        log.info(
+            "Journalførte og distribuerte endringsvedtak for deltaker ${hendelseMedJournalforingstatuser.first().hendelse.deltaker.id}, " +
+                "hendelser ${hendelseMedJournalforingstatuser.map { it.hendelse.id }.joinToString()}",
+        )
+    }
+
+    private suspend fun journalforEndringsvedtak(ikkeJournalforteHendelser: List<Hendelse>): String {
+        val nyesteHendelse = ikkeJournalforteHendelser.maxBy { it.opprettet }
+
         val veileder = when (nyesteHendelse.ansvarlig) {
             is HendelseAnsvarlig.NavVeileder -> nyesteHendelse.ansvarlig
         }
@@ -130,7 +177,7 @@ class JournalforingService(
                 nyesteHendelse.deltaker,
                 navBruker,
                 veileder,
-                hendelser,
+                ikkeJournalforteHendelser,
                 nyesteHendelse.opprettet.toLocalDate(),
             ),
         )
@@ -144,33 +191,43 @@ class JournalforingService(
             tiltakstype = nyesteHendelse.deltaker.deltakerliste.tiltak,
             endring = true,
         )
-        val hendelseIder = hendelser.map { it.id }
 
-        hendelseIder.forEach {
+        ikkeJournalforteHendelser.forEach {
             journalforingstatusRepository.upsert(
                 Journalforingstatus(
-                    hendelseId = it,
+                    hendelseId = it.id,
                     journalpostId = journalpostId,
+                    bestillingsId = null,
                 ),
             )
         }
-
-        distribuer(nyesteHendelse, journalpostId)
-
         log.info(
-            "Journalførte endringsvedtak for deltaker ${hendelser.first().deltaker.id}, " +
-                "hendelser ${hendelser.map { it.id }.joinToString()}",
+            "Journalførte endringsvedtak for deltaker ${ikkeJournalforteHendelser.first().deltaker.id}, " +
+                "hendelser ${ikkeJournalforteHendelser.map { it.id }.joinToString()}",
         )
+        return journalpostId
     }
 
-    private suspend fun distribuer(hendelse: Hendelse, journalpostId: String) {
-        if (!hendelse.distribusjonskanal.skalDistribueresDigitalt()) {
-            dokdistfordelingClient.distribuerJournalpost(journalpostId)
+    private suspend fun distribuer(hendelser: List<Hendelse>, journalpostId: String) {
+        if (hendelser.isEmpty()) {
+            return
+        }
+        val nyesteHendelse = hendelser.maxBy { it.opprettet }
+        if (!nyesteHendelse.distribusjonskanal.skalDistribueresDigitalt()) {
+            val bestillingsId = dokdistfordelingClient.distribuerJournalpost(journalpostId)
+            hendelser.forEach {
+                journalforingstatusRepository.upsert(
+                    Journalforingstatus(
+                        hendelseId = it.id,
+                        journalpostId = journalpostId,
+                        bestillingsId = bestillingsId,
+                    ),
+                )
+            }
         }
     }
 
-    private fun hendelseErBehandlet(hendelseId: UUID): Boolean {
-        val journalforingstatus = journalforingstatusRepository.get(hendelseId)
-        return journalforingstatus?.journalpostId != null
+    private fun hendelseErBehandlet(journalforingstatus: Journalforingstatus?, distribusjonskanal: Distribusjonskanal): Boolean {
+        return journalforingstatus != null && journalforingstatus.erJournalfort() && journalforingstatus.erDistribuert(distribusjonskanal)
     }
 }

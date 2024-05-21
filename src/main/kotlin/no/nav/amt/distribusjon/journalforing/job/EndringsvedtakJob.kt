@@ -38,11 +38,11 @@ class EndringsvedtakJob(
                     try {
                         log.info("Kjører jobb for å behandle endringsvedtak")
                         val endringsvedtak = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now().minusMinutes(15))
-                            .filter { it.erEndringsVedtakSomSkalJournalfores() }
-                        val endringsvedtakPrDeltaker = endringsvedtak.groupBy { it.deltaker.id }
+                            .filter { it.hendelse.erEndringsVedtakSomSkalJournalfores() }
+                        val endringsvedtakPrDeltaker = endringsvedtak.groupBy { it.hendelse.deltaker.id }
                         endringsvedtakPrDeltaker.forEach { entry ->
                             log.info("Behandler endringsvedtak for deltaker med id ${entry.key}")
-                            journalforingService.journalforEndringsvedtak(entry.value)
+                            journalforingService.journalforOgDistribuerEndringsvedtak(entry.value)
                         }
                         log.info("Ferdig med å behandle ${endringsvedtak.size} endringsvedtak")
                     } catch (e: Exception) {
