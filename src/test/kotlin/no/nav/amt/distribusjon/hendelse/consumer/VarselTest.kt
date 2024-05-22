@@ -16,14 +16,16 @@ import no.nav.amt.distribusjon.utils.data.Varselsdata
 import no.nav.amt.distribusjon.utils.produceStringString
 import no.nav.amt.distribusjon.utils.shouldBeCloseTo
 import no.nav.amt.distribusjon.varsel.VarselService
-import no.nav.amt.distribusjon.varsel.model.PAMELDING_TEKST
-import no.nav.amt.distribusjon.varsel.model.PLACEHOLDER_BESKJED_TEKST
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import no.nav.amt.distribusjon.varsel.model.beskjedTekst
+import no.nav.amt.distribusjon.varsel.model.oppgaveTekst
+import no.nav.amt.distribusjon.varsel.nesteUtsendingstidspunkt
 import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.Test
 import java.time.Duration
+import java.time.ZonedDateTime
 import java.util.UUID
 
 class VarselTest {
@@ -37,7 +39,8 @@ class VarselTest {
             val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
 
             varsel.aktivTil shouldBe null
-            varsel.tekst shouldBe PAMELDING_TEKST
+            varsel.tekst shouldBe oppgaveTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV))
+            varsel.erSendt shouldBe true
             varsel.aktivFra shouldBeCloseTo nowUTC()
             varsel.deltakerId shouldBe hendelse.deltaker.id
             varsel.personident shouldBe hendelse.deltaker.personident
@@ -54,6 +57,7 @@ class VarselTest {
             Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusMinutes(30),
             deltakerId = hendelse.deltaker.id,
+            erSendt = true,
         )
         app.varselRepository.upsert(forrigeVarsel)
 
@@ -79,7 +83,7 @@ class VarselTest {
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.opprettUtkast())
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
-            hendelseId = hendelse.id,
+            hendelser = listOf(hendelse.id),
             aktivFra = nowUTC().minusMinutes(30),
             aktivTil = nowUTC().minusMinutes(20),
             deltakerId = hendelse.deltaker.id,
@@ -112,6 +116,7 @@ class VarselTest {
             Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
+            erSendt = true,
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
@@ -133,6 +138,7 @@ class VarselTest {
             Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
+            erSendt = true,
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
@@ -151,7 +157,9 @@ class VarselTest {
     fun `navGodkjennUtkast - ingen tidligere varsel - oppretter beskjed`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.navGodkjennUtkast())
         produce(hendelse)
-        AsyncUtils.eventually { assertNyBeskjed(app, hendelse) }
+        AsyncUtils.eventually {
+            assertNyBeskjed(app, hendelse, nowUTC())
+        }
     }
 
     @Test
@@ -162,12 +170,13 @@ class VarselTest {
             Varsel.Type.OPPGAVE,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
+            erSendt = true,
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
 
         AsyncUtils.eventually {
-            assertNyBeskjed(app, hendelse)
+            assertNyBeskjed(app, hendelse, nowUTC())
 
             val inaktivertVarsel = app.varselRepository.get(forrigeVarsel.id).getOrThrow()
             inaktivertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
@@ -177,31 +186,38 @@ class VarselTest {
     }
 
     @Test
-    fun `endreSluttdato - ingen tidligere varsel - oppretter varsel`() = integrationTest { app, _ ->
+    fun `endreSluttdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreSluttdato())
         produce(hendelse)
-        AsyncUtils.eventually { assertNyBeskjed(app, hendelse) }
+        AsyncUtils.eventually { assertNyBeskjed(app, hendelse, nesteUtsendingstidspunkt()) }
     }
 
     @Test
-    fun `endreStartdato - ingen tidligere varsel - oppretter varsel`() = integrationTest { app, _ ->
+    fun `endreStartdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreStartdato())
         produce(hendelse)
-        AsyncUtils.eventually { assertNyBeskjed(app, hendelse) }
+        AsyncUtils.eventually { assertNyBeskjed(app, hendelse, nesteUtsendingstidspunkt()) }
     }
 
-    private fun assertNyBeskjed(app: TestApp, hendelse: HendelseDto) {
+    private fun assertNyBeskjed(
+        app: TestApp,
+        hendelse: HendelseDto,
+        aktivFra: ZonedDateTime,
+    ) {
         val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrThrow()
 
         varsel.aktivTil!! shouldBeCloseTo nowUTC().plus(VarselService.beskjedAktivLengde)
-        varsel.tekst shouldBe PLACEHOLDER_BESKJED_TEKST
-        varsel.aktivFra shouldBeCloseTo nowUTC()
+        varsel.tekst shouldBe beskjedTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV))
+        varsel.aktivFra shouldBeCloseTo aktivFra
         varsel.deltakerId shouldBe hendelse.deltaker.id
         varsel.personident shouldBe hendelse.deltaker.personident
 
         varsel.skalVarsleEksternt shouldBe hendelse.skalVarslesEksternt()
+        varsel.erSendt shouldBe (aktivFra <= nowUTC())
 
-        assertProducedBeskjed(varsel.id)
+        if (varsel.erSendt) {
+            assertProducedBeskjed(varsel.id)
+        }
     }
 }
 
@@ -222,7 +238,7 @@ private fun assertProducedInaktiver(id: UUID) = assertProduced(Environment.MINSI
     }
 }
 
-private fun assertProducedOppgave(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
+fun assertProducedOppgave(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
     AsyncUtils.eventually {
         val json = objectMapper.readTree(it[id])
         json["varselId"].asText() shouldBe id.toString()
@@ -231,7 +247,7 @@ private fun assertProducedOppgave(id: UUID) = assertProduced(Environment.MINSIDE
     }
 }
 
-private fun assertProducedBeskjed(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
+fun assertProducedBeskjed(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
     AsyncUtils.eventually {
         val json = objectMapper.readTree(it[id])
         json["varselId"].asText() shouldBe id.toString()

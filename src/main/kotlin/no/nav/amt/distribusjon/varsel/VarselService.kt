@@ -6,9 +6,9 @@ import no.nav.amt.distribusjon.distribusjonskanal.skalDistribueresDigitalt
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
-import no.nav.amt.distribusjon.varsel.model.PAMELDING_TEKST
-import no.nav.amt.distribusjon.varsel.model.PLACEHOLDER_BESKJED_TEKST
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import no.nav.amt.distribusjon.varsel.model.beskjedTekst
+import no.nav.amt.distribusjon.varsel.model.oppgaveTekst
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.ZoneId
@@ -23,7 +23,7 @@ class VarselService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     companion object {
-        val beskjedAktivLengde: Duration = Duration.ofDays(14)
+        val beskjedAktivLengde: Duration = Duration.ofDays(21).plusMinutes(30)
     }
 
     fun handleHendelse(hendelse: Hendelse) {
@@ -36,13 +36,18 @@ class VarselService(
 
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> opprettPameldingsoppgave(hendelse)
-            is HendelseType.AvbrytUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
-            is HendelseType.InnbyggerGodkjennUtkast -> inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
+                .onSuccess { sendVarsel(it) }
+            is HendelseType.AvbrytUtkast -> inaktiverOppgave(hendelse.deltaker)
+            is HendelseType.InnbyggerGodkjennUtkast -> inaktiverOppgave(hendelse.deltaker)
             is HendelseType.NavGodkjennUtkast -> {
-                inaktiverVarsel(hendelse.deltaker, Varsel.Type.OPPGAVE)
+                inaktiverOppgave(hendelse.deltaker)
                 opprettBeskjed(hendelse)
+                    .onSuccess { sendVarsel(it) }
             }
 
+            is HendelseType.EndreBakgrunnsinformasjon,
+            is HendelseType.EndreDeltakelsesmengde,
+            is HendelseType.EndreInnhold,
             is HendelseType.EndreStartdato,
             is HendelseType.EndreSluttdato,
             is HendelseType.ForlengDeltakelse,
@@ -51,9 +56,6 @@ class VarselService(
             -> opprettBeskjed(hendelse)
 
             is HendelseType.EndreUtkast,
-            is HendelseType.EndreDeltakelsesmengde,
-            is HendelseType.EndreBakgrunnsinformasjon,
-            is HendelseType.EndreInnhold,
             is HendelseType.EndreSluttarsak,
             -> {
                 log.info("Oppretter ikke varsel for hendelse ${hendelse.payload::class} for deltaker ${hendelse.deltaker.id}")
@@ -64,61 +66,84 @@ class VarselService(
     private fun opprettBeskjed(hendelse: Hendelse) = opprettVarsel(
         hendelse = hendelse,
         type = Varsel.Type.BESKJED,
-        aktivTil = nowUTC().plus(beskjedAktivLengde),
-        tekst = PLACEHOLDER_BESKJED_TEKST,
     )
 
     private fun opprettPameldingsoppgave(hendelse: Hendelse) = opprettVarsel(
         hendelse = hendelse,
         type = Varsel.Type.OPPGAVE,
-        aktivTil = null,
-        tekst = PAMELDING_TEKST,
     )
 
-    private fun opprettVarsel(
-        hendelse: Hendelse,
-        type: Varsel.Type,
-        aktivTil: ZonedDateTime?,
-        tekst: String,
-    ) {
-        repository.getByHendelseId(hendelse.id).onSuccess {
-            log.info("Varsel for hendelse ${hendelse.id} er allerede opprettet. Oppretter ikke nytt varsel.")
-            return
-        }
-
-        val forrigeVarsel = repository.getSisteVarsel(hendelse.deltaker.id, type).getOrNull()
+    private fun sendVarsel(varsel: Varsel) {
+        val forrigeVarsel = repository.getSisteVarsel(varsel.deltakerId, varsel.type).getOrNull()
         if (forrigeVarsel?.erAktiv == true) {
             log.info(
-                "Forrige varsel for deltaker ${hendelse.deltaker.id} av type $type er fortsatt aktivt. " +
+                "Forrige varsel for deltaker ${varsel.deltakerId} av type $varsel.type er fortsatt aktivt. " +
                     "Oppretter ikke nytt varsel.",
             )
             return
         }
-
-        val varsel = Varsel(
-            id = UUID.randomUUID(),
-            type = type,
-            hendelseId = hendelse.id,
-            aktivFra = nowUTC(),
-            aktivTil = aktivTil,
-            deltakerId = hendelse.deltaker.id,
-            personident = hendelse.deltaker.personident,
-            tekst = tekst,
-            skalVarsleEksternt = hendelse.skalVarslesEksternt(),
-        )
-
-        repository.upsert(varsel)
-
-        log.info("Opprettet varsel for deltaker ${hendelse.deltaker.id} av type $type")
-
-        when (type) {
-            Varsel.Type.OPPGAVE -> producer.opprettOppgave(varsel)
+        when (varsel.type) {
             Varsel.Type.BESKJED -> producer.opprettBeskjed(varsel)
+            Varsel.Type.OPPGAVE -> producer.opprettOppgave(varsel)
         }
+
+        repository.upsert(varsel.copy(aktivFra = nowUTC(), erSendt = true))
+        log.info("Sendte varsel ${varsel.id} for deltaker ${varsel.deltakerId}")
     }
 
-    private fun inaktiverVarsel(deltaker: HendelseDeltaker, type: Varsel.Type) {
-        repository.getSisteVarsel(deltaker.id, type).onSuccess { varsel ->
+    private fun opprettVarsel(hendelse: Hendelse, type: Varsel.Type): Result<Varsel> {
+        repository.getByHendelseId(hendelse.id).onSuccess {
+            val msg = "Varsel for hendelse ${hendelse.id} er allerede opprettet. Oppretter ikke nytt varsel."
+            log.info(msg)
+            return Result.failure(IllegalStateException(msg))
+        }
+
+        val forrigeVarsel = repository.getIkkeSendt(hendelse.deltaker.id).getOrNull()
+
+        val varsel = if (forrigeVarsel != null) {
+            val nyType = if (type == Varsel.Type.OPPGAVE) Varsel.Type.OPPGAVE else forrigeVarsel.type
+            val eksternVarsling = forrigeVarsel.skalVarsleEksternt || hendelse.skalVarslesEksternt()
+
+            forrigeVarsel.copy(
+                type = nyType,
+                hendelser = forrigeVarsel.hendelser.plus(hendelse.id),
+                tekst = varselTekst(nyType, hendelse),
+                skalVarsleEksternt = eksternVarsling,
+                aktivFra = nesteUtsendingstidspunkt(),
+                aktivTil = aktivTilTidspunkt(nyType),
+            )
+        } else {
+            Varsel(
+                id = UUID.randomUUID(),
+                type = type,
+                hendelser = listOf(hendelse.id),
+                aktivFra = nesteUtsendingstidspunkt(),
+                aktivTil = aktivTilTidspunkt(type),
+                deltakerId = hendelse.deltaker.id,
+                personident = hendelse.deltaker.personident,
+                tekst = varselTekst(type, hendelse),
+                skalVarsleEksternt = hendelse.skalVarslesEksternt(),
+                erSendt = false,
+            )
+        }
+
+        repository.upsert(varsel)
+        log.info("Lagret varsel ${varsel.id} for hendelse ${hendelse.id}")
+        return Result.success(varsel)
+    }
+
+    private fun varselTekst(type: Varsel.Type, hendelse: Hendelse) = when (type) {
+        Varsel.Type.BESKJED -> beskjedTekst(hendelse)
+        Varsel.Type.OPPGAVE -> oppgaveTekst(hendelse)
+    }
+
+    private fun aktivTilTidspunkt(type: Varsel.Type) = when (type) {
+        Varsel.Type.BESKJED -> nowUTC().plus(beskjedAktivLengde)
+        Varsel.Type.OPPGAVE -> null
+    }
+
+    private fun inaktiverOppgave(deltaker: HendelseDeltaker) {
+        repository.getSisteVarsel(deltaker.id, Varsel.Type.OPPGAVE).onSuccess { varsel ->
             if (varsel.erAktiv) {
                 repository.upsert(varsel.copy(aktivTil = nowUTC()))
                 producer.inaktiver(varsel)
@@ -135,9 +160,21 @@ class VarselService(
     }
 
     fun get(varselId: UUID) = repository.get(varselId)
+
+    fun sendVentendeVarsler() {
+        val varsler = repository.getVentende()
+        require(varsler.size == varsler.distinctBy { it.deltakerId }.size) {
+            "Det finnes flere enn et ventende varsel for en eller flere deltakere"
+        }
+        varsler.forEach {
+            sendVarsel(it)
+        }
+    }
 }
 
 fun nowUTC(): ZonedDateTime = ZonedDateTime.now(ZoneId.of("Z"))
+
+fun nesteUtsendingstidspunkt() = nowUTC().plusMinutes(30)
 
 fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.AvbrytUtkast,
@@ -147,10 +184,10 @@ fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.EndreSluttarsak,
     is HendelseType.EndreStartdato,
     is HendelseType.EndreUtkast,
+    is HendelseType.ForlengDeltakelse,
     is HendelseType.InnbyggerGodkjennUtkast,
     -> false
 
-    is HendelseType.ForlengDeltakelse,
     is HendelseType.EndreSluttdato,
     is HendelseType.IkkeAktuell,
     is HendelseType.NavGodkjennUtkast,
