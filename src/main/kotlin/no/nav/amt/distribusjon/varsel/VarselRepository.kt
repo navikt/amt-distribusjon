@@ -70,6 +70,19 @@ class VarselRepository {
         } ?: Result.failure(NoSuchElementException("Fant ingen varsel av type $type for deltaker $deltakerId"))
     }
 
+    fun getAktivt(deltakerId: UUID) = Database.query {
+        val sql =
+            """
+            select * 
+            from varsel
+            where deltaker_id = :deltaker_id
+                and er_sendt = true
+                and (aktiv_til is null or aktiv_til > current_timestamp)
+            """.trimIndent()
+        it.run(queryOf(sql, mapOf("deltaker_id" to deltakerId)).map(::rowmapper).asSingle)?.let { varsel -> Result.success(varsel) }
+            ?: Result.failure(NoSuchElementException())
+    }
+
     fun get(id: UUID) = Database.query {
         val sql =
             """

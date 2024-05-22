@@ -51,34 +51,6 @@ class VarselTest {
     }
 
     @Test
-    fun `opprettUtkast - tidligere oppgave er aktiv - sender ikke nytt varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.opprettUtkast())
-        val forrigeVarsel = Varselsdata.varsel(
-            Varsel.Type.OPPGAVE,
-            aktivFra = nowUTC().minusMinutes(30),
-            deltakerId = hendelse.deltaker.id,
-            erSendt = true,
-        )
-        app.varselRepository.upsert(forrigeVarsel)
-
-        produce(hendelse)
-
-        AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
-
-            varsel.id shouldBe forrigeVarsel.id
-            varsel.aktivTil shouldBe null
-            varsel.tekst shouldBe forrigeVarsel.tekst
-            varsel.aktivFra shouldBeCloseTo forrigeVarsel.aktivFra
-            varsel.deltakerId shouldBe forrigeVarsel.deltakerId
-            varsel.personident shouldBe forrigeVarsel.personident
-            varsel.skalVarsleEksternt shouldBe hendelse.skalVarslesEksternt()
-
-            assertNotProduced(varsel.id)
-        }
-    }
-
-    @Test
     fun `opprettUtkast - hendelsen er håndtert tidligere - sender ikke nytt varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.opprettUtkast())
         val forrigeVarsel = Varselsdata.varsel(
@@ -230,7 +202,7 @@ private fun assertNotProduced(id: UUID) = assertProduced(Environment.MINSIDE_VAR
     cache[id] shouldBe null
 }
 
-private fun assertProducedInaktiver(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
+fun assertProducedInaktiver(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
     AsyncUtils.eventually {
         val json = objectMapper.readTree(it[id])
         json["varselId"].asText() shouldBe id.toString()
