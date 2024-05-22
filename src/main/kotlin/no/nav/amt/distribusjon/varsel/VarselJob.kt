@@ -9,7 +9,6 @@ import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Duration
-import java.time.temporal.ChronoUnit
 import java.util.Timer
 import kotlin.concurrent.fixedRateTimer
 
@@ -24,8 +23,8 @@ class VarselJob(
     fun startJob(): Timer {
         return fixedRateTimer(
             name = this.javaClass.simpleName,
-            initialDelay = Duration.of(5, ChronoUnit.MINUTES).toMillis(),
-            period = Duration.of(10, ChronoUnit.MINUTES).toMillis(),
+            initialDelay = Duration.ofMinutes(2).toMillis(),
+            period = Duration.ofMinutes(5).toMillis(),
         ) {
             scope.launch {
                 if (leaderElection.isLeader() && attributes.getOrNull(isReadyKey) == true) {
