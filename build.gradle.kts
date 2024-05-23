@@ -25,7 +25,7 @@ val prometeusVersion = "1.13.0"
 val ktlintVersion = "1.2.1"
 val jacksonVersion = "2.17.1"
 val logstashEncoderVersion = "7.4"
-val commonVersion = "3.2024.04.22_13.50-7815154a2573"
+val commonVersion = "3.2024.05.23_05.46-2b29fa343e8e"
 val kafkaClientsVersion = "3.7.0"
 val testcontainersVersion = "1.19.8"
 val kotestVersion = "5.9.0"
@@ -36,6 +36,7 @@ val postgresVersion = "42.7.3"
 val caffeineVersion = "3.1.8"
 val mockkVersion = "1.13.11"
 val unleashVersion = "9.2.2"
+val nimbusVersion = "9.39.1"
 
 dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
@@ -83,6 +84,7 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json-jvm:$kotestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:$nimbusVersion")
 }
 
 kotlin {

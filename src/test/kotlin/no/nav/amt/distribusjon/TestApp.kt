@@ -4,9 +4,11 @@ import io.getunleash.FakeUnleash
 import io.ktor.client.HttpClient
 import io.ktor.server.testing.testApplication
 import no.nav.amt.distribusjon.application.isReadyKey
+import no.nav.amt.distribusjon.application.plugins.configureAuthentication
 import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
+import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
 import no.nav.amt.distribusjon.hendelse.HendelseRepository
@@ -16,7 +18,6 @@ import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
-import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
 import no.nav.amt.distribusjon.utils.SingletonKafkaProvider
 import no.nav.amt.distribusjon.utils.SingletonPostgresContainer
@@ -26,11 +27,12 @@ import no.nav.amt.distribusjon.utils.mockDokarkivClient
 import no.nav.amt.distribusjon.utils.mockDokdistfordelingClient
 import no.nav.amt.distribusjon.utils.mockDokdistkanalClient
 import no.nav.amt.distribusjon.utils.mockPdfgenClient
-import no.nav.amt.distribusjon.utils.mockSakClient
+import no.nav.amt.distribusjon.utils.mockVeilarboppfolgingClient
 import no.nav.amt.distribusjon.varsel.VarselProducer
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
+import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import java.util.UUID
 
 class TestApp {
@@ -44,12 +46,13 @@ class TestApp {
 
     val pdfgenClient: PdfgenClient
     val amtPersonClient: AmtPersonClient
-    val sakClient: SakClient
+    val veilarboppfolgingClient: VeilarboppfolgingClient
     val dokarkivClient: DokarkivClient
     val dokdistkanalClient: DokdistkanalClient
     val dokdistfordelingClient: DokdistfordelingClient
 
     val journalforingService: JournalforingService
+    val digitalBrukerService: DigitalBrukerService
 
     val unleash: FakeUnleash
 
@@ -65,7 +68,7 @@ class TestApp {
         azureAdTokenClient = mockAzureAdClient(environment)
         pdfgenClient = mockPdfgenClient(environment)
         amtPersonClient = mockAmtPersonClient(azureAdTokenClient, environment)
-        sakClient = mockSakClient(
+        veilarboppfolgingClient = mockVeilarboppfolgingClient(
             azureAdTokenClient,
             environment,
         )
@@ -83,10 +86,12 @@ class TestApp {
             journalforingstatusRepository,
             amtPersonClient,
             pdfgenClient,
-            sakClient,
+            veilarboppfolgingClient,
             dokarkivClient,
             dokdistfordelingClient,
         )
+
+        digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
 
         val consumerId = UUID.randomUUID().toString()
         val kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
@@ -105,7 +110,8 @@ fun integrationTest(testBlock: suspend (app: TestApp, client: HttpClient) -> Uni
     application {
         configureSerialization()
 
-        configureRouting()
+        configureAuthentication(testApp.environment)
+        configureRouting(testApp.digitalBrukerService)
         // configureMonitoring()
 
         attributes.put(isReadyKey, true)

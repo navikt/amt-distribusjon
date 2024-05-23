@@ -41,7 +41,7 @@ class HendelseConsumer(
         val hendelseDto: HendelseDto = objectMapper.readValue(value)
         log.info("Mottatt hendelse ${hendelseDto.id} for deltaker ${hendelseDto.deltaker.id}")
 
-        val distribusjonskanal = dokdistkanalClient.bestemDistribusjonskanal(hendelseDto.deltaker)
+        val distribusjonskanal = dokdistkanalClient.bestemDistribusjonskanal(hendelseDto.deltaker.personident, hendelseDto.deltaker.id)
         val hendelse = hendelseDto.toModel(distribusjonskanal)
 
         hendelseRepository.insert(hendelse)

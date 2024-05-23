@@ -12,11 +12,13 @@ import io.ktor.server.netty.Netty
 import no.nav.amt.distribusjon.Environment.Companion.HTTP_CLIENT_TIMEOUT_MS
 import no.nav.amt.distribusjon.application.isReadyKey
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
+import no.nav.amt.distribusjon.application.plugins.configureAuthentication
 import no.nav.amt.distribusjon.application.plugins.configureMonitoring
 import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.db.Database
+import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
 import no.nav.amt.distribusjon.hendelse.HendelseRepository
@@ -28,12 +30,12 @@ import no.nav.amt.distribusjon.journalforing.job.EndringsvedtakJob
 import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
-import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import no.nav.amt.distribusjon.varsel.VarselJob
 import no.nav.amt.distribusjon.varsel.VarselProducer
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
+import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 
 fun main() {
     val server = embeddedServer(Netty, port = 8080, module = Application::module)
@@ -70,10 +72,12 @@ fun Application.module() {
     val azureAdTokenClient = AzureAdTokenClient(httpClient, environment)
     val pdfgenClient = PdfgenClient(httpClient, environment)
     val amtPersonClient = AmtPersonClient(httpClient, azureAdTokenClient, environment)
-    val sakClient = SakClient(httpClient, azureAdTokenClient, environment)
+    val veilarboppfolgingClient = VeilarboppfolgingClient(httpClient, azureAdTokenClient, environment)
     val dokarkivClient = DokarkivClient(httpClient, azureAdTokenClient, environment)
     val dokdistkanalClient = DokdistkanalClient(httpClient, azureAdTokenClient, environment)
     val dokdistfordelingClient = DokdistfordelingClient(httpClient, azureAdTokenClient, environment)
+
+    val digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
 
     val unleash = DefaultUnleash(
         UnleashConfig.builder()
@@ -91,7 +95,7 @@ fun Application.module() {
         JournalforingstatusRepository(),
         amtPersonClient,
         pdfgenClient,
-        sakClient,
+        veilarboppfolgingClient,
         dokarkivClient,
         dokdistfordelingClient,
     )
@@ -102,7 +106,8 @@ fun Application.module() {
     )
     consumers.forEach { it.run() }
 
-    configureRouting()
+    configureAuthentication(environment)
+    configureRouting(digitalBrukerService)
     configureMonitoring()
 
     val endringsvedtakJob = EndringsvedtakJob(leaderElection, attributes, hendelseRepository, journalforingService)

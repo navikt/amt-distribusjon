@@ -31,11 +31,13 @@ import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.NavBrukerRequest
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
-import no.nav.amt.distribusjon.journalforing.sak.Sak
-import no.nav.amt.distribusjon.journalforing.sak.SakClient
 import no.nav.amt.distribusjon.testEnvironment
 import no.nav.amt.distribusjon.utils.data.Journalforingdata
 import no.nav.amt.distribusjon.utils.data.Persondata
+import no.nav.amt.distribusjon.veilarboppfolging.ManuellStatusRequest
+import no.nav.amt.distribusjon.veilarboppfolging.ManuellV2Response
+import no.nav.amt.distribusjon.veilarboppfolging.Sak
+import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import java.util.UUID
 
 fun mockHttpClient(defaultResponse: Any? = null): HttpClient {
@@ -101,7 +103,7 @@ fun mockAmtPersonClient(azureAdTokenClient: AzureAdTokenClient, environment: Env
     environment,
 )
 
-fun mockSakClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = SakClient(
+fun mockVeilarboppfolgingClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = VeilarboppfolgingClient(
     mockHttpClient(Journalforingdata.lagSak()),
     azureAdTokenClient,
     environment,
@@ -156,6 +158,12 @@ object MockResponseHandler {
         BestemDistribusjonskanalResponse(distribusjonskanal),
     )
 
+    fun addDistribusjonskanalErrorResponse(personident: String, status: HttpStatusCode) = post(
+        url = "${testEnvironment.dokdistkanalUrl}/rest/bestemDistribusjonskanal",
+        requestBody = BestemDistribusjonskanalRequest(personident),
+        responseCode = status,
+    )
+
     fun addNavBrukerResponse(personident: String, navBruker: NavBruker) = post(
         "${testEnvironment.amtPersonUrl}/api/nav-bruker",
         NavBrukerRequest(personident),
@@ -163,17 +171,31 @@ object MockResponseHandler {
     )
 
     fun addSakResponse(oppfolgingsperiodeId: UUID, sak: Sak) = post(
-        "${testEnvironment.sakUrl}/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId",
+        "${testEnvironment.veilarboppfolgingUrl}/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId",
         null,
         sak,
+    )
+
+    fun addManuellOppfolgingResponse(personident: String, manuellOppfolging: Boolean) = post(
+        "${testEnvironment.veilarboppfolgingUrl}/veilarboppfolging/api/v3/hent-manuell",
+        ManuellStatusRequest(personident),
+        ManuellV2Response(manuellOppfolging),
+    )
+
+    fun addManuellOppfolgingErrorResponse(personident: String, status: HttpStatusCode) = post(
+        url = "${testEnvironment.veilarboppfolgingUrl}/veilarboppfolging/api/v3/hent-manuell",
+        requestBody = ManuellStatusRequest(personident),
+        responseCode = status,
     )
 
     private fun post(
         url: String,
         requestBody: Any?,
         responseBody: Any = "",
+        responseCode: HttpStatusCode = HttpStatusCode.OK,
     ) = addResponse(
         Request(url, HttpMethod.Post, requestBody?.let { objectMapper.writeValueAsString(it) }),
         responseBody,
+        responseCode,
     )
 }

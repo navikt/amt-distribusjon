@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.distribusjonskanal
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header
@@ -13,7 +14,8 @@ import io.ktor.http.isSuccess
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
-import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
+import java.time.Duration
+import java.util.UUID
 
 class DokdistkanalClient(
     private val httpClient: HttpClient,
@@ -24,18 +26,31 @@ class DokdistkanalClient(
     private val url = environment.dokdistkanalUrl
     private val navCallId = "amt-distribusjon"
 
-    suspend fun bestemDistribusjonskanal(deltaker: HendelseDeltaker): Distribusjonskanal {
+    private val distribusjonskanalCache = Caffeine.newBuilder()
+        .expireAfterWrite(Duration.ofMinutes(60))
+        .build<String, Distribusjonskanal>()
+
+    suspend fun bestemDistribusjonskanal(personident: String, deltakerId: UUID? = null): Distribusjonskanal {
+        distribusjonskanalCache.getIfPresent(personident)?.let {
+            return it
+        }
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
         val response = httpClient.post("$url/rest/bestemDistribusjonskanal") {
             header(HttpHeaders.Authorization, token)
             header("Nav-Callid", navCallId)
             contentType(ContentType.Application.Json)
-            setBody(objectMapper.writeValueAsString(BestemDistribusjonskanalRequest(deltaker.personident)))
+            setBody(objectMapper.writeValueAsString(BestemDistribusjonskanalRequest(personident)))
         }
         if (!response.status.isSuccess()) {
-            error("Kunne ikke hente distribusjonskanal for deltaker ${deltaker.id} status: ${response.status} ${response.bodyAsText()}")
+            if (deltakerId == null) {
+                error("Kunne ikke hente distribusjonskanal, status: ${response.status} ${response.bodyAsText()}")
+            } else {
+                error("Kunne ikke hente distribusjonskanal for deltaker $deltakerId status: ${response.status} ${response.bodyAsText()}")
+            }
         }
-        return response.body<BestemDistribusjonskanalResponse>().distribusjonskanal
+        val distribusjonskanal = response.body<BestemDistribusjonskanalResponse>().distribusjonskanal
+        distribusjonskanalCache.put(personident, distribusjonskanal)
+        return distribusjonskanal
     }
 }
 
