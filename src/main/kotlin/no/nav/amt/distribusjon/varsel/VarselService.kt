@@ -74,14 +74,12 @@ class VarselService(
     )
 
     private fun sendVarsel(varsel: Varsel) {
-        val forrigeVarsel = repository.getSisteVarsel(varsel.deltakerId, varsel.type).getOrNull()
-        if (forrigeVarsel?.erAktiv == true) {
-            log.info(
-                "Forrige varsel for deltaker ${varsel.deltakerId} av type $varsel.type er fortsatt aktivt. " +
-                    "Oppretter ikke nytt varsel.",
-            )
-            return
+        val aktivtVarsel = repository.getAktivt(varsel.deltakerId).getOrNull()
+
+        if (aktivtVarsel?.erAktiv == true) {
+            inaktiverVarsel(aktivtVarsel)
         }
+
         when (varsel.type) {
             Varsel.Type.BESKJED -> producer.opprettBeskjed(varsel)
             Varsel.Type.OPPGAVE -> producer.opprettOppgave(varsel)
@@ -144,10 +142,15 @@ class VarselService(
 
     private fun inaktiverOppgave(deltaker: HendelseDeltaker) {
         repository.getSisteVarsel(deltaker.id, Varsel.Type.OPPGAVE).onSuccess { varsel ->
-            if (varsel.erAktiv) {
-                repository.upsert(varsel.copy(aktivTil = nowUTC()))
-                producer.inaktiver(varsel)
-            }
+            inaktiverVarsel(varsel)
+        }
+    }
+
+    private fun inaktiverVarsel(varsel: Varsel) {
+        if (varsel.erAktiv) {
+            repository.upsert(varsel.copy(aktivTil = nowUTC()))
+            producer.inaktiver(varsel)
+            log.info("Inaktiverte varsel ${varsel.id} for deltaker ${varsel.deltakerId}")
         }
     }
 
