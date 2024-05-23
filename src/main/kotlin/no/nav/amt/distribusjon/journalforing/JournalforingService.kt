@@ -14,14 +14,14 @@ import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
-import no.nav.amt.distribusjon.journalforing.sak.SakClient
+import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import org.slf4j.LoggerFactory
 
 class JournalforingService(
     private val journalforingstatusRepository: JournalforingstatusRepository,
     private val amtPersonClient: AmtPersonClient,
     private val pdfgenClient: PdfgenClient,
-    private val sakClient: SakClient,
+    private val veilarboppfolgingClient: VeilarboppfolgingClient,
     private val dokarkivClient: DokarkivClient,
     private val dokdistfordelingClient: DokdistfordelingClient,
 ) {
@@ -77,7 +77,7 @@ class JournalforingService(
                 ?: throw IllegalArgumentException(
                     "Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
                 )
-            val sak = sakClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
+            val sak = veilarboppfolgingClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
             val pdf = pdfgenClient.hovedvedtak(
                 lagHovedvedtakPdfDto(hendelse.deltaker, navBruker, utkast, veileder, hendelse.opprettet.toLocalDate()),
             )
@@ -171,7 +171,7 @@ class JournalforingService(
             ?: throw IllegalArgumentException(
                 "Kan ikke endre på deltaker ${nyesteHendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
             )
-        val sak = sakClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
+        val sak = veilarboppfolgingClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
         val pdf = pdfgenClient.endringsvedtak(
             lagEndringsvedtakPdfDto(
                 nyesteHendelse.deltaker,

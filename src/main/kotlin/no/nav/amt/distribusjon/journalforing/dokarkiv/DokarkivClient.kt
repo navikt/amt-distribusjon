@@ -13,7 +13,7 @@ import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
-import no.nav.amt.distribusjon.journalforing.sak.Sak
+import no.nav.amt.distribusjon.veilarboppfolging.Sak
 import java.util.UUID
 
 class DokarkivClient(

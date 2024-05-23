@@ -36,6 +36,7 @@ val postgresVersion = "42.7.3"
 val caffeineVersion = "3.1.8"
 val mockkVersion = "1.13.11"
 val unleashVersion = "9.2.2"
+val nimbusVersion = "9.39.1"
 
 dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
@@ -83,6 +84,7 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json-jvm:$kotestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:$nimbusVersion")
 }
 
 kotlin {

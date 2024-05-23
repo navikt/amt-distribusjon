@@ -1,6 +1,6 @@
 package no.nav.amt.distribusjon.utils.data
 
-import no.nav.amt.distribusjon.journalforing.sak.Sak
+import no.nav.amt.distribusjon.veilarboppfolging.Sak
 import java.util.UUID
 
 object Journalforingdata {
