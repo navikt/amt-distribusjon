@@ -12,6 +12,7 @@ import no.nav.amt.distribusjon.varsel.model.oppgaveTekst
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -23,7 +24,8 @@ class VarselService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     companion object {
-        val beskjedAktivLengde: Duration = Duration.ofDays(21).plusMinutes(30)
+        const val BESKJED_FORSINKELSE_MINUTTER = 30L
+        val beskjedAktivLengde: Duration = Duration.ofDays(21).plusMinutes(BESKJED_FORSINKELSE_MINUTTER)
     }
 
     fun handleHendelse(hendelse: Hendelse) {
@@ -37,6 +39,7 @@ class VarselService(
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> opprettPameldingsoppgave(hendelse)
                 .onSuccess { sendVarsel(it) }
+
             is HendelseType.AvbrytUtkast -> inaktiverOppgave(hendelse.deltaker)
             is HendelseType.InnbyggerGodkjennUtkast -> inaktiverOppgave(hendelse.deltaker)
             is HendelseType.NavGodkjennUtkast -> {
@@ -60,6 +63,8 @@ class VarselService(
             -> {
                 log.info("Oppretter ikke varsel for hendelse ${hendelse.payload::class} for deltaker ${hendelse.deltaker.id}")
             }
+
+            is HendelseType.DeltakerSistBesokt -> inaktiverBeskjed(hendelse.deltaker, hendelse.payload.sistBesokt)
         }
     }
 
@@ -154,12 +159,36 @@ class VarselService(
         }
     }
 
-    fun inaktiverBeskjed(varsel: Varsel) {
+    fun inaktiverBeskjedLokalt(varsel: Varsel) {
         require(varsel.type == Varsel.Type.BESKJED) {
             "Varsel er ikke av type ${Varsel.Type.BESKJED}, kan ikke inaktivere beskjed"
         }
         log.info("Inaktiverer beskjed ${varsel.id}")
         repository.upsert(varsel.copy(aktivTil = nowUTC()))
+    }
+
+    private fun inaktiverBeskjed(deltaker: HendelseDeltaker, sistBesokt: ZonedDateTime) {
+        val sisteBeskjed = repository.getSisteVarsel(deltaker.id, Varsel.Type.BESKJED).getOrNull() ?: return
+
+        if (besokTidligereEnnBeskjed(sistBesokt, sisteBeskjed)) {
+            return
+        }
+
+        if (sisteBeskjed.erAktiv) {
+            inaktiverVarsel(sisteBeskjed)
+        } else if (!sisteBeskjed.erSendt) {
+            repository.upsert(sisteBeskjed.copy(erSendt = true, aktivFra = nowUTC(), aktivTil = nowUTC()))
+            log.info("Inaktiverte varsel ${sisteBeskjed.id} som ikke var sendt til deltaker ${deltaker.id}")
+        }
+    }
+
+    private fun besokTidligereEnnBeskjed(sistBesokt: ZonedDateTime, sisteBeskjed: Varsel): Boolean {
+        val besokForSendt = sistBesokt.withZoneSameInstant(ZoneOffset.UTC) < sisteBeskjed.aktivFra && sisteBeskjed.erSendt
+        val besokForIkkeSent = sistBesokt.withZoneSameInstant(
+            ZoneOffset.UTC,
+        ) < sisteBeskjed.aktivFra.minusMinutes(BESKJED_FORSINKELSE_MINUTTER) && !sisteBeskjed.erSendt
+
+        return besokForSendt || besokForIkkeSent
     }
 
     fun get(varselId: UUID) = repository.get(varselId)
@@ -177,7 +206,7 @@ class VarselService(
 
 fun nowUTC(): ZonedDateTime = ZonedDateTime.now(ZoneId.of("Z"))
 
-fun nesteUtsendingstidspunkt() = nowUTC().plusMinutes(30)
+fun nesteUtsendingstidspunkt() = nowUTC().plusMinutes(VarselService.BESKJED_FORSINKELSE_MINUTTER)
 
 fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.AvbrytUtkast,
@@ -189,6 +218,7 @@ fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.EndreUtkast,
     is HendelseType.ForlengDeltakelse,
     is HendelseType.InnbyggerGodkjennUtkast,
+    is HendelseType.DeltakerSistBesokt,
     -> false
 
     is HendelseType.EndreSluttdato,
