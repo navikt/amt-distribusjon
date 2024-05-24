@@ -39,7 +39,7 @@ class VarselTest {
             val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
 
             varsel.aktivTil shouldBe null
-            varsel.tekst shouldBe oppgaveTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV))
+            varsel.tekst shouldBe oppgaveTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV, false))
             varsel.erSendt shouldBe true
             varsel.aktivFra shouldBeCloseTo nowUTC()
             varsel.deltakerId shouldBe hendelse.deltaker.id
@@ -74,6 +74,20 @@ class VarselTest {
     @Test
     fun `navGodkjennUtkast - innbyggers distribusjonskanal er ikke digital - oppretter ikke varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast(), distribusjonskanal = Distribusjonskanal.PRINT)
+
+        app.varselService.handleHendelse(hendelse)
+
+        val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrNull()
+        varsel shouldBe null
+    }
+
+    @Test
+    fun `navGodkjennUtkast - innbyggers er under manuell oppfolging - oppretter ikke varsel`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(
+            HendelseTypeData.navGodkjennUtkast(),
+            distribusjonskanal = Distribusjonskanal.SDP,
+            manuellOppfolging = true,
+        )
 
         app.varselService.handleHendelse(hendelse)
 
@@ -260,7 +274,7 @@ class VarselTest {
         val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrThrow()
 
         varsel.aktivTil!! shouldBeCloseTo nowUTC().plus(VarselService.beskjedAktivLengde)
-        varsel.tekst shouldBe beskjedTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV))
+        varsel.tekst shouldBe beskjedTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV, false))
         varsel.aktivFra shouldBeCloseTo aktivFra
         varsel.deltakerId shouldBe hendelse.deltaker.id
         varsel.personident shouldBe hendelse.deltaker.personident
@@ -309,4 +323,4 @@ fun assertProducedBeskjed(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_
     }
 }
 
-fun HendelseDto.skalVarslesEksternt() = this.toModel(Distribusjonskanal.DITT_NAV).skalVarslesEksternt()
+fun HendelseDto.skalVarslesEksternt() = this.toModel(Distribusjonskanal.DITT_NAV, false).skalVarslesEksternt()

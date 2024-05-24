@@ -11,12 +11,13 @@ data class HendelseDto(
     val ansvarlig: HendelseAnsvarlig,
     val payload: HendelseType,
 ) {
-    fun toModel(distribusjonskanal: Distribusjonskanal) = Hendelse(
+    fun toModel(distribusjonskanal: Distribusjonskanal, manuellOppfolging: Boolean) = Hendelse(
         id,
         opprettet,
         deltaker,
         ansvarlig,
         payload,
         distribusjonskanal,
+        manuellOppfolging,
     )
 }

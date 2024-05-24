@@ -1,7 +1,7 @@
 package no.nav.amt.distribusjon.journalforing
 
+import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
-import no.nav.amt.distribusjon.distribusjonskanal.skalDistribueresDigitalt
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
@@ -29,7 +29,7 @@ class JournalforingService(
 
     suspend fun handleHendelse(hendelse: Hendelse) {
         val journalforingstatus = journalforingstatusRepository.get(hendelse.id)
-        if (hendelseErBehandlet(journalforingstatus, hendelse.distribusjonskanal)) {
+        if (hendelseErBehandlet(journalforingstatus, hendelse.distribusjonskanal, hendelse.manuellOppfolging)) {
             log.info("Hendelse med id ${hendelse.id} for deltaker ${hendelse.deltaker.id} er allerede behandlet")
             return
         }
@@ -216,7 +216,7 @@ class JournalforingService(
             return
         }
         val nyesteHendelse = hendelser.maxBy { it.opprettet }
-        if (!nyesteHendelse.distribusjonskanal.skalDistribueresDigitalt()) {
+        if (!DigitalBrukerService.skalDistribueresDigitalt(nyesteHendelse.distribusjonskanal, nyesteHendelse.manuellOppfolging)) {
             val bestillingsId = dokdistfordelingClient.distribuerJournalpost(journalpostId)
             hendelser.forEach {
                 journalforingstatusRepository.upsert(
@@ -230,7 +230,14 @@ class JournalforingService(
         }
     }
 
-    private fun hendelseErBehandlet(journalforingstatus: Journalforingstatus?, distribusjonskanal: Distribusjonskanal): Boolean {
-        return journalforingstatus != null && journalforingstatus.erJournalfort() && journalforingstatus.erDistribuert(distribusjonskanal)
+    private fun hendelseErBehandlet(
+        journalforingstatus: Journalforingstatus?,
+        distribusjonskanal: Distribusjonskanal,
+        manuellOppfolging: Boolean,
+    ): Boolean {
+        return journalforingstatus != null && journalforingstatus.erJournalfort() && journalforingstatus.erDistribuert(
+            distribusjonskanal,
+            manuellOppfolging,
+        )
     }
 }

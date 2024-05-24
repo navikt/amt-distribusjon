@@ -96,7 +96,15 @@ class TestApp {
         val consumerId = UUID.randomUUID().toString()
         val kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
         val consumers = listOf(
-            HendelseConsumer(varselService, journalforingService, hendelseRepository, dokdistkanalClient, consumerId, kafkaConfig),
+            HendelseConsumer(
+                varselService,
+                journalforingService,
+                hendelseRepository,
+                dokdistkanalClient,
+                veilarboppfolgingClient,
+                consumerId,
+                kafkaConfig,
+            ),
             VarselHendelseConsumer(varselService, consumerId, kafkaConfig),
         )
 

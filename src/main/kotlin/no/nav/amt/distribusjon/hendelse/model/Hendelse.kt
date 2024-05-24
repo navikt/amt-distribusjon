@@ -11,6 +11,7 @@ data class Hendelse(
     val ansvarlig: HendelseAnsvarlig,
     val payload: HendelseType,
     val distribusjonskanal: Distribusjonskanal,
+    val manuellOppfolging: Boolean,
 ) {
     fun erEndringsVedtakSomSkalJournalfores(): Boolean {
         return when (payload) {

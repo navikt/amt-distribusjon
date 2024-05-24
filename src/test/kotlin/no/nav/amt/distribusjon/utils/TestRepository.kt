@@ -25,8 +25,8 @@ object TestRepository {
     fun insert(hendelse: Hendelse) = Database.query {
         val sql =
             """
-            insert into hendelse (id, deltaker_id, deltaker, ansvarlig, payload, distribusjonskanal, created_at)
-            values(:id, :deltaker_id, :deltaker, :ansvarlig, :payload, :distribusjonskanal, :created_at)
+            insert into hendelse (id, deltaker_id, deltaker, ansvarlig, payload, distribusjonskanal, manuelloppfolging, created_at)
+            values(:id, :deltaker_id, :deltaker, :ansvarlig, :payload, :distribusjonskanal, :manuelloppfolging, :created_at)
             on conflict (id) do nothing
             """.trimIndent()
 
@@ -38,6 +38,7 @@ object TestRepository {
             "payload" to toPGObject(hendelse.payload),
             "created_at" to hendelse.opprettet,
             "distribusjonskanal" to hendelse.distribusjonskanal.name,
+            "manuelloppfolging" to hendelse.manuellOppfolging,
         )
 
         it.update(queryOf(sql, params))

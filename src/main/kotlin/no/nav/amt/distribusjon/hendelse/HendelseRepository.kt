@@ -20,6 +20,7 @@ class HendelseRepository {
         payload = objectMapper.readValue(row.string("payload")),
         opprettet = row.localDateTime("h.created_at"),
         distribusjonskanal = row.string("distribusjonskanal").let { Distribusjonskanal.valueOf(it) },
+        manuellOppfolging = row.boolean("manuelloppfolging"),
     )
 
     private fun rowmapperHendelseMedJournalforingstatus(row: Row) = HendelseMedJournalforingstatus(
@@ -30,6 +31,7 @@ class HendelseRepository {
             payload = objectMapper.readValue(row.string("payload")),
             opprettet = row.localDateTime("h.created_at"),
             distribusjonskanal = row.string("distribusjonskanal").let { Distribusjonskanal.valueOf(it) },
+            manuellOppfolging = row.boolean("manuelloppfolging"),
         ),
         journalforingstatus = Journalforingstatus(
             hendelseId = row.uuid("id"),
@@ -41,8 +43,8 @@ class HendelseRepository {
     fun insert(hendelse: Hendelse) = Database.query {
         val sql =
             """
-            insert into hendelse (id, deltaker_id, deltaker, ansvarlig, payload, distribusjonskanal)
-            values(:id, :deltaker_id, :deltaker, :ansvarlig, :payload, :distribusjonskanal)
+            insert into hendelse (id, deltaker_id, deltaker, ansvarlig, payload, distribusjonskanal, manuelloppfolging)
+            values(:id, :deltaker_id, :deltaker, :ansvarlig, :payload, :distribusjonskanal, :manuelloppfolging)
             on conflict (id) do nothing
             """.trimIndent()
 
@@ -53,6 +55,7 @@ class HendelseRepository {
             "ansvarlig" to toPGObject(hendelse.ansvarlig),
             "payload" to toPGObject(hendelse.payload),
             "distribusjonskanal" to hendelse.distribusjonskanal.name,
+            "manuelloppfolging" to hendelse.manuellOppfolging,
         )
 
         it.update(queryOf(sql, params))
@@ -67,6 +70,7 @@ class HendelseRepository {
                 h.payload as "payload",
                 h.created_at as "h.created_at",
                 h.distribusjonskanal as "distribusjonskanal",
+                h.manuelloppfolging as "manuelloppfolging",
                 js.journalpost_id as "journalpost_id",
                 js.bestillingsid as "bestillingsid"
             from hendelse h

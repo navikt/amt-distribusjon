@@ -101,7 +101,7 @@ fun Application.module() {
     )
 
     val consumers = listOf(
-        HendelseConsumer(varselService, journalforingService, hendelseRepository, dokdistkanalClient),
+        HendelseConsumer(varselService, journalforingService, hendelseRepository, dokdistkanalClient, veilarboppfolgingClient),
         VarselHendelseConsumer(varselService),
     )
     consumers.forEach { it.run() }
