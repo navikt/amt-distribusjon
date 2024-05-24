@@ -1,7 +1,7 @@
 package no.nav.amt.distribusjon.journalforing.model
 
+import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
-import no.nav.amt.distribusjon.distribusjonskanal.skalDistribueresDigitalt
 import java.util.UUID
 
 data class Journalforingstatus(
@@ -13,8 +13,8 @@ data class Journalforingstatus(
         return journalpostId != null
     }
 
-    fun erDistribuert(distribusjonskanal: Distribusjonskanal): Boolean {
-        return if (distribusjonskanal.skalDistribueresDigitalt()) {
+    fun erDistribuert(distribusjonskanal: Distribusjonskanal, erUnderManuellOppfolging: Boolean): Boolean {
+        return if (DigitalBrukerService.skalDistribueresDigitalt(distribusjonskanal, erUnderManuellOppfolging)) {
             true
         } else {
             bestillingsId != null

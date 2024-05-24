@@ -12,6 +12,7 @@ import no.nav.amt.distribusjon.kafka.config.KafkaConfig
 import no.nav.amt.distribusjon.kafka.config.KafkaConfigImpl
 import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
 import no.nav.amt.distribusjon.varsel.VarselService
+import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.slf4j.LoggerFactory
@@ -22,6 +23,7 @@ class HendelseConsumer(
     private val journalforingService: JournalforingService,
     private val hendelseRepository: HendelseRepository,
     private val dokdistkanalClient: DokdistkanalClient,
+    private val veilarboppfolgingClient: VeilarboppfolgingClient,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
 ) : Consumer<UUID, String> {
@@ -42,7 +44,8 @@ class HendelseConsumer(
         log.info("Mottatt hendelse ${hendelseDto.id} for deltaker ${hendelseDto.deltaker.id}")
 
         val distribusjonskanal = dokdistkanalClient.bestemDistribusjonskanal(hendelseDto.deltaker.personident, hendelseDto.deltaker.id)
-        val hendelse = hendelseDto.toModel(distribusjonskanal)
+        val erUnderManuellOppfolging = veilarboppfolgingClient.erUnderManuellOppfolging(hendelseDto.deltaker.personident)
+        val hendelse = hendelseDto.toModel(distribusjonskanal, erUnderManuellOppfolging)
 
         hendelseRepository.insert(hendelse)
 

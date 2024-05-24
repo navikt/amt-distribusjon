@@ -68,6 +68,23 @@ class JournalforingServiceTest {
     }
 
     @Test
+    fun `handleHendelse - NavGodkjennUtkast, manuell oppfolging - sender brev`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(
+            HendelseTypeData.navGodkjennUtkast(),
+            distribusjonskanal = Distribusjonskanal.SDP,
+            manuellOppfolging = true,
+        )
+
+        app.hendelseRepository.insert(hendelse)
+
+        app.journalforingService.handleHendelse(hendelse)
+
+        val status = app.journalforingstatusRepository.get(hendelse.id)
+        status!!.journalpostId shouldNotBe null
+        status.bestillingsId shouldNotBe null
+    }
+
+    @Test
     fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort, skal ikke sende brev - ignorerer hendelse`() = integrationTest {
             app,
             _,
@@ -102,7 +119,7 @@ class JournalforingServiceTest {
 
         assertThrows(IllegalArgumentException::class.java) {
             runBlocking {
-                app.journalforingService.handleHendelse(hendelse.toModel(Distribusjonskanal.DITT_NAV))
+                app.journalforingService.handleHendelse(hendelse.toModel(Distribusjonskanal.DITT_NAV, false))
             }
         }
     }

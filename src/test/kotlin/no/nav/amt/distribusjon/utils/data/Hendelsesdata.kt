@@ -34,13 +34,14 @@ object Hendelsesdata {
         ansvarlig: HendelseAnsvarlig = ansvarligNavVeileder(),
         opprettet: LocalDateTime = LocalDateTime.now(),
         distribusjonskanal: Distribusjonskanal = Distribusjonskanal.DITT_NAV,
+        manuellOppfolging: Boolean = false,
     ) = hendelseDto(
         payload,
         id,
         deltaker,
         ansvarlig,
         opprettet,
-    ).toModel(distribusjonskanal)
+    ).toModel(distribusjonskanal, manuellOppfolging)
 
     fun ansvarligNavVeileder(
         id: UUID = UUID.randomUUID(),

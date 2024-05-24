@@ -2,7 +2,7 @@ package no.nav.amt.distribusjon.varsel
 
 import io.getunleash.Unleash
 import no.nav.amt.distribusjon.Environment
-import no.nav.amt.distribusjon.distribusjonskanal.skalDistribueresDigitalt
+import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
@@ -32,7 +32,7 @@ class VarselService(
             return
         }
 
-        if (!hendelse.distribusjonskanal.skalDistribueresDigitalt()) return
+        if (!DigitalBrukerService.skalDistribueresDigitalt(hendelse.distribusjonskanal, hendelse.manuellOppfolging)) return
 
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> opprettPameldingsoppgave(hendelse)
