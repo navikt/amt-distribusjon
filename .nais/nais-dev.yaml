@@ -42,6 +42,9 @@ spec:
   kafka:
     pool: nav-dev
   accessPolicy:
+    inbound:
+      rules:
+        - application: amt-deltaker-bff
     outbound:
       rules:
         - application: amt-pdfgen
