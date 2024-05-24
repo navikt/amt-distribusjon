@@ -190,7 +190,7 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
 }
 
 private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?): String {
-    val dagerPerUkeTekst = dagerPerUkeTekst(dagerPerUke)
+    val dagerPerUkeTekst = dagerPerUkeTekst(dagerPerUke)?.lowercase()
     if (dagerPerUkeTekst != null) {
         return "${deltakelsesprosent ?: 100} % $dagerPerUkeTekst"
     }
@@ -200,9 +200,9 @@ private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?):
 private fun dagerPerUkeTekst(dagerPerUke: Int?): String? {
     if (dagerPerUke != null) {
         return if (dagerPerUke == 1) {
-            "$dagerPerUke dag i uka"
+            "Fordelt på $dagerPerUke dag i uka"
         } else {
-            "$dagerPerUke dager i uka"
+            "Fordelt på $dagerPerUke dager i uka"
         }
     }
     return null
