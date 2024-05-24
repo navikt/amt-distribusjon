@@ -58,6 +58,7 @@ data class BestemDistribusjonskanalRequest(
     val brukerId: String,
     val mottakerId: String = brukerId,
     val tema: String = "OPP",
+    val erArkivert: Boolean = true, // hvis denne utelates eller settes til false så defaulter responsen til PRINT
 )
 
 data class BestemDistribusjonskanalResponse(
