@@ -53,7 +53,7 @@ class VarselHendelseConsumer(
 
             is InaktivertVarselHendelse -> {
                 if (hendelse.varseltype == Varseltype.Beskjed) {
-                    varselService.inaktiverBeskjed(varsel)
+                    varselService.inaktiverBeskjedLokalt(varsel)
                 }
             }
 

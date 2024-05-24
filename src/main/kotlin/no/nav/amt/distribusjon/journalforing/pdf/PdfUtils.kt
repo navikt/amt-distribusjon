@@ -145,6 +145,7 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
         is HendelseType.EndreUtkast,
         is HendelseType.OpprettUtkast,
         is HendelseType.AvbrytUtkast,
+        is HendelseType.DeltakerSistBesokt,
         -> throw IllegalArgumentException("Skal ikke journalføre $hendelseType som endringsvedtak")
         is HendelseType.AvsluttDeltakelse -> EndringDto.AvsluttDeltakelse(
             aarsak = hendelseType.aarsak.visningsnavn(),

@@ -30,6 +30,7 @@ data class Hendelse(
             is HendelseType.EndreUtkast,
             is HendelseType.OpprettUtkast,
             is HendelseType.AvbrytUtkast,
+            is HendelseType.DeltakerSistBesokt,
             -> false
         }
     }

@@ -58,6 +58,7 @@ class JournalforingService(
             is HendelseType.EndreUtkast,
             is HendelseType.OpprettUtkast,
             is HendelseType.AvbrytUtkast,
+            is HendelseType.DeltakerSistBesokt,
             -> {
             }
         }
@@ -71,6 +72,7 @@ class JournalforingService(
         if (journalforingstatus == null || !journalforingstatus.erJournalfort()) {
             val veileder = when (hendelse.ansvarlig) {
                 is HendelseAnsvarlig.NavVeileder -> hendelse.ansvarlig
+                is HendelseAnsvarlig.Deltaker -> throw IllegalArgumentException("Deltaker kan ikke være ansvarlig for vedtaket")
             }
             val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
             val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
@@ -165,6 +167,7 @@ class JournalforingService(
 
         val veileder = when (nyesteHendelse.ansvarlig) {
             is HendelseAnsvarlig.NavVeileder -> nyesteHendelse.ansvarlig
+            is HendelseAnsvarlig.Deltaker -> throw IllegalArgumentException("Deltaker kan ikke være ansvarlig for vedtaket")
         }
         val navBruker = amtPersonClient.hentNavBruker(nyesteHendelse.deltaker.personident)
         val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()

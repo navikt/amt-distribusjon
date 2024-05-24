@@ -171,6 +171,87 @@ class VarselTest {
         AsyncUtils.eventually { assertNyBeskjed(app, hendelse, nesteUtsendingstidspunkt()) }
     }
 
+    @Test
+    fun `deltakerSistBesokt - aktiv beskjed - inaktiverer`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
+        val varsel = Varselsdata.varsel(
+            Varsel.Type.BESKJED,
+            deltakerId = hendelse.deltaker.id,
+            aktivFra = nowUTC().minusMinutes(1),
+            erSendt = true,
+        )
+
+        app.varselRepository.upsert(varsel)
+        produce(hendelse)
+
+        AsyncUtils.eventually {
+            val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
+            oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+        }
+        assertProducedInaktiver(varsel.id)
+    }
+
+    @Test
+    fun `deltakerSistBesokt - beskjed venter på å bli sendt - inaktiverer`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
+        val varsel = Varselsdata.varsel(
+            Varsel.Type.BESKJED,
+            deltakerId = hendelse.deltaker.id,
+            aktivFra = nowUTC().plusMinutes(10),
+            erSendt = false,
+        )
+
+        app.varselRepository.upsert(varsel)
+        produce(hendelse)
+
+        AsyncUtils.eventually {
+            val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
+            oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
+            oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+            oppdatertVarsel.erSendt shouldBe true
+        }
+    }
+
+    @Test
+    fun `deltakerSistBesokt - siste besøk er før beskjed var sendt - inaktiverer ikke`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.sistBesokt(sistBesokt = ZonedDateTime.now().minusMinutes(10)))
+        val varsel = Varselsdata.varsel(
+            Varsel.Type.BESKJED,
+            deltakerId = hendelse.deltaker.id,
+            aktivFra = nowUTC(),
+            aktivTil = nowUTC().plus(VarselService.beskjedAktivLengde),
+            erSendt = true,
+        )
+
+        app.varselRepository.upsert(varsel)
+        app.varselService.handleHendelse(hendelse)
+
+        val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
+        oppdatertVarsel.aktivFra shouldBeCloseTo varsel.aktivFra
+        oppdatertVarsel.aktivTil!! shouldBeCloseTo varsel.aktivTil
+        oppdatertVarsel.erSendt shouldBe true
+    }
+
+    @Test
+    fun `deltakerSistBesokt - siste besøk er før beskjed - inaktiverer ikke`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.sistBesokt(sistBesokt = ZonedDateTime.now().minusMinutes(10)))
+        val varsel = Varselsdata.varsel(
+            Varsel.Type.BESKJED,
+            deltakerId = hendelse.deltaker.id,
+            aktivFra = nowUTC().plusMinutes(30),
+            aktivTil = nowUTC().plus(VarselService.beskjedAktivLengde),
+            erSendt = false,
+        )
+
+        app.varselRepository.upsert(varsel)
+        app.varselService.handleHendelse(hendelse)
+
+        val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
+        oppdatertVarsel.aktivFra shouldBeCloseTo varsel.aktivFra
+        oppdatertVarsel.aktivTil!! shouldBeCloseTo varsel.aktivTil
+        oppdatertVarsel.erSendt shouldBe false
+    }
+
     private fun assertNyBeskjed(
         app: TestApp,
         hendelse: HendelseDto,

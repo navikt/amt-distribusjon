@@ -3,6 +3,7 @@ package no.nav.amt.distribusjon.hendelse.model
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
@@ -79,6 +80,10 @@ sealed interface HendelseType {
 
     data class EndreSluttarsak(
         val aarsak: Aarsak,
+    ) : HendelseType
+
+    data class DeltakerSistBesokt(
+        val sistBesokt: ZonedDateTime,
     ) : HendelseType
 }
 

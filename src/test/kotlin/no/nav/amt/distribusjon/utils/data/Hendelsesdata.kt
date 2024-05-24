@@ -10,6 +10,7 @@ import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.util.UUID
 
 object Hendelsesdata {
@@ -115,6 +116,8 @@ object HendelseTypeData {
         HendelseType.AvsluttDeltakelse(aarsak, sluttdato)
 
     fun endreSluttarsak(aarsak: Aarsak = Aarsak(Aarsak.Type.ANNET, "Noe annet")) = HendelseType.EndreSluttarsak(aarsak)
+
+    fun sistBesokt(sistBesokt: ZonedDateTime = ZonedDateTime.now()) = HendelseType.DeltakerSistBesokt(sistBesokt)
 
     fun utkast(
         startdato: LocalDate? = null,
