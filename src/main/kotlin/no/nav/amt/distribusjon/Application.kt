@@ -27,10 +27,11 @@ import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.job.EndringsvedtakJob
-import no.nav.amt.distribusjon.journalforing.job.leaderelection.LeaderElection
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
-import no.nav.amt.distribusjon.varsel.VarselJob
+import no.nav.amt.distribusjon.utils.job.JobManager
+import no.nav.amt.distribusjon.utils.job.leaderelection.LeaderElection
+import no.nav.amt.distribusjon.varsel.VarselJobService
 import no.nav.amt.distribusjon.varsel.VarselProducer
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
@@ -110,11 +111,15 @@ fun Application.module() {
     configureRouting(digitalBrukerService)
     configureMonitoring()
 
-    val endringsvedtakJob = EndringsvedtakJob(leaderElection, attributes, hendelseRepository, journalforingService)
+    val jobManager = JobManager(leaderElection, ::isReady)
+
+    val endringsvedtakJob = EndringsvedtakJob(jobManager, hendelseRepository, journalforingService)
     endringsvedtakJob.startJob()
 
-    val varselJob = VarselJob(leaderElection, attributes, varselService)
-    varselJob.startJob()
+    val varselJobService = VarselJobService(jobManager, varselService)
+    varselJobService.startJobs()
 
     attributes.put(isReadyKey, true)
 }
+
+fun Application.isReady() = attributes.getOrNull(isReadyKey) == true
