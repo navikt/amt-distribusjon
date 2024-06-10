@@ -62,7 +62,15 @@ data class Varsel(
         produsent = produsent()
 
         if (skalVarsleEksternt) {
-            eksternVarsling = EksternVarslingBestilling(prefererteKanaler = listOf(EksternKanal.SMS))
+            eksternVarsling = EksternVarslingBestilling(prefererteKanaler = getPrefererteKanaler(varseltype))
+        }
+    }
+
+    private fun getPrefererteKanaler(varseltype: Varseltype): List<EksternKanal> {
+        return if (varseltype == Varseltype.Oppgave) {
+            listOf(EksternKanal.SMS)
+        } else {
+            listOf(EksternKanal.EPOST)
         }
     }
 
