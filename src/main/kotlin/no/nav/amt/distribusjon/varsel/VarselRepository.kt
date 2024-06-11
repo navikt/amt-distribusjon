@@ -19,7 +19,7 @@ class VarselRepository {
         deltakerId = row.uuid("deltaker_id"),
         personident = row.string("personident"),
         tekst = row.string("tekst"),
-        erEksterntVarsel = row.boolean("skal_varsle_eksternt"),
+        erEksterntVarsel = row.boolean("er_eksternt_varsel"),
         revarselForVarsel = row.uuidOrNull("revarsel_for_varsel"),
     )
 
@@ -36,7 +36,7 @@ class VarselRepository {
                 aktiv_til, 
                 deltaker_id, 
                 personident, 
-                skal_varsle_eksternt, 
+                er_eksternt_varsel, 
                 skal_revarsles,
                 revarsel_for_varsel
             )
@@ -50,7 +50,7 @@ class VarselRepository {
                 :aktiv_til, 
                 :deltaker_id, 
                 :personident, 
-                :skal_varsle_eksternt, 
+                :er_eksternt_varsel, 
                 :skal_revarsles,
                 :revarsel_for_varsel
             )
@@ -76,7 +76,7 @@ class VarselRepository {
             "aktiv_til" to varsel.aktivTil,
             "deltaker_id" to varsel.deltakerId,
             "personident" to varsel.personident,
-            "skal_varsle_eksternt" to varsel.erEksterntVarsel,
+            "er_eksternt_varsel" to varsel.erEksterntVarsel,
             "skal_revarsles" to varsel.skalRevarsles,
             "revarsel_for_varsel" to varsel.revarselForVarsel,
         )

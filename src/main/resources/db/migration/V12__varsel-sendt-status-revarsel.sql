@@ -10,3 +10,5 @@ where aktiv_til at time zone 'UTC'> current_timestamp at time zone 'UTC';
 alter table varsel alter column status drop default;
 
 alter table varsel drop column er_sendt;
+
+alter table varsel rename column skal_varsle_eksternt to er_eksternt_varsel;
