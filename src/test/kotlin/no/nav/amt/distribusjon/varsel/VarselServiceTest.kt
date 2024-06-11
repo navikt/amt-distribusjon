@@ -7,6 +7,7 @@ import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.data.Varselsdata
 import no.nav.amt.distribusjon.utils.shouldBeCloseTo
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.util.UUID
 
@@ -143,5 +144,33 @@ class VarselServiceTest {
         ikkeOppdatertVarsel.revarsles!! shouldBeCloseTo skalIkkeRevarsles.revarsles!!
         ikkeOppdatertVarsel.status shouldBe skalIkkeRevarsles.status
         ikkeOppdatertVarsel.aktivTil!! shouldBeCloseTo skalIkkeRevarsles.aktivTil
+    }
+
+    @Test
+    fun `utlopBeskjed - varsler kan ikke utløpes - feiler`() = integrationTest { app, _ ->
+        val ugyldigeVarsler = listOf(
+            Varselsdata.varsel(Varsel.Type.OPPGAVE),
+            Varselsdata.beskjed(status = Varsel.Status.INAKTIVERT),
+            Varselsdata.beskjed(status = Varsel.Status.AKTIV, aktivTil = nowUTC().plusMinutes(1)),
+        )
+
+        ugyldigeVarsler.forEach {
+            assertThrows(IllegalArgumentException::class.java) {
+                app.varselService.utlopBeskjed(it)
+            }
+        }
+    }
+
+    @Test
+    fun `utlopBeskjed - varsel er utløpt - utløper`() = integrationTest { app, _ ->
+        val utloptBeskjed = Varselsdata.beskjed(
+            Varsel.Status.AKTIV,
+            aktivFra = nowUTC().minusDays(21),
+            aktivTil = nowUTC().minusMinutes(1),
+        )
+
+        app.varselService.utlopBeskjed(utloptBeskjed)
+
+        app.varselRepository.get(utloptBeskjed.id).getOrThrow().status shouldBe Varsel.Status.UTLOPT
     }
 }

@@ -10,6 +10,7 @@ import no.nav.amt.distribusjon.kafka.config.KafkaConfigImpl
 import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import no.nav.amt.distribusjon.varsel.nowUTC
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -50,7 +51,13 @@ class VarselHendelseConsumer(
                 log.info("Ekstern varsling for varsel ${varsel.id} er ${hendelse.status}")
             }
 
-            is InaktivertVarselHendelse,
+            is InaktivertVarselHendelse -> {
+                if (varsel.type == Varsel.Type.OPPGAVE || !varsel.erAktiv) return
+
+                if (varsel.aktivTil != null && varsel.aktivTil <= nowUTC()) {
+                    varselService.utlopBeskjed(varsel)
+                }
+            }
             is OpprettetVarselHendelse,
             is SlettetVarselHendelse,
             -> {

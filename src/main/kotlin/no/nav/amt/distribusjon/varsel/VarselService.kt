@@ -159,11 +159,22 @@ class VarselService(
                 ferdigstillSendtVarsel(sisteBeskjed, Varsel.Status.UTFORT)
             }
 
-            Varsel.Status.UTFORT,
-            Varsel.Status.INAKTIVERT,
-            -> {
-            }
+            else -> {}
         }
+    }
+
+    fun utlopBeskjed(varsel: Varsel) {
+        require(varsel.type == Varsel.Type.BESKJED && varsel.erAktiv) {
+            "Varsel må være en aktiv beskjed for å kunne utløpe. Varsel: ${varsel.id}"
+        }
+
+        require(varsel.aktivTil != null && varsel.aktivTil <= nowUTC()) {
+            "Beskjed sin aktivTil må være passert for å kunne utløpe, Varsel: ${varsel.id}"
+        }
+
+        repository.upsert(varsel.copy(status = Varsel.Status.UTLOPT))
+
+        log.info("Varsel ${varsel.id} sin aktiv periode er utløpt")
     }
 
     private fun erBesokTidligereEnnBeskjed(sistBesokt: ZonedDateTime, sisteBeskjed: Varsel): Boolean {

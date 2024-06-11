@@ -118,6 +118,7 @@ data class Varsel(
         AKTIV,
         UTFORT,
         INAKTIVERT,
+        UTLOPT,
     }
 
     fun toOppgaveDto() = VarselActionBuilder.opprett {
