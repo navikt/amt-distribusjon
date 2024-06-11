@@ -27,7 +27,6 @@ data class Varsel(
     val deltakerId: UUID,
     val personident: String,
     val tekst: String,
-    val sendt: ZonedDateTime?,
 ) {
     companion object {
         const val BESKJED_FORSINKELSE_MINUTTER = 30L
@@ -46,7 +45,6 @@ data class Varsel(
             personident = hendelse.deltaker.personident,
             tekst = oppgaveTekst(hendelse),
             revarselForVarsel = null,
-            sendt = null,
         )
 
         fun nyBeskjed(hendelse: Hendelse) = Varsel(
@@ -61,7 +59,6 @@ data class Varsel(
             personident = hendelse.deltaker.personident,
             tekst = beskjedTekst(hendelse),
             revarselForVarsel = null,
-            sendt = null,
         )
 
         fun revarsel(varsel: Varsel): Varsel {
@@ -75,7 +72,6 @@ data class Varsel(
                 aktivFra = nesteUtsendingstidspunkt(),
                 aktivTil = nesteUtsendingstidspunkt().plus(beskjedAktivLengde),
                 revarselForVarsel = varsel.id,
-                sendt = null,
             )
         }
 
@@ -86,9 +82,7 @@ data class Varsel(
 
     val erAktiv: Boolean get() = status == Status.AKTIV
 
-    val venter: Boolean get() = status == Status.VENTER_PA_UTSENDELSE
-
-    val erSendt: Boolean get() = sendt != null
+    val venterPaUsendelse: Boolean get() = status == Status.VENTER_PA_UTSENDELSE
 
     val kanRevarsles: Boolean
         get() {

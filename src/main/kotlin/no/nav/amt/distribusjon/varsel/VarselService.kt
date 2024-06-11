@@ -67,7 +67,7 @@ class VarselService(
     }
 
     private fun slaSammenMedVentendeVarsel(nyttVarsel: Varsel): Varsel {
-        val varsel = repository.getIkkeSendt(nyttVarsel.deltakerId).fold(
+        val varsel = repository.getVentendeVarsel(nyttVarsel.deltakerId).fold(
             onSuccess = { it.merge(nyttVarsel) },
             onFailure = { nyttVarsel },
         )
@@ -91,7 +91,7 @@ class VarselService(
     private fun sendVarsel(varsel: Varsel) {
         inaktiverTidligereBeskjed(varsel.deltakerId)
 
-        val oppdatertVarsel = varsel.copy(aktivFra = nowUTC(), status = Varsel.Status.AKTIV, sendt = nowUTC())
+        val oppdatertVarsel = varsel.copy(aktivFra = nowUTC(), status = Varsel.Status.AKTIV)
         repository.upsert(oppdatertVarsel)
 
         when (varsel.type) {
@@ -161,7 +161,7 @@ class VarselService(
         val besokForSendt = sistBesokt.withZoneSameInstant(ZoneOffset.UTC) < sisteBeskjed.aktivFra && sisteBeskjed.erAktiv
         val besokForIkkeSendt = sistBesokt.withZoneSameInstant(
             ZoneId.of("Z"),
-        ) < sisteBeskjed.aktivFra.minusMinutes(Varsel.BESKJED_FORSINKELSE_MINUTTER) && sisteBeskjed.venter
+        ) < sisteBeskjed.aktivFra.minusMinutes(Varsel.BESKJED_FORSINKELSE_MINUTTER) && sisteBeskjed.venterPaUsendelse
 
         return besokForSendt || besokForIkkeSendt
     }
@@ -169,7 +169,7 @@ class VarselService(
     fun get(varselId: UUID) = repository.get(varselId)
 
     fun sendVentendeVarsler() {
-        val varsler = repository.getVentende()
+        val varsler = repository.getVarslerSomSkalSendes()
         require(varsler.size == varsler.distinctBy { it.deltakerId }.size) {
             "Det finnes flere enn et ventende varsel for en eller flere deltakere"
         }

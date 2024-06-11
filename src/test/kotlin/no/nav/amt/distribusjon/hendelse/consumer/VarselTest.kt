@@ -38,7 +38,6 @@ class VarselTest {
 
             varsel.aktivTil shouldBe null
             varsel.tekst shouldBe oppgaveTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV, false))
-            varsel.erSendt shouldBe true
             varsel.aktivFra shouldBeCloseTo nowUTC()
             varsel.deltakerId shouldBe hendelse.deltaker.id
             varsel.personident shouldBe hendelse.deltaker.personident
@@ -101,7 +100,6 @@ class VarselTest {
             Varsel.Status.AKTIV,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
-            sendt = nowUTC().minusDays(1),
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
@@ -124,7 +122,6 @@ class VarselTest {
             Varsel.Status.AKTIV,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
-            sendt = nowUTC().minusDays(1),
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
@@ -157,7 +154,6 @@ class VarselTest {
             Varsel.Status.AKTIV,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
-            sendt = nowUTC().minusDays(1),
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
@@ -194,7 +190,6 @@ class VarselTest {
             Varsel.Status.AKTIV,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC().minusMinutes(1),
-            sendt = nowUTC().minusMinutes(1),
         )
 
         app.varselRepository.upsert(varsel)
@@ -225,7 +220,6 @@ class VarselTest {
             oppdatertVarsel.status shouldBe Varsel.Status.UTFORT
             oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
             oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
-            oppdatertVarsel.erSendt shouldBe false
         }
     }
 
@@ -238,7 +232,6 @@ class VarselTest {
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC(),
             aktivTil = nowUTC().plus(Varsel.beskjedAktivLengde),
-            sendt = nowUTC(),
         )
 
         app.varselRepository.upsert(varsel)
@@ -248,7 +241,6 @@ class VarselTest {
         oppdatertVarsel.status shouldBe Varsel.Status.AKTIV
         oppdatertVarsel.aktivFra shouldBeCloseTo varsel.aktivFra
         oppdatertVarsel.aktivTil!! shouldBeCloseTo varsel.aktivTil
-        oppdatertVarsel.erSendt shouldBe true
     }
 
     @Test
@@ -268,7 +260,6 @@ class VarselTest {
         val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
         oppdatertVarsel.aktivFra shouldBeCloseTo varsel.aktivFra
         oppdatertVarsel.aktivTil!! shouldBeCloseTo varsel.aktivTil
-        oppdatertVarsel.erSendt shouldBe false
     }
 
     private fun assertNyBeskjed(
@@ -285,9 +276,8 @@ class VarselTest {
         varsel.personident shouldBe hendelse.deltaker.personident
 
         varsel.erEksterntVarsel shouldBe hendelse.skalVarslesEksternt()
-        varsel.erSendt shouldBe (aktivFra <= nowUTC())
 
-        if (varsel.erSendt) {
+        if (varsel.erAktiv) {
             assertProducedBeskjed(varsel.id)
         }
     }

@@ -17,7 +17,6 @@ object Varselsdata {
         personident: String = randomIdent(),
         tekst: String = "Varselstekst",
         erEksterntVarsel: Boolean = type == Varsel.Type.OPPGAVE,
-        sendt: ZonedDateTime? = null,
         revarselForVarsel: UUID? = null,
     ) = Varsel(
         id,
@@ -31,6 +30,5 @@ object Varselsdata {
         deltakerId,
         personident,
         tekst,
-        sendt,
     )
 }

@@ -20,7 +20,6 @@ class VarselRepository {
         personident = row.string("personident"),
         tekst = row.string("tekst"),
         erEksterntVarsel = row.boolean("skal_varsle_eksternt"),
-        sendt = row.zonedDateTimeOrNull("sendt")?.withZoneSameInstant(ZoneId.of("Z")),
         revarselForVarsel = row.uuidOrNull("revarsel_for_varsel"),
     )
 
@@ -38,8 +37,6 @@ class VarselRepository {
                 deltaker_id, 
                 personident, 
                 skal_varsle_eksternt, 
-                er_sendt,
-                sendt,
                 skal_revarsles,
                 revarsel_for_varsel
             )
@@ -54,8 +51,6 @@ class VarselRepository {
                 :deltaker_id, 
                 :personident, 
                 :skal_varsle_eksternt, 
-                :er_sendt,
-                :sendt,
                 :skal_revarsles,
                 :revarsel_for_varsel
             )
@@ -65,9 +60,7 @@ class VarselRepository {
                 tekst = :tekst,
                 aktiv_fra = :aktiv_fra,
                 aktiv_til = :aktiv_til,
-                er_sendt = :er_sendt,
                 status = :status,
-                sendt = :sendt,
                 skal_revarsles = :skal_revarsles,
                 revarsel_for_varsel = :revarsel_for_varsel,
                 modified_at = current_timestamp
@@ -84,8 +77,6 @@ class VarselRepository {
             "deltaker_id" to varsel.deltakerId,
             "personident" to varsel.personident,
             "skal_varsle_eksternt" to varsel.erEksterntVarsel,
-            "er_sendt" to varsel.erSendt,
-            "sendt" to varsel.sendt,
             "skal_revarsles" to varsel.skalRevarsles,
             "revarsel_for_varsel" to varsel.revarselForVarsel,
         )
@@ -116,8 +107,7 @@ class VarselRepository {
             select * 
             from varsel
             where deltaker_id = :deltaker_id
-                and er_sendt = true
-                and (aktiv_til is null or aktiv_til > current_timestamp)
+                and status = 'AKTIV'
             """.trimIndent()
         it.run(queryOf(sql, mapOf("deltaker_id" to deltakerId)).map(::rowmapper).asSingle)?.let { varsel -> Result.success(varsel) }
             ?: Result.failure(NoSuchElementException())
@@ -153,12 +143,13 @@ class VarselRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke varsel for hendelse $hendelseId"))
     }
 
-    fun getIkkeSendt(deltakerId: UUID) = Database.query {
+    fun getVentendeVarsel(deltakerId: UUID) = Database.query {
         val sql =
             """
             select * 
             from varsel
-            where deltaker_id = :deltaker_id and er_sendt = false
+            where deltaker_id = :deltaker_id 
+                and status = 'VENTER_PA_UTSENDELSE'
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("deltaker_id" to deltakerId))
@@ -168,12 +159,13 @@ class VarselRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke varsel som ikke var sendt for deltaker $deltakerId"))
     }
 
-    fun getVentende() = Database.query {
+    fun getVarslerSomSkalSendes() = Database.query {
         val sql =
             """
             select * 
             from varsel
-            where er_sendt = false and aktiv_fra at time zone 'UTC' < current_timestamp at time zone 'UTC'
+            where status = 'VENTER_PA_UTSENDELSE' 
+                and aktiv_fra at time zone 'UTC' < current_timestamp at time zone 'UTC'
             """.trimIndent()
 
         it.run(queryOf(sql).map(::rowmapper).asList)
@@ -185,7 +177,6 @@ class VarselRepository {
             select * 
             from varsel
             where status = 'AKTIV'
-                and (aktiv_til is null or aktiv_til > current_timestamp)
                 and aktiv_fra at time zone 'UTC' < current_timestamp at time zone 'UTC' - interval '40 hours'
             """.trimIndent()
         it.run(queryOf(sql).map(::rowmapper).asList)

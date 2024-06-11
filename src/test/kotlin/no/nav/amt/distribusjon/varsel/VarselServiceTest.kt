@@ -24,7 +24,6 @@ class VarselServiceTest {
 
         assertProducedBeskjed(varsel.id)
         val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
-        oppdatertVarsel.erSendt shouldBe true
         oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
     }
 
@@ -40,7 +39,6 @@ class VarselServiceTest {
         app.varselService.sendVentendeVarsler()
 
         val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
-        oppdatertVarsel.erSendt shouldBe false
         oppdatertVarsel.aktivFra shouldBeCloseTo varsel.aktivFra
     }
 
@@ -53,7 +51,6 @@ class VarselServiceTest {
                 Varsel.Status.AKTIV,
                 deltakerId = deltakerId,
                 aktivFra = nowUTC().minusMinutes(35),
-                sendt = nowUTC().minusMinutes(35),
             )
             app.varselRepository.upsert(aktivtVarsel)
 
@@ -71,7 +68,6 @@ class VarselServiceTest {
             app.varselRepository.get(aktivtVarsel.id).getOrThrow().erAktiv shouldBe false
 
             val oppdatertVarsel = app.varselRepository.get(nyttVarsel.id).getOrThrow()
-            oppdatertVarsel.erSendt shouldBe true
             oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
 
             assertProducedInaktiver(aktivtVarsel.id)
@@ -83,8 +79,7 @@ class VarselServiceTest {
         fun aktivBeskjed(timer: Long) = Varselsdata.varsel(
             Varsel.Type.BESKJED,
             Varsel.Status.AKTIV,
-            aktivFra = nowUTC().minusHours(timer),
-            sendt = nowUTC().minusHours(timer),
+            aktivFra = nowUTC().minusHours(timer).minusMinutes(1),
         )
 
         val skalIkkeReturneres = aktivBeskjed(39)
