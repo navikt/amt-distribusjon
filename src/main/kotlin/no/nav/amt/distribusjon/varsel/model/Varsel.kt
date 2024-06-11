@@ -21,12 +21,13 @@ data class Varsel(
     val hendelser: List<UUID>,
     val status: Status,
     val erEksterntVarsel: Boolean,
-    val revarselForVarsel: UUID?,
     val aktivFra: ZonedDateTime,
     val aktivTil: ZonedDateTime?,
     val deltakerId: UUID,
     val personident: String,
     val tekst: String,
+    val revarselForVarsel: UUID?,
+    val revarsles: ZonedDateTime?,
 ) {
     companion object {
         const val BESKJED_FORSINKELSE_MINUTTER = 30L
@@ -45,6 +46,7 @@ data class Varsel(
             personident = hendelse.deltaker.personident,
             tekst = oppgaveTekst(hendelse),
             revarselForVarsel = null,
+            revarsles = null,
         )
 
         fun nyBeskjed(hendelse: Hendelse) = Varsel(
@@ -59,48 +61,50 @@ data class Varsel(
             personident = hendelse.deltaker.personident,
             tekst = beskjedTekst(hendelse),
             revarselForVarsel = null,
+            revarsles = if (hendelse.skalVarslesEksternt()) revarslingstidspunkt() else null,
         )
 
         fun revarsel(varsel: Varsel): Varsel {
-            require(varsel.skalRevarsles) {
+            require(varsel.kanRevarsles) {
                 "Kan ikke lage et revarsel for varsel ${varsel.id}"
             }
 
             return varsel.copy(
                 id = UUID.randomUUID(),
                 status = Status.VENTER_PA_UTSENDELSE,
-                aktivFra = nesteUtsendingstidspunkt(),
-                aktivTil = nesteUtsendingstidspunkt().plus(beskjedAktivLengde),
+                aktivFra = nowUTC(),
+                aktivTil = nowUTC().plus(beskjedAktivLengde),
                 revarselForVarsel = varsel.id,
+                revarsles = null,
             )
         }
 
-        fun nesteUtsendingstidspunkt() = nowUTC().plusMinutes(BESKJED_FORSINKELSE_MINUTTER)
-    }
+        fun nesteUtsendingstidspunkt(): ZonedDateTime = nowUTC().plusMinutes(BESKJED_FORSINKELSE_MINUTTER)
 
-    val skalRevarsles: Boolean get() = type == Type.OPPGAVE && erEksterntVarsel && revarselForVarsel != null
+        fun revarslingstidspunkt(): ZonedDateTime = nesteUtsendingstidspunkt().plusDays(7)
+    }
 
     val erAktiv: Boolean get() = status == Status.AKTIV
 
     val venterPaUsendelse: Boolean get() = status == Status.VENTER_PA_UTSENDELSE
 
-    val kanRevarsles: Boolean
-        get() {
-            return status != Status.UTFORT &&
-                erEksterntVarsel &&
-                revarselForVarsel == null
-        }
+    val kanRevarsles: Boolean get() = revarsles != null
+
+    val erRevarsel: Boolean get() = revarselForVarsel != null
 
     fun merge(varsel: Varsel): Varsel {
         require(this.type == Type.BESKJED && status == Status.VENTER_PA_UTSENDELSE) {
             error("Kan ikke slå sammen andre varsler enn beskjeder som ikke er sendt")
         }
 
+        val eksterntVarsel = this.erEksterntVarsel || varsel.erEksterntVarsel
+
         return this.copy(
             hendelser = this.hendelser.plus(varsel.hendelser),
-            erEksterntVarsel = this.erEksterntVarsel || varsel.erEksterntVarsel,
+            erEksterntVarsel = eksterntVarsel,
             aktivFra = nesteUtsendingstidspunkt(),
             aktivTil = nesteUtsendingstidspunkt().plus(beskjedAktivLengde),
+            revarsles = if (eksterntVarsel) revarslingstidspunkt() else null,
         )
     }
 

@@ -1,7 +1,7 @@
-alter table varsel add column sendt timestamp with time zone,
+alter table varsel
    add column status varchar not null default 'UTFORT',
    add column revarsel_for_varsel UUID,
-   add column skal_revarsles boolean not null default false;
+   add column revarsles timestamp with time zone;
 
 update varsel
 set status = 'AKTIV'

@@ -9,6 +9,7 @@ class VarselJobService(
 ) {
     fun startJobs() {
         sendVentendeVarslerJob()
+        revarslingJob()
     }
 
     private fun sendVentendeVarslerJob() = jobManager.startJob(
@@ -19,11 +20,11 @@ class VarselJobService(
         varselService.sendVentendeVarsler()
     }
 
-    private fun sendBrevJob() = jobManager.startJob(
-        navn = "SendBrevJob",
+    private fun revarslingJob() = jobManager.startJob(
+        navn = "RevarslingJob",
         initialDelay = Duration.ofHours(1),
         period = Duration.ofHours(1),
     ) {
-        val varsler = varselService.getVarslerSomSkalRevarsles()
+        varselService.sendRevarsler()
     }
 }

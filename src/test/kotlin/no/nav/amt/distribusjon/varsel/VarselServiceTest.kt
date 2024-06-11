@@ -75,25 +75,73 @@ class VarselServiceTest {
         }
 
     @Test
-    fun `getVarselerSomSkalRevarsles - skal returnere alle varsler som er aktive og eldre enn frist`() = integrationTest { app, client ->
-        fun aktivBeskjed(timer: Long) = Varselsdata.varsel(
-            Varsel.Type.BESKJED,
-            Varsel.Status.AKTIV,
-            aktivFra = nowUTC().minusHours(timer).minusMinutes(1),
+    fun `sendRevarsler - inaktivert beskjed skal revarsles - oppretter og sender revarsel`() = integrationTest { app, _ ->
+        val skalRevarsles = Varselsdata.beskjed(
+            Varsel.Status.INAKTIVERT,
+            aktivFra = nowUTC().minusDays(7).plusMinutes(1),
+            revarsles = nowUTC().minusMinutes(1),
         )
 
-        val skalIkkeReturneres = aktivBeskjed(39)
-        val skalReturneres1 = aktivBeskjed(40)
-        val skalReturneres2 = aktivBeskjed(41)
+        app.varselRepository.upsert(skalRevarsles)
 
-        app.varselRepository.upsert(skalIkkeReturneres)
-        app.varselRepository.upsert(skalReturneres1)
-        app.varselRepository.upsert(skalReturneres2)
+        app.varselService.sendRevarsler()
 
-        val varsler = app.varselService.getVarslerSomSkalRevarsles()
+        app.varselRepository.get(skalRevarsles.id).getOrThrow().revarsles shouldBe null
 
-        varsler.size shouldBe 2
-        varsler.any { it == skalReturneres1 } shouldBe true
-        varsler.any { it == skalReturneres2 } shouldBe true
+        val revarsel = app.varselRepository.getAktivt(skalRevarsles.deltakerId).getOrThrow()
+        revarsel.erRevarsel shouldBe true
+        revarsel.kanRevarsles shouldBe false
+        revarsel.aktivFra shouldBeCloseTo nowUTC()
+        revarsel.aktivTil!! shouldBeCloseTo nowUTC().plus(Varsel.beskjedAktivLengde)
+        revarsel.revarselForVarsel shouldBe skalRevarsles.id
+
+        assertProducedBeskjed(revarsel.id)
+    }
+
+    @Test
+    fun `sendRevarsler - aktiv beskjed skal revarsles - inaktiverer beskjed, oppretter og sender revarsel`() = integrationTest { app, _ ->
+        val skalRevarsles = Varselsdata.beskjed(
+            Varsel.Status.AKTIV,
+            aktivFra = nowUTC().minusDays(7).plusMinutes(1),
+            revarsles = nowUTC().minusMinutes(1),
+        )
+
+        app.varselRepository.upsert(skalRevarsles)
+
+        app.varselService.sendRevarsler()
+
+        val oppdatertVarsel = app.varselRepository.get(skalRevarsles.id).getOrThrow()
+        oppdatertVarsel.revarsles shouldBe null
+        oppdatertVarsel.status shouldBe Varsel.Status.INAKTIVERT
+        oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+
+        assertProducedInaktiver(oppdatertVarsel.id)
+
+        val revarsel = app.varselRepository.getAktivt(skalRevarsles.deltakerId).getOrThrow()
+        revarsel.erRevarsel shouldBe true
+        revarsel.kanRevarsles shouldBe false
+        revarsel.aktivFra shouldBeCloseTo nowUTC()
+        revarsel.aktivTil!! shouldBeCloseTo nowUTC().plus(Varsel.beskjedAktivLengde)
+        revarsel.revarselForVarsel shouldBe skalRevarsles.id
+
+        assertProducedBeskjed(revarsel.id)
+    }
+
+    @Test
+    fun `sendRevarsler - aktiv beskjed skal ikke revarsles enda - endrer ingenting`() = integrationTest { app, _ ->
+        val skalIkkeRevarsles = Varselsdata.beskjed(
+            Varsel.Status.AKTIV,
+            aktivFra = nowUTC().minusDays(6).plusMinutes(1),
+            revarsles = nowUTC().plusDays(1),
+        )
+
+        app.varselRepository.upsert(skalIkkeRevarsles)
+
+        app.varselService.sendRevarsler()
+
+        val ikkeOppdatertVarsel = app.varselRepository.get(skalIkkeRevarsles.id).getOrThrow()
+        ikkeOppdatertVarsel.revarsles!! shouldBeCloseTo skalIkkeRevarsles.revarsles!!
+        ikkeOppdatertVarsel.status shouldBe skalIkkeRevarsles.status
+        ikkeOppdatertVarsel.aktivTil!! shouldBeCloseTo skalIkkeRevarsles.aktivTil
     }
 }

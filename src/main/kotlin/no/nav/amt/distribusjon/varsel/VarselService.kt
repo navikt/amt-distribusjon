@@ -24,14 +24,14 @@ class VarselService(
         if (skalIkkeVarsles(hendelse)) return
 
         when (hendelse.payload) {
-            is HendelseType.OpprettUtkast -> handleVarsel(Varsel.nyOppgave(hendelse), true)
+            is HendelseType.OpprettUtkast -> handleNyttVarsel(Varsel.nyOppgave(hendelse), true)
 
-            is HendelseType.AvbrytUtkast -> intaktiverOppgave(hendelse.deltaker)
+            is HendelseType.AvbrytUtkast -> inaktiverOppgave(hendelse.deltaker)
             is HendelseType.InnbyggerGodkjennUtkast -> utforOppgave(hendelse.deltaker)
             is HendelseType.NavGodkjennUtkast -> {
-                intaktiverOppgave(hendelse.deltaker)
+                inaktiverOppgave(hendelse.deltaker)
                 val beskjed = slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse))
-                handleVarsel(beskjed, true)
+                handleNyttVarsel(beskjed, true)
             }
 
             is HendelseType.EndreBakgrunnsinformasjon,
@@ -42,7 +42,7 @@ class VarselService(
             is HendelseType.ForlengDeltakelse,
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.IkkeAktuell,
-            -> handleVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)))
+            -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)))
 
             is HendelseType.EndreUtkast,
             is HendelseType.EndreSluttarsak,
@@ -75,8 +75,8 @@ class VarselService(
         return varsel
     }
 
-    private fun handleVarsel(varsel: Varsel, sendUmiddelbart: Boolean = false) {
-        if (varsel.kanRevarsles) {
+    private fun handleNyttVarsel(varsel: Varsel, sendUmiddelbart: Boolean = false) {
+        if (varsel.kanRevarsles || varsel.erRevarsel) {
             repository.stoppRevarsler(varsel.deltakerId)
         }
 
@@ -104,7 +104,9 @@ class VarselService(
 
     private fun ferdigstillSendtVarsel(varsel: Varsel, nyStatus: Varsel.Status) {
         if (varsel.erAktiv) {
-            repository.upsert(varsel.copy(aktivTil = nowUTC(), status = nyStatus))
+            val revarsles = if (nyStatus == Varsel.Status.UTFORT) null else varsel.revarsles
+
+            repository.upsert(varsel.copy(aktivTil = nowUTC(), status = nyStatus, revarsles = revarsles))
             producer.inaktiver(varsel)
             log.info("Endret status på varsel ${varsel.id} til $nyStatus for deltaker ${varsel.deltakerId}")
         }
@@ -121,7 +123,7 @@ class VarselService(
         }
     }
 
-    private fun intaktiverOppgave(deltaker: HendelseDeltaker) {
+    private fun inaktiverOppgave(deltaker: HendelseDeltaker) {
         repository.getSisteVarsel(deltaker.id, Varsel.Type.OPPGAVE).onSuccess { varsel ->
             ferdigstillSendtVarsel(varsel, Varsel.Status.INAKTIVERT)
         }
@@ -143,7 +145,14 @@ class VarselService(
         when (sisteBeskjed.status) {
             Varsel.Status.VENTER_PA_UTSENDELSE -> {
                 val now = nowUTC()
-                repository.upsert(sisteBeskjed.copy(aktivFra = now, aktivTil = now, status = Varsel.Status.UTFORT))
+                repository.upsert(
+                    sisteBeskjed.copy(
+                        aktivFra = now,
+                        aktivTil = now,
+                        status = Varsel.Status.UTFORT,
+                        revarsles = null,
+                    ),
+                )
             }
 
             Varsel.Status.AKTIV -> {
@@ -178,7 +187,12 @@ class VarselService(
         }
     }
 
-    fun getVarslerSomSkalRevarsles() = repository.getVarslerSomSkalRevarsles()
+    fun sendRevarsler() {
+        val varsler = repository.getVarslerSomSkalRevarsles()
+        val revarsler = varsler.map { slaSammenMedVentendeVarsel(Varsel.revarsel(it)) }
+
+        revarsler.forEach { handleNyttVarsel(it, true) }
+    }
 }
 
 fun nowUTC(): ZonedDateTime = ZonedDateTime.now(ZoneId.of("Z"))

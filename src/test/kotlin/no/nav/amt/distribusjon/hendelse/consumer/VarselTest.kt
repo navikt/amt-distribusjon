@@ -169,6 +169,26 @@ class VarselTest {
     }
 
     @Test
+    fun `avsluttDeltakelse - nytt varsel med ekstern varsling, tidligere varsel skal revarsles - stopper revarsling av tidligere varsel`() =
+        integrationTest { app, _ ->
+            val deltakerId = UUID.randomUUID()
+            val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse(), deltaker = Hendelsesdata.deltaker(deltakerId))
+
+            val forrigeVarsel = Varselsdata.beskjed(
+                Varsel.Status.INAKTIVERT,
+                deltakerId = deltakerId,
+                aktivFra = nowUTC().minusDays(6),
+                aktivTil = nowUTC().plusDays(3),
+                revarsles = nowUTC().plusDays(1),
+            )
+
+            app.varselRepository.upsert(forrigeVarsel)
+            app.varselService.handleHendelse(hendelse)
+
+            app.varselRepository.get(forrigeVarsel.id).getOrThrow().revarsles shouldBe null
+        }
+
+    @Test
     fun `endreSluttdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreSluttdato())
         produce(hendelse)

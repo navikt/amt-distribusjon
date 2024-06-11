@@ -21,6 +21,7 @@ class VarselRepository {
         tekst = row.string("tekst"),
         erEksterntVarsel = row.boolean("er_eksternt_varsel"),
         revarselForVarsel = row.uuidOrNull("revarsel_for_varsel"),
+        revarsles = row.zonedDateTimeOrNull("revarsles"),
     )
 
     fun upsert(varsel: Varsel) = Database.query {
@@ -37,8 +38,8 @@ class VarselRepository {
                 deltaker_id, 
                 personident, 
                 er_eksternt_varsel, 
-                skal_revarsles,
-                revarsel_for_varsel
+                revarsel_for_varsel,
+                revarsles
             )
             values(
                 :id, 
@@ -51,18 +52,18 @@ class VarselRepository {
                 :deltaker_id, 
                 :personident, 
                 :er_eksternt_varsel, 
-                :skal_revarsles,
-                :revarsel_for_varsel
+                :revarsel_for_varsel,
+                :revarsles    
             )
             on conflict (id) do update set
                 type = :type,
                 hendelser = :hendelser,
+                status = :status,
                 tekst = :tekst,
                 aktiv_fra = :aktiv_fra,
                 aktiv_til = :aktiv_til,
-                status = :status,
-                skal_revarsles = :skal_revarsles,
                 revarsel_for_varsel = :revarsel_for_varsel,
+                revarsles = :revarsles,
                 modified_at = current_timestamp
             """.trimIndent()
 
@@ -77,7 +78,7 @@ class VarselRepository {
             "deltaker_id" to varsel.deltakerId,
             "personident" to varsel.personident,
             "er_eksternt_varsel" to varsel.erEksterntVarsel,
-            "skal_revarsles" to varsel.skalRevarsles,
+            "revarsles" to varsel.revarsles,
             "revarsel_for_varsel" to varsel.revarselForVarsel,
         )
 
@@ -176,8 +177,7 @@ class VarselRepository {
             """
             select * 
             from varsel
-            where status = 'AKTIV'
-                and aktiv_fra at time zone 'UTC' < current_timestamp at time zone 'UTC' - interval '40 hours'
+            where revarsles < current_timestamp
             """.trimIndent()
         it.run(queryOf(sql).map(::rowmapper).asList)
     }
@@ -186,8 +186,8 @@ class VarselRepository {
         val sql =
             """
             update varsel
-            set skal_revarsles = false
-            where deltaker_id = ? and skal_revarsles = true -- and varsel_id != ?
+            set revarsles = null
+            where deltaker_id = ? and revarsles is not null
             """.trimIndent()
 
         it.update(queryOf(sql, deltakerId))
