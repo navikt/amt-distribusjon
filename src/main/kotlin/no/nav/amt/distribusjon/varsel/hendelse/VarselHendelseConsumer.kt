@@ -52,6 +52,9 @@ class VarselHendelseConsumer(
             }
 
             is InaktivertVarselHendelse -> {
+                // Vi inaktiverer alle varsler selv med unntak av de som går ut på tid.
+                // Derfor bør vi ikke inaktivere andre varsler som vi mottar melding på her
+
                 if (varsel.type == Varsel.Type.OPPGAVE || !varsel.erAktiv) return
 
                 if (varsel.aktivTil != null && varsel.aktivTil <= nowUTC()) {
