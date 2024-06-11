@@ -1,7 +1,9 @@
 package no.nav.amt.distribusjon.varsel.model
 
 import no.nav.amt.distribusjon.Environment
+import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.varsel.nowUTC
+import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
 import no.nav.tms.varsel.action.EksternKanal
 import no.nav.tms.varsel.action.EksternVarslingBestilling
 import no.nav.tms.varsel.action.Produsent
@@ -9,6 +11,7 @@ import no.nav.tms.varsel.action.Sensitivitet
 import no.nav.tms.varsel.action.Tekst
 import no.nav.tms.varsel.action.Varseltype
 import no.nav.tms.varsel.builder.VarselActionBuilder
+import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -16,22 +19,107 @@ data class Varsel(
     val id: UUID,
     val type: Type,
     val hendelser: List<UUID>,
+    val status: Status,
+    val erEksterntVarsel: Boolean,
+    val revarselForVarsel: UUID?,
     val aktivFra: ZonedDateTime,
     val aktivTil: ZonedDateTime?,
     val deltakerId: UUID,
     val personident: String,
     val tekst: String,
-    val skalVarsleEksternt: Boolean,
-    val erSendt: Boolean,
+    val sendt: ZonedDateTime?,
 ) {
-    val erAktiv: Boolean get() {
-        val now = nowUTC()
-        return erSendt && (aktivTil == null || aktivTil >= now)
+    companion object {
+        const val BESKJED_FORSINKELSE_MINUTTER = 30L
+
+        val beskjedAktivLengde: Duration = Duration.ofDays(21).plusMinutes(BESKJED_FORSINKELSE_MINUTTER)
+
+        fun nyOppgave(hendelse: Hendelse) = Varsel(
+            id = UUID.randomUUID(),
+            type = Type.OPPGAVE,
+            hendelser = listOf(hendelse.id),
+            status = Status.VENTER_PA_UTSENDELSE,
+            erEksterntVarsel = true,
+            aktivFra = nowUTC(),
+            aktivTil = null,
+            deltakerId = hendelse.deltaker.id,
+            personident = hendelse.deltaker.personident,
+            tekst = oppgaveTekst(hendelse),
+            revarselForVarsel = null,
+            sendt = null,
+        )
+
+        fun nyBeskjed(hendelse: Hendelse) = Varsel(
+            id = UUID.randomUUID(),
+            type = Type.BESKJED,
+            hendelser = listOf(hendelse.id),
+            status = Status.VENTER_PA_UTSENDELSE,
+            erEksterntVarsel = hendelse.skalVarslesEksternt(),
+            aktivFra = nesteUtsendingstidspunkt(),
+            aktivTil = nesteUtsendingstidspunkt().plus(beskjedAktivLengde),
+            deltakerId = hendelse.deltaker.id,
+            personident = hendelse.deltaker.personident,
+            tekst = beskjedTekst(hendelse),
+            revarselForVarsel = null,
+            sendt = null,
+        )
+
+        fun revarsel(varsel: Varsel): Varsel {
+            require(varsel.skalRevarsles) {
+                "Kan ikke lage et revarsel for varsel ${varsel.id}"
+            }
+
+            return varsel.copy(
+                id = UUID.randomUUID(),
+                status = Status.VENTER_PA_UTSENDELSE,
+                aktivFra = nesteUtsendingstidspunkt(),
+                aktivTil = nesteUtsendingstidspunkt().plus(beskjedAktivLengde),
+                revarselForVarsel = varsel.id,
+                sendt = null,
+            )
+        }
+
+        fun nesteUtsendingstidspunkt() = nowUTC().plusMinutes(BESKJED_FORSINKELSE_MINUTTER)
+    }
+
+    val skalRevarsles: Boolean get() = type == Type.OPPGAVE && erEksterntVarsel && revarselForVarsel != null
+
+    val erAktiv: Boolean get() = status == Status.AKTIV
+
+    val venter: Boolean get() = status == Status.VENTER_PA_UTSENDELSE
+
+    val erSendt: Boolean get() = sendt != null
+
+    val kanRevarsles: Boolean
+        get() {
+            return status != Status.UTFORT &&
+                erEksterntVarsel &&
+                revarselForVarsel == null
+        }
+
+    fun merge(varsel: Varsel): Varsel {
+        require(this.type == Type.BESKJED && status == Status.VENTER_PA_UTSENDELSE) {
+            error("Kan ikke slå sammen andre varsler enn beskjeder som ikke er sendt")
+        }
+
+        return this.copy(
+            hendelser = this.hendelser.plus(varsel.hendelser),
+            erEksterntVarsel = this.erEksterntVarsel || varsel.erEksterntVarsel,
+            aktivFra = nesteUtsendingstidspunkt(),
+            aktivTil = nesteUtsendingstidspunkt().plus(beskjedAktivLengde),
+        )
     }
 
     enum class Type {
         BESKJED,
         OPPGAVE,
+    }
+
+    enum class Status {
+        VENTER_PA_UTSENDELSE,
+        AKTIV,
+        UTFORT,
+        INAKTIVERT,
     }
 
     fun toOppgaveDto() = VarselActionBuilder.opprett {
@@ -61,7 +149,7 @@ data class Varsel(
         link = innbyggerDeltakerUrl(deltakerId)
         produsent = produsent()
 
-        if (skalVarsleEksternt) {
+        if (erEksterntVarsel) {
             eksternVarsling = EksternVarslingBestilling(prefererteKanaler = getPrefererteKanaler(varseltype))
         }
     }

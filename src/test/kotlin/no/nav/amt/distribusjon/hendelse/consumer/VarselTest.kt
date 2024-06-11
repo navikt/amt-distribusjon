@@ -15,11 +15,9 @@ import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Varselsdata
 import no.nav.amt.distribusjon.utils.produceStringString
 import no.nav.amt.distribusjon.utils.shouldBeCloseTo
-import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.distribusjon.varsel.model.beskjedTekst
 import no.nav.amt.distribusjon.varsel.model.oppgaveTekst
-import no.nav.amt.distribusjon.varsel.nesteUtsendingstidspunkt
 import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -44,7 +42,7 @@ class VarselTest {
             varsel.aktivFra shouldBeCloseTo nowUTC()
             varsel.deltakerId shouldBe hendelse.deltaker.id
             varsel.personident shouldBe hendelse.deltaker.personident
-            varsel.skalVarsleEksternt shouldBe hendelse.skalVarslesEksternt()
+            varsel.erEksterntVarsel shouldBe hendelse.skalVarslesEksternt()
 
             assertProducedOppgave(varsel.id)
         }
@@ -100,9 +98,10 @@ class VarselTest {
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.avbrytUtkast())
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
+            Varsel.Status.AKTIV,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
-            erSendt = true,
+            sendt = nowUTC().minusDays(1),
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
@@ -122,9 +121,10 @@ class VarselTest {
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
+            Varsel.Status.AKTIV,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
-            erSendt = true,
+            sendt = nowUTC().minusDays(1),
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
@@ -154,9 +154,10 @@ class VarselTest {
 
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
+            Varsel.Status.AKTIV,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
-            erSendt = true,
+            sendt = nowUTC().minusDays(1),
         )
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
@@ -175,14 +176,14 @@ class VarselTest {
     fun `endreSluttdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreSluttdato())
         produce(hendelse)
-        AsyncUtils.eventually { assertNyBeskjed(app, hendelse, nesteUtsendingstidspunkt()) }
+        AsyncUtils.eventually { assertNyBeskjed(app, hendelse, Varsel.nesteUtsendingstidspunkt()) }
     }
 
     @Test
     fun `endreStartdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreStartdato())
         produce(hendelse)
-        AsyncUtils.eventually { assertNyBeskjed(app, hendelse, nesteUtsendingstidspunkt()) }
+        AsyncUtils.eventually { assertNyBeskjed(app, hendelse, Varsel.nesteUtsendingstidspunkt()) }
     }
 
     @Test
@@ -190,9 +191,10 @@ class VarselTest {
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
         val varsel = Varselsdata.varsel(
             Varsel.Type.BESKJED,
+            Varsel.Status.AKTIV,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC().minusMinutes(1),
-            erSendt = true,
+            sendt = nowUTC().minusMinutes(1),
         )
 
         app.varselRepository.upsert(varsel)
@@ -210,19 +212,20 @@ class VarselTest {
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
         val varsel = Varselsdata.varsel(
             Varsel.Type.BESKJED,
+            Varsel.Status.VENTER_PA_UTSENDELSE,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC().plusMinutes(10),
-            erSendt = false,
         )
 
         app.varselRepository.upsert(varsel)
         produce(hendelse)
 
-        AsyncUtils.eventually {
+        AsyncUtils.eventually(Duration.ofSeconds(10)) {
             val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
+            oppdatertVarsel.status shouldBe Varsel.Status.UTFORT
             oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
             oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
-            oppdatertVarsel.erSendt shouldBe true
+            oppdatertVarsel.erSendt shouldBe false
         }
     }
 
@@ -231,16 +234,18 @@ class VarselTest {
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.sistBesokt(sistBesokt = ZonedDateTime.now().minusMinutes(10)))
         val varsel = Varselsdata.varsel(
             Varsel.Type.BESKJED,
+            Varsel.Status.AKTIV,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC(),
-            aktivTil = nowUTC().plus(VarselService.beskjedAktivLengde),
-            erSendt = true,
+            aktivTil = nowUTC().plus(Varsel.beskjedAktivLengde),
+            sendt = nowUTC(),
         )
 
         app.varselRepository.upsert(varsel)
         app.varselService.handleHendelse(hendelse)
 
         val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
+        oppdatertVarsel.status shouldBe Varsel.Status.AKTIV
         oppdatertVarsel.aktivFra shouldBeCloseTo varsel.aktivFra
         oppdatertVarsel.aktivTil!! shouldBeCloseTo varsel.aktivTil
         oppdatertVarsel.erSendt shouldBe true
@@ -251,10 +256,10 @@ class VarselTest {
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.sistBesokt(sistBesokt = ZonedDateTime.now().minusMinutes(10)))
         val varsel = Varselsdata.varsel(
             Varsel.Type.BESKJED,
+            Varsel.Status.VENTER_PA_UTSENDELSE,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC().plusMinutes(30),
-            aktivTil = nowUTC().plus(VarselService.beskjedAktivLengde),
-            erSendt = false,
+            aktivTil = nowUTC().plus(Varsel.beskjedAktivLengde),
         )
 
         app.varselRepository.upsert(varsel)
@@ -273,13 +278,13 @@ class VarselTest {
     ) {
         val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrThrow()
 
-        varsel.aktivTil!! shouldBeCloseTo nowUTC().plus(VarselService.beskjedAktivLengde)
+        varsel.aktivTil!! shouldBeCloseTo Varsel.nesteUtsendingstidspunkt().plus(Varsel.beskjedAktivLengde)
         varsel.tekst shouldBe beskjedTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV, false))
         varsel.aktivFra shouldBeCloseTo aktivFra
         varsel.deltakerId shouldBe hendelse.deltaker.id
         varsel.personident shouldBe hendelse.deltaker.personident
 
-        varsel.skalVarsleEksternt shouldBe hendelse.skalVarslesEksternt()
+        varsel.erEksterntVarsel shouldBe hendelse.skalVarslesEksternt()
         varsel.erSendt shouldBe (aktivFra <= nowUTC())
 
         if (varsel.erSendt) {

@@ -8,6 +8,7 @@ import java.util.UUID
 object Varselsdata {
     fun varsel(
         type: Varsel.Type,
+        status: Varsel.Status = Varsel.Status.VENTER_PA_UTSENDELSE,
         id: UUID = UUID.randomUUID(),
         hendelser: List<UUID> = listOf(UUID.randomUUID()),
         aktivFra: ZonedDateTime = nowUTC(),
@@ -15,7 +16,21 @@ object Varselsdata {
         deltakerId: UUID = UUID.randomUUID(),
         personident: String = randomIdent(),
         tekst: String = "Varselstekst",
-        skalVarsleEksternt: Boolean = if (type == Varsel.Type.OPPGAVE) true else false,
-        erSendt: Boolean = false,
-    ) = Varsel(id, type, hendelser, aktivFra, aktivTil, deltakerId, personident, tekst, skalVarsleEksternt, erSendt)
+        erEksterntVarsel: Boolean = type == Varsel.Type.OPPGAVE,
+        sendt: ZonedDateTime? = null,
+        revarselForVarsel: UUID? = null,
+    ) = Varsel(
+        id,
+        type,
+        hendelser,
+        status,
+        erEksterntVarsel,
+        revarselForVarsel,
+        aktivFra,
+        aktivTil,
+        deltakerId,
+        personident,
+        tekst,
+        sendt,
+    )
 }

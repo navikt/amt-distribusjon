@@ -13,7 +13,11 @@ import java.util.UUID
 class VarselServiceTest {
     @Test
     fun `sendVentendeVarsler - varsler er klare for sending - sender`() = integrationTest { app, _ ->
-        val varsel = Varselsdata.varsel(Varsel.Type.BESKJED, aktivFra = nowUTC().minusMinutes(5), erSendt = false)
+        val varsel = Varselsdata.varsel(
+            Varsel.Type.BESKJED,
+            Varsel.Status.VENTER_PA_UTSENDELSE,
+            aktivFra = nowUTC().minusMinutes(5),
+        )
         app.varselRepository.upsert(varsel)
 
         app.varselService.sendVentendeVarsler()
@@ -26,7 +30,11 @@ class VarselServiceTest {
 
     @Test
     fun `sendVentendeVarsler - varsler er ikke klare for sending - sender ikke`() = integrationTest { app, _ ->
-        val varsel = Varselsdata.varsel(Varsel.Type.BESKJED, aktivFra = nowUTC().plusMinutes(5), erSendt = false)
+        val varsel = Varselsdata.varsel(
+            Varsel.Type.BESKJED,
+            Varsel.Status.VENTER_PA_UTSENDELSE,
+            aktivFra = nowUTC().plusMinutes(5),
+        )
         app.varselRepository.upsert(varsel)
 
         app.varselService.sendVentendeVarsler()
@@ -42,17 +50,18 @@ class VarselServiceTest {
             val deltakerId = UUID.randomUUID()
             val aktivtVarsel = Varselsdata.varsel(
                 Varsel.Type.BESKJED,
+                Varsel.Status.AKTIV,
                 deltakerId = deltakerId,
                 aktivFra = nowUTC().minusMinutes(35),
-                erSendt = true,
+                sendt = nowUTC().minusMinutes(35),
             )
             app.varselRepository.upsert(aktivtVarsel)
 
             val nyttVarsel = Varselsdata.varsel(
                 Varsel.Type.BESKJED,
+                Varsel.Status.VENTER_PA_UTSENDELSE,
                 deltakerId = deltakerId,
                 aktivFra = nowUTC().minusMinutes(5),
-                erSendt = false,
             )
 
             app.varselRepository.upsert(nyttVarsel)
@@ -68,4 +77,28 @@ class VarselServiceTest {
             assertProducedInaktiver(aktivtVarsel.id)
             assertProducedBeskjed(nyttVarsel.id)
         }
+
+    @Test
+    fun `getVarselerSomSkalRevarsles - skal returnere alle varsler som er aktive og eldre enn frist`() = integrationTest { app, client ->
+        fun aktivBeskjed(timer: Long) = Varselsdata.varsel(
+            Varsel.Type.BESKJED,
+            Varsel.Status.AKTIV,
+            aktivFra = nowUTC().minusHours(timer),
+            sendt = nowUTC().minusHours(timer),
+        )
+
+        val skalIkkeReturneres = aktivBeskjed(39)
+        val skalReturneres1 = aktivBeskjed(40)
+        val skalReturneres2 = aktivBeskjed(41)
+
+        app.varselRepository.upsert(skalIkkeReturneres)
+        app.varselRepository.upsert(skalReturneres1)
+        app.varselRepository.upsert(skalReturneres2)
+
+        val varsler = app.varselService.getVarslerSomSkalRevarsles()
+
+        varsler.size shouldBe 2
+        varsler.any { it == skalReturneres1 } shouldBe true
+        varsler.any { it == skalReturneres2 } shouldBe true
+    }
 }
