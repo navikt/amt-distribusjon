@@ -13,41 +13,73 @@ class VarselRepository {
         id = row.uuid("id"),
         type = Varsel.Type.valueOf(row.string("type")),
         hendelser = row.array<UUID>("hendelser").toList(),
+        status = row.string("status").let { Varsel.Status.valueOf(it) },
         aktivFra = row.zonedDateTime("aktiv_fra").withZoneSameInstant(ZoneId.of("Z")),
         aktivTil = row.zonedDateTimeOrNull("aktiv_til")?.withZoneSameInstant(ZoneId.of("Z")),
         deltakerId = row.uuid("deltaker_id"),
         personident = row.string("personident"),
         tekst = row.string("tekst"),
-        skalVarsleEksternt = row.boolean("skal_varsle_eksternt"),
-        erSendt = row.boolean("er_sendt"),
+        erEksterntVarsel = row.boolean("er_eksternt_varsel"),
+        revarselForVarsel = row.uuidOrNull("revarsel_for_varsel"),
+        revarsles = row.zonedDateTimeOrNull("revarsles"),
     )
 
     fun upsert(varsel: Varsel) = Database.query {
         val sql =
             """
-            insert into varsel (id, type, hendelser, tekst, aktiv_fra, aktiv_til, deltaker_id, personident, skal_varsle_eksternt, er_sendt)
-            values(:id, :type, :hendelser, :tekst, :aktiv_fra, :aktiv_til, :deltaker_id, :personident, :skal_varsle_eksternt, :er_sendt)
+            insert into varsel (
+                id, 
+                type, 
+                hendelser, 
+                status, 
+                tekst, 
+                aktiv_fra, 
+                aktiv_til, 
+                deltaker_id, 
+                personident, 
+                er_eksternt_varsel, 
+                revarsel_for_varsel,
+                revarsles
+            )
+            values(
+                :id, 
+                :type, 
+                :hendelser, 
+                :status, 
+                :tekst, 
+                :aktiv_fra, 
+                :aktiv_til, 
+                :deltaker_id, 
+                :personident, 
+                :er_eksternt_varsel, 
+                :revarsel_for_varsel,
+                :revarsles    
+            )
             on conflict (id) do update set
                 type = :type,
                 hendelser = :hendelser,
+                status = :status,
                 tekst = :tekst,
                 aktiv_fra = :aktiv_fra,
                 aktiv_til = :aktiv_til,
-                er_sendt = :er_sendt,
+                revarsel_for_varsel = :revarsel_for_varsel,
+                revarsles = :revarsles,
                 modified_at = current_timestamp
             """.trimIndent()
 
         val params = mapOf(
             "id" to varsel.id,
             "type" to varsel.type.name,
+            "status" to varsel.status.name,
             "hendelser" to varsel.hendelser.toTypedArray(),
             "tekst" to varsel.tekst,
             "aktiv_fra" to varsel.aktivFra,
             "aktiv_til" to varsel.aktivTil,
             "deltaker_id" to varsel.deltakerId,
             "personident" to varsel.personident,
-            "skal_varsle_eksternt" to varsel.skalVarsleEksternt,
-            "er_sendt" to varsel.erSendt,
+            "er_eksternt_varsel" to varsel.erEksterntVarsel,
+            "revarsles" to varsel.revarsles,
+            "revarsel_for_varsel" to varsel.revarselForVarsel,
         )
 
         it.update(queryOf(sql, params))
@@ -76,8 +108,7 @@ class VarselRepository {
             select * 
             from varsel
             where deltaker_id = :deltaker_id
-                and er_sendt = true
-                and (aktiv_til is null or aktiv_til > current_timestamp)
+                and status = 'AKTIV'
             """.trimIndent()
         it.run(queryOf(sql, mapOf("deltaker_id" to deltakerId)).map(::rowmapper).asSingle)?.let { varsel -> Result.success(varsel) }
             ?: Result.failure(NoSuchElementException())
@@ -113,12 +144,13 @@ class VarselRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke varsel for hendelse $hendelseId"))
     }
 
-    fun getIkkeSendt(deltakerId: UUID) = Database.query {
+    fun getVentendeVarsel(deltakerId: UUID) = Database.query {
         val sql =
             """
             select * 
             from varsel
-            where deltaker_id = :deltaker_id and er_sendt = false
+            where deltaker_id = :deltaker_id 
+                and status = 'VENTER_PA_UTSENDELSE'
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("deltaker_id" to deltakerId))
@@ -128,14 +160,36 @@ class VarselRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke varsel som ikke var sendt for deltaker $deltakerId"))
     }
 
-    fun getVentende() = Database.query {
+    fun getVarslerSomSkalSendes() = Database.query {
         val sql =
             """
             select * 
             from varsel
-            where er_sendt = false and aktiv_fra at time zone 'UTC' < current_timestamp at time zone 'UTC'
+            where status = 'VENTER_PA_UTSENDELSE' 
+                and aktiv_fra at time zone 'UTC' < current_timestamp at time zone 'UTC'
             """.trimIndent()
 
         it.run(queryOf(sql).map(::rowmapper).asList)
+    }
+
+    fun getVarslerSomSkalRevarsles() = Database.query {
+        val sql =
+            """
+            select * 
+            from varsel
+            where revarsles < current_timestamp
+            """.trimIndent()
+        it.run(queryOf(sql).map(::rowmapper).asList)
+    }
+
+    fun stoppRevarsler(deltakerId: UUID) = Database.query {
+        val sql =
+            """
+            update varsel
+            set revarsles = null
+            where deltaker_id = ? and revarsles is not null
+            """.trimIndent()
+
+        it.update(queryOf(sql, deltakerId))
     }
 }

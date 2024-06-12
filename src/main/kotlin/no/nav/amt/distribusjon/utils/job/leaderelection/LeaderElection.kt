@@ -1,4 +1,4 @@
-package no.nav.amt.distribusjon.journalforing.job.leaderelection
+package no.nav.amt.distribusjon.utils.job.leaderelection
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body

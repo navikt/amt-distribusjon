@@ -10,7 +10,7 @@ import no.nav.amt.distribusjon.kafka.config.KafkaConfigImpl
 import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.model.Varsel
-import no.nav.tms.varsel.action.Varseltype
+import no.nav.amt.distribusjon.varsel.nowUTC
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -52,11 +52,15 @@ class VarselHendelseConsumer(
             }
 
             is InaktivertVarselHendelse -> {
-                if (hendelse.varseltype == Varseltype.Beskjed) {
-                    varselService.inaktiverBeskjedLokalt(varsel)
+                // Vi inaktiverer alle varsler selv med unntak av de som går ut på tid.
+                // Derfor bør vi ikke inaktivere andre varsler som vi mottar melding på her
+
+                if (varsel.type == Varsel.Type.OPPGAVE || !varsel.erAktiv) return
+
+                if (varsel.aktivTil != null && varsel.aktivTil <= nowUTC()) {
+                    varselService.utlopBeskjed(varsel)
                 }
             }
-
             is OpprettetVarselHendelse,
             is SlettetVarselHendelse,
             -> {
