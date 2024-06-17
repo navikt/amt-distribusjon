@@ -39,6 +39,11 @@ class JournalforingService(
                 hendelse.payload.utkast,
                 journalforingstatus,
             )
+            is HendelseType.ReaktiverDeltakelse -> journalforHovedvedtak(
+                hendelse,
+                hendelse.payload.utkast,
+                journalforingstatus,
+            )
             is HendelseType.NavGodkjennUtkast -> journalforHovedvedtak(
                 hendelse,
                 hendelse.payload.utkast,
