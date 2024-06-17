@@ -141,6 +141,7 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
     return when (hendelseType) {
         is HendelseType.InnbyggerGodkjennUtkast,
         is HendelseType.NavGodkjennUtkast,
+        is HendelseType.ReaktiverDeltakelse,
         is HendelseType.EndreSluttarsak,
         is HendelseType.EndreUtkast,
         is HendelseType.OpprettUtkast,

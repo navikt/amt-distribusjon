@@ -28,7 +28,9 @@ class VarselService(
 
             is HendelseType.AvbrytUtkast -> inaktiverOppgave(hendelse.deltaker)
             is HendelseType.InnbyggerGodkjennUtkast -> utforOppgave(hendelse.deltaker)
-            is HendelseType.NavGodkjennUtkast -> {
+            is HendelseType.ReaktiverDeltakelse,
+            is HendelseType.NavGodkjennUtkast,
+            -> {
                 inaktiverOppgave(hendelse.deltaker)
                 val beskjed = slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse))
                 handleNyttVarsel(beskjed, true)
@@ -226,5 +228,6 @@ fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.NavGodkjennUtkast,
     is HendelseType.OpprettUtkast,
     is HendelseType.AvsluttDeltakelse,
+    is HendelseType.ReaktiverDeltakelse,
     -> true
 }

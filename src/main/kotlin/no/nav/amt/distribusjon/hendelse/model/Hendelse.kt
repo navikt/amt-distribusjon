@@ -32,6 +32,7 @@ data class Hendelse(
             is HendelseType.OpprettUtkast,
             is HendelseType.AvbrytUtkast,
             is HendelseType.DeltakerSistBesokt,
+            is HendelseType.ReaktiverDeltakelse,
             -> false
         }
     }
