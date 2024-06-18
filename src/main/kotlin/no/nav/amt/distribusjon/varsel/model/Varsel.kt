@@ -32,7 +32,7 @@ data class Varsel(
     companion object {
         const val BESKJED_FORSINKELSE_MINUTTER = 30L
 
-        val beskjedAktivLengde: Duration = Duration.ofDays(21).plusMinutes(BESKJED_FORSINKELSE_MINUTTER)
+        val beskjedAktivLengde: Duration = Duration.ofMinutes(1) // Duration.ofDays(21).plusMinutes(BESKJED_FORSINKELSE_MINUTTER)
 
         fun nyOppgave(hendelse: Hendelse) = Varsel(
             id = UUID.randomUUID(),
