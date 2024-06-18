@@ -61,7 +61,6 @@ data class Varsel(
             personident = hendelse.deltaker.personident,
             tekst = beskjedTekst(hendelse),
             revarselForVarsel = null,
-            // TODO: Hvis beskjed sendes umiddelbart så blir tidspunktet 30min for seint
             revarsles = if (hendelse.skalVarslesEksternt()) revarslingstidspunkt() else null,
         )
 
