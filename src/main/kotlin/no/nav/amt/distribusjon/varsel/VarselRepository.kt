@@ -62,6 +62,7 @@ class VarselRepository {
                 tekst = :tekst,
                 aktiv_fra = :aktiv_fra,
                 aktiv_til = :aktiv_til,
+                er_eksternt_varsel = :er_eksternt_varsel,
                 revarsel_for_varsel = :revarsel_for_varsel,
                 revarsles = :revarsles,
                 modified_at = current_timestamp
