@@ -173,6 +173,7 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
         }
         is HendelseType.ForlengDeltakelse -> EndringDto.ForlengDeltakelse(
             sluttdato = hendelseType.sluttdato,
+            begrunnelse = hendelseType.begrunnelse,
         )
         is HendelseType.IkkeAktuell -> EndringDto.IkkeAktuell(
             aarsak = hendelseType.aarsak.visningsnavn(),
