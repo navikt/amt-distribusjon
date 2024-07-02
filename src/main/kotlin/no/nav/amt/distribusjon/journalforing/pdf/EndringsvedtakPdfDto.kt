@@ -67,7 +67,8 @@ sealed interface EndringDto {
 
     data class ForlengDeltakelse(
         val sluttdato: LocalDate,
-        val begrunnelse: String?,
+        val begrunnelseFraNav: String?,
+        val begrunnelseFraArrangor: String?,
     ) : EndringDto
 
     data class IkkeAktuell(

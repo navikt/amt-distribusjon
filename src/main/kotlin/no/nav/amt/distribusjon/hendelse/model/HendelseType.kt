@@ -69,7 +69,8 @@ sealed interface HendelseType {
 
     data class ForlengDeltakelse(
         val sluttdato: LocalDate,
-        val begrunnelse: String?,
+        val begrunnelseFraNav: String?,
+        val begrunnelseFraArrangor: String?,
     ) : HendelseType
 
     data class IkkeAktuell(
