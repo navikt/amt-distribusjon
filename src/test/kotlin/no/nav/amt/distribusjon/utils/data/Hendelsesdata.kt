@@ -109,8 +109,11 @@ object HendelseTypeData {
 
     fun endreSluttdato(sluttdato: LocalDate = LocalDate.now().plusDays(7)) = HendelseType.EndreSluttdato(sluttdato)
 
-    fun forlengDeltakelse(sluttdato: LocalDate = LocalDate.now().plusMonths(2), begrunnelse: String = "begrunnelse") =
-        HendelseType.ForlengDeltakelse(sluttdato, begrunnelse)
+    fun forlengDeltakelse(
+        sluttdato: LocalDate = LocalDate.now().plusMonths(2),
+        begrunnelseFraNav: String? = "begrunnelse",
+        begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
+    ) = HendelseType.ForlengDeltakelse(sluttdato, begrunnelseFraNav, begrunnelseFraArrangor)
 
     fun ikkeAktuell(aarsak: Aarsak = Aarsak(Aarsak.Type.FATT_JOBB, null)) = HendelseType.IkkeAktuell(aarsak)
 
