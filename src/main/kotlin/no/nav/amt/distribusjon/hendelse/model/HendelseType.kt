@@ -75,11 +75,15 @@ sealed interface HendelseType {
 
     data class IkkeAktuell(
         val aarsak: Aarsak,
+        val begrunnelseFraNav: String?,
+        val begrunnelseFraArrangor: String?,
     ) : HendelseType
 
     data class AvsluttDeltakelse(
         val aarsak: Aarsak,
         val sluttdato: LocalDate,
+        val begrunnelseFraNav: String?,
+        val begrunnelseFraArrangor: String?,
     ) : HendelseType
 
     data class EndreSluttarsak(

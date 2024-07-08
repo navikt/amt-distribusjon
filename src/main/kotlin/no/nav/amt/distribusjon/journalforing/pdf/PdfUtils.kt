@@ -151,6 +151,8 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
         is HendelseType.AvsluttDeltakelse -> EndringDto.AvsluttDeltakelse(
             aarsak = hendelseType.aarsak.visningsnavn(),
             sluttdato = hendelseType.sluttdato,
+            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+            begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
         )
         is HendelseType.EndreDeltakelsesmengde -> EndringDto.EndreDeltakelsesmengde(
             deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
@@ -178,6 +180,8 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
         )
         is HendelseType.IkkeAktuell -> EndringDto.IkkeAktuell(
             aarsak = hendelseType.aarsak.visningsnavn(),
+            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+            begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
         )
         is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
             innhold = hendelseType.innhold.map { it.visningsnavn() },
