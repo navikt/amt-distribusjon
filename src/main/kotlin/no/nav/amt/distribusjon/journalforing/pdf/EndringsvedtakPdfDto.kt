@@ -73,11 +73,15 @@ sealed interface EndringDto {
 
     data class IkkeAktuell(
         val aarsak: String,
+        val begrunnelseFraNav: String?,
+        val begrunnelseFraArrangor: String?,
     ) : EndringDto
 
     data class AvsluttDeltakelse(
         val aarsak: String,
         val sluttdato: LocalDate,
+        val begrunnelseFraNav: String?,
+        val begrunnelseFraArrangor: String?,
     ) : EndringDto
 
     data class EndreBakgrunnsinformasjon(

@@ -115,10 +115,18 @@ object HendelseTypeData {
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
     ) = HendelseType.ForlengDeltakelse(sluttdato, begrunnelseFraNav, begrunnelseFraArrangor)
 
-    fun ikkeAktuell(aarsak: Aarsak = Aarsak(Aarsak.Type.FATT_JOBB, null)) = HendelseType.IkkeAktuell(aarsak)
+    fun ikkeAktuell(
+        aarsak: Aarsak = Aarsak(Aarsak.Type.FATT_JOBB, null),
+        begrunnelseFraNav: String? = "begrunnelse",
+        begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
+    ) = HendelseType.IkkeAktuell(aarsak, begrunnelseFraNav, begrunnelseFraArrangor)
 
-    fun avsluttDeltakelse(aarsak: Aarsak = Aarsak(Aarsak.Type.FATT_JOBB, null), sluttdato: LocalDate = LocalDate.now().plusDays(7)) =
-        HendelseType.AvsluttDeltakelse(aarsak, sluttdato)
+    fun avsluttDeltakelse(
+        aarsak: Aarsak = Aarsak(Aarsak.Type.FATT_JOBB, null),
+        sluttdato: LocalDate = LocalDate.now().plusDays(7),
+        begrunnelseFraNav: String? = "begrunnelse",
+        begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
+    ) = HendelseType.AvsluttDeltakelse(aarsak, sluttdato, begrunnelseFraNav, begrunnelseFraArrangor)
 
     fun endreSluttarsak(aarsak: Aarsak = Aarsak(Aarsak.Type.ANNET, "Noe annet")) = HendelseType.EndreSluttarsak(aarsak)
 
