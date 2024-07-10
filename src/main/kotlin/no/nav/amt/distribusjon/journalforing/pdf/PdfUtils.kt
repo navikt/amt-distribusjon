@@ -16,6 +16,7 @@ fun lagHovedvedtakPdfDto(
     utkast: Utkast,
     veileder: HendelseAnsvarlig.NavVeileder,
     vedtaksdato: LocalDate,
+    begrunnelseFraNav: String?,
 ) = HovedvedtakPdfDto(
     deltaker = HovedvedtakPdfDto.DeltakerDto(
         fornavn = navBruker.fornavn,
@@ -53,6 +54,7 @@ fun lagHovedvedtakPdfDto(
         enhet = navBruker.navEnhet?.navn ?: "",
     ),
     vedtaksdato = vedtaksdato,
+    begrunnelseFraNav = begrunnelseFraNav,
 )
 
 fun lagEndringsvedtakPdfDto(

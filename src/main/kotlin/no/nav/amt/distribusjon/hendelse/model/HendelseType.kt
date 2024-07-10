@@ -96,6 +96,7 @@ sealed interface HendelseType {
 
     data class ReaktiverDeltakelse(
         val utkast: Utkast,
+        val begrunnelseFraNav: String,
     ) : HendelseType
 }
 
