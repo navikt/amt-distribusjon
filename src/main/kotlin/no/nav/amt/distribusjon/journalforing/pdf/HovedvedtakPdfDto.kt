@@ -7,6 +7,7 @@ data class HovedvedtakPdfDto(
     val deltakerliste: DeltakerlisteDto,
     val navVeileder: NavVeilederDto,
     val vedtaksdato: LocalDate,
+    val begrunnelseFraNav: String? = null,
 ) {
     data class DeltakerDto(
         val fornavn: String,

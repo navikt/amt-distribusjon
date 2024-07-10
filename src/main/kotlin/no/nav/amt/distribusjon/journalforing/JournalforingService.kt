@@ -86,7 +86,14 @@ class JournalforingService(
                 )
             val sak = veilarboppfolgingClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
             val pdf = pdfgenClient.hovedvedtak(
-                lagHovedvedtakPdfDto(hendelse.deltaker, navBruker, utkast, veileder, hendelse.opprettet.toLocalDate()),
+                lagHovedvedtakPdfDto(
+                    deltaker = hendelse.deltaker,
+                    navBruker = navBruker,
+                    utkast = utkast,
+                    veileder = veileder,
+                    vedtaksdato = hendelse.opprettet.toLocalDate(),
+                    begrunnelseFraNav = hendelse.getBegrunnelseForHovedvedtak(),
+                ),
             )
 
             val journalpostId = dokarkivClient.opprettJournalpost(
