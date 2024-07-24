@@ -53,7 +53,9 @@ sealed interface HendelseType {
 
     data class EndreSluttdato(
         val sluttdato: LocalDate,
-    ) : HendelseType
+        override val begrunnelseFraNav: String?,
+        override val begrunnelseFraArrangor: String?,
+    ) : HendelseMedForslag
 
     data class ForlengDeltakelse(
         val sluttdato: LocalDate,

@@ -164,6 +164,8 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto = when (hendel
 
     is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
         sluttdato = hendelseType.sluttdato,
+        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+        begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
     )
 
     is HendelseType.EndreStartdato -> {
