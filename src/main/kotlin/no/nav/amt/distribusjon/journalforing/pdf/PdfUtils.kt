@@ -92,14 +92,13 @@ fun lagEndringsvedtakPdfDto(
     )
 }
 
-private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> {
-    return hendelser.sortedByDescending { it.opprettet }.distinctBy { it.payload.javaClass }
-}
+private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> = hendelser
+    .sortedByDescending { it.opprettet }
+    .distinctBy { it.payload.javaClass }
 
-private fun skalViseDeltakelsesmengde(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak.Type): Boolean {
-    return tiltakstype == HendelseDeltaker.Deltakerliste.Tiltak.Type.VASV ||
+private fun skalViseDeltakelsesmengde(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak.Type): Boolean =
+    tiltakstype == HendelseDeltaker.Deltakerliste.Tiltak.Type.VASV ||
         tiltakstype == HendelseDeltaker.Deltakerliste.Tiltak.Type.ARBFORB
-}
 
 fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.type) {
     HendelseDeltaker.Deltakerliste.Tiltak.Type.INDOPPFAG -> 4
@@ -131,71 +130,78 @@ fun HendelseDeltaker.Deltakerliste.Arrangor.visningsnavn(): String {
     return toTitleCase(visningsnavn)
 }
 
-private fun adresseDelesMedArrangor(deltaker: HendelseDeltaker, navBruker: NavBruker): Boolean {
-    return navBruker.adressebeskyttelse == null && deltaker.deltakerliste.deltakerAdresseDeles()
-}
+private fun adresseDelesMedArrangor(deltaker: HendelseDeltaker, navBruker: NavBruker): Boolean =
+    navBruker.adressebeskyttelse == null && deltaker.deltakerliste.deltakerAdresseDeles()
 
 private fun List<Innhold>.toVisingstekst() = this.map { innhold ->
     "${innhold.tekst}${innhold.beskrivelse?.let { ": $it" } ?: ""}"
 }
 
-private fun tilEndringDto(hendelseType: HendelseType): EndringDto {
-    return when (hendelseType) {
-        is HendelseType.InnbyggerGodkjennUtkast,
-        is HendelseType.NavGodkjennUtkast,
-        is HendelseType.ReaktiverDeltakelse,
-        is HendelseType.EndreSluttarsak,
-        is HendelseType.EndreUtkast,
-        is HendelseType.OpprettUtkast,
-        is HendelseType.AvbrytUtkast,
-        is HendelseType.DeltakerSistBesokt,
-        -> throw IllegalArgumentException("Skal ikke journalføre $hendelseType som endringsvedtak")
-        is HendelseType.AvsluttDeltakelse -> EndringDto.AvsluttDeltakelse(
-            aarsak = hendelseType.aarsak.visningsnavn(),
-            sluttdato = hendelseType.sluttdato,
-            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-            begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
-        )
-        is HendelseType.EndreDeltakelsesmengde -> EndringDto.EndreDeltakelsesmengde(
-            deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
-            dagerPerUkeTekst = dagerPerUkeTekst(hendelseType.dagerPerUke?.toInt()),
-        )
-        is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
-            sluttdato = hendelseType.sluttdato,
-        )
-        is HendelseType.EndreStartdato -> {
-            if (hendelseType.sluttdato != null) {
-                EndringDto.EndreStartdatoOgVarighet(
-                    startdato = hendelseType.startdato,
-                    sluttdato = hendelseType.sluttdato,
-                )
-            } else {
-                EndringDto.EndreStartdato(
-                    startdato = hendelseType.startdato,
-                )
-            }
+private fun tilEndringDto(hendelseType: HendelseType): EndringDto = when (hendelseType) {
+    is HendelseType.InnbyggerGodkjennUtkast,
+    is HendelseType.NavGodkjennUtkast,
+    is HendelseType.ReaktiverDeltakelse,
+    is HendelseType.EndreSluttarsak,
+    is HendelseType.EndreUtkast,
+    is HendelseType.OpprettUtkast,
+    is HendelseType.AvbrytUtkast,
+    is HendelseType.DeltakerSistBesokt,
+    -> throw IllegalArgumentException("Skal ikke journalføre $hendelseType som endringsvedtak")
+
+    is HendelseType.AvsluttDeltakelse -> EndringDto.AvsluttDeltakelse(
+        aarsak = hendelseType.aarsak.visningsnavn(),
+        sluttdato = hendelseType.sluttdato,
+        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+        begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
+    )
+
+    is HendelseType.EndreDeltakelsesmengde -> EndringDto.EndreDeltakelsesmengde(
+        deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
+        dagerPerUkeTekst = dagerPerUkeTekst(hendelseType.dagerPerUke?.toInt()),
+        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+        begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
+    )
+
+    is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
+        sluttdato = hendelseType.sluttdato,
+    )
+
+    is HendelseType.EndreStartdato -> {
+        if (hendelseType.sluttdato != null) {
+            EndringDto.EndreStartdatoOgVarighet(
+                startdato = hendelseType.startdato,
+                sluttdato = hendelseType.sluttdato,
+            )
+        } else {
+            EndringDto.EndreStartdato(
+                startdato = hendelseType.startdato,
+            )
         }
-        is HendelseType.ForlengDeltakelse -> EndringDto.ForlengDeltakelse(
-            sluttdato = hendelseType.sluttdato,
-            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-            begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
-        )
-        is HendelseType.IkkeAktuell -> EndringDto.IkkeAktuell(
-            aarsak = hendelseType.aarsak.visningsnavn(),
-            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-            begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
-        )
-        is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
-            innhold = hendelseType.innhold.map { it.visningsnavn() },
-        )
-        is HendelseType.EndreBakgrunnsinformasjon -> EndringDto.EndreBakgrunnsinformasjon(
-            bakgrunnsinformasjon = if (hendelseType.bakgrunnsinformasjon.isNullOrEmpty()) {
-                "—"
-            } else {
-                hendelseType.bakgrunnsinformasjon
-            },
-        )
     }
+
+    is HendelseType.ForlengDeltakelse -> EndringDto.ForlengDeltakelse(
+        sluttdato = hendelseType.sluttdato,
+        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+        begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
+    )
+
+    is HendelseType.IkkeAktuell -> EndringDto.IkkeAktuell(
+        aarsak = hendelseType.aarsak.visningsnavn(),
+        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+        begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
+    )
+
+    is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
+        innhold = hendelseType.innhold.map { it.visningsnavn() },
+    )
+
+    is HendelseType.EndreBakgrunnsinformasjon -> EndringDto.EndreBakgrunnsinformasjon(
+        bakgrunnsinformasjon = if (hendelseType.bakgrunnsinformasjon.isNullOrEmpty()) {
+            "—"
+        } else {
+            hendelseType.bakgrunnsinformasjon
+        },
+    )
 }
 
 private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?): String {
@@ -209,9 +215,9 @@ private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?):
 private fun dagerPerUkeTekst(dagerPerUke: Int?): String? {
     if (dagerPerUke != null) {
         return if (dagerPerUke == 1) {
-            "Fordelt på $dagerPerUke dag i uka"
+            "fordelt på $dagerPerUke dag i uka"
         } else {
-            "Fordelt på $dagerPerUke dager i uka"
+            "fordelt på $dagerPerUke dager i uka"
         }
     }
     return null

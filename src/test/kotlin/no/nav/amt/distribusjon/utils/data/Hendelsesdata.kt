@@ -101,8 +101,12 @@ object HendelseTypeData {
 
     fun endreInnhold(innhold: List<Innhold> = listOf(innhold())) = HendelseType.EndreInnhold(innhold)
 
-    fun endreDeltakelsesmengde(deltakelsesprosent: Float? = 99F, dagerPerUke: Float? = 5F) =
-        HendelseType.EndreDeltakelsesmengde(deltakelsesprosent, dagerPerUke)
+    fun endreDeltakelsesmengde(
+        deltakelsesprosent: Float? = 99F,
+        dagerPerUke: Float? = 5F,
+        begrunnelseFraNav: String? = "begrunnelse",
+        begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
+    ) = HendelseType.EndreDeltakelsesmengde(deltakelsesprosent, dagerPerUke, begrunnelseFraNav, begrunnelseFraArrangor)
 
     fun endreStartdato(startdato: LocalDate? = LocalDate.now().plusDays(7), sluttdato: LocalDate? = null) =
         HendelseType.EndreStartdato(startdato, sluttdato)
