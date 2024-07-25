@@ -55,6 +55,8 @@ sealed interface EndringDto {
 
     data class EndreSluttdato(
         val sluttdato: LocalDate,
+        val begrunnelseFraNav: String?,
+        val begrunnelseFraArrangor: String?,
     ) : EndringDto
 
     data class ForlengDeltakelse(

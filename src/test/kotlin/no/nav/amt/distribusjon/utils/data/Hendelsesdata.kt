@@ -111,7 +111,11 @@ object HendelseTypeData {
     fun endreStartdato(startdato: LocalDate? = LocalDate.now().plusDays(7), sluttdato: LocalDate? = null) =
         HendelseType.EndreStartdato(startdato, sluttdato)
 
-    fun endreSluttdato(sluttdato: LocalDate = LocalDate.now().plusDays(7)) = HendelseType.EndreSluttdato(sluttdato)
+    fun endreSluttdato(
+        sluttdato: LocalDate = LocalDate.now().plusDays(7),
+        begrunnelseFraNav: String? = "begrunnelse",
+        begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
+    ) = HendelseType.EndreSluttdato(sluttdato, begrunnelseFraNav, begrunnelseFraArrangor)
 
     fun forlengDeltakelse(
         sluttdato: LocalDate = LocalDate.now().plusMonths(2),
