@@ -173,10 +173,14 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto = when (hendel
             EndringDto.EndreStartdatoOgVarighet(
                 startdato = hendelseType.startdato,
                 sluttdato = hendelseType.sluttdato,
+                begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+                begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
             )
         } else {
             EndringDto.EndreStartdato(
                 startdato = hendelseType.startdato,
+                begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+                begrunnelseFraArrangor = hendelseType.begrunnelseFraArrangor,
             )
         }
     }

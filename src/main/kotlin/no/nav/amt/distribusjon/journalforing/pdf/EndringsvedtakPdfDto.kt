@@ -46,11 +46,15 @@ sealed interface EndringDto {
 
     data class EndreStartdato(
         val startdato: LocalDate?,
+        val begrunnelseFraNav: String?,
+        val begrunnelseFraArrangor: String?,
     ) : EndringDto
 
     data class EndreStartdatoOgVarighet(
         val startdato: LocalDate?,
         val sluttdato: LocalDate,
+        val begrunnelseFraNav: String?,
+        val begrunnelseFraArrangor: String?,
     ) : EndringDto
 
     data class EndreSluttdato(

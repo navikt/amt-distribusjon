@@ -108,8 +108,12 @@ object HendelseTypeData {
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
     ) = HendelseType.EndreDeltakelsesmengde(deltakelsesprosent, dagerPerUke, begrunnelseFraNav, begrunnelseFraArrangor)
 
-    fun endreStartdato(startdato: LocalDate? = LocalDate.now().plusDays(7), sluttdato: LocalDate? = null) =
-        HendelseType.EndreStartdato(startdato, sluttdato)
+    fun endreStartdato(
+        startdato: LocalDate? = LocalDate.now().plusDays(7),
+        sluttdato: LocalDate? = null,
+        begrunnelseFraNav: String? = "begrunnelse",
+        begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
+    ) = HendelseType.EndreStartdato(startdato, sluttdato, begrunnelseFraNav, begrunnelseFraArrangor)
 
     fun endreSluttdato(
         sluttdato: LocalDate = LocalDate.now().plusDays(7),
@@ -136,7 +140,11 @@ object HendelseTypeData {
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
     ) = HendelseType.AvsluttDeltakelse(aarsak, sluttdato, begrunnelseFraNav, begrunnelseFraArrangor)
 
-    fun endreSluttarsak(aarsak: Aarsak = Aarsak(Aarsak.Type.ANNET, "Noe annet")) = HendelseType.EndreSluttarsak(aarsak)
+    fun endreSluttarsak(
+        aarsak: Aarsak = Aarsak(Aarsak.Type.ANNET, "Noe annet"),
+        begrunnelseFraNav: String? = "begrunnelse",
+        begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
+    ) = HendelseType.EndreSluttarsak(aarsak, begrunnelseFraNav, begrunnelseFraArrangor)
 
     fun sistBesokt(sistBesokt: ZonedDateTime = ZonedDateTime.now()) = HendelseType.DeltakerSistBesokt(sistBesokt)
 

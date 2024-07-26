@@ -49,7 +49,9 @@ sealed interface HendelseType {
     data class EndreStartdato(
         val startdato: LocalDate?,
         val sluttdato: LocalDate? = null,
-    ) : HendelseType
+        override val begrunnelseFraNav: String?,
+        override val begrunnelseFraArrangor: String?,
+    ) : HendelseMedForslag
 
     data class EndreSluttdato(
         val sluttdato: LocalDate,
@@ -78,7 +80,9 @@ sealed interface HendelseType {
 
     data class EndreSluttarsak(
         val aarsak: Aarsak,
-    ) : HendelseType
+        override val begrunnelseFraNav: String?,
+        override val begrunnelseFraArrangor: String?,
+    ) : HendelseMedForslag
 
     data class DeltakerSistBesokt(
         val sistBesokt: ZonedDateTime,
