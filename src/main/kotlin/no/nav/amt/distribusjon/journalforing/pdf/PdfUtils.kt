@@ -24,11 +24,7 @@ fun lagHovedvedtakPdfDto(
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
         innhold = utkast.innhold.toVisingstekst(),
-        bakgrunnsinformasjon = if (utkast.bakgrunnsinformasjon.isNullOrEmpty()) {
-            "—"
-        } else {
-            utkast.bakgrunnsinformasjon
-        },
+        bakgrunnsinformasjon = utkast.bakgrunnsinformasjon,
         deltakelsesmengdeTekst = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak.type)) {
             utkast.deltakelsesprosent?.let {
                 deltakelsesmengdeTekst(
