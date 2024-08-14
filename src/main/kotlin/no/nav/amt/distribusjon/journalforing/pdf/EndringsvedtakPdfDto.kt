@@ -89,4 +89,9 @@ sealed interface EndringDto {
     data class EndreInnhold(
         val innhold: List<String>,
     ) : EndringDto
+
+    data class LeggTilOppstartsdato(
+        val startdatoFraArrangor: LocalDate,
+        val sluttdatoFraArrangor: LocalDate?,
+    ) : EndringDto
 }
