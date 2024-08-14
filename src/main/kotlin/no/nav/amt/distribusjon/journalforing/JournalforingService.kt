@@ -57,6 +57,7 @@ class JournalforingService(
             is HendelseType.IkkeAktuell,
             is HendelseType.EndreInnhold,
             is HendelseType.EndreBakgrunnsinformasjon,
+            is HendelseType.LeggTilOppstartsdato,
             -> handleEndringsvedtak(hendelse, journalforingstatus)
 
             is HendelseType.EndreSluttarsak,

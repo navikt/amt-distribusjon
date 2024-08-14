@@ -44,6 +44,7 @@ class VarselService(
             is HendelseType.ForlengDeltakelse,
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.IkkeAktuell,
+            is HendelseType.LeggTilOppstartsdato,
             -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)))
 
             is HendelseType.EndreUtkast,
@@ -221,6 +222,7 @@ fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.ForlengDeltakelse,
     is HendelseType.InnbyggerGodkjennUtkast,
     is HendelseType.DeltakerSistBesokt,
+    is HendelseType.LeggTilOppstartsdato,
     -> false
 
     is HendelseType.EndreSluttdato,

@@ -92,6 +92,11 @@ sealed interface HendelseType {
         val utkast: Utkast,
         val begrunnelseFraNav: String,
     ) : HendelseType
+
+    data class LeggTilOppstartsdato(
+        val startdato: LocalDate,
+        val sluttdato: LocalDate?,
+    ) : HendelseType
 }
 
 data class Utkast(

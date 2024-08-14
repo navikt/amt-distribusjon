@@ -204,6 +204,11 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto = when (hendel
             hendelseType.bakgrunnsinformasjon
         },
     )
+
+    is HendelseType.LeggTilOppstartsdato -> EndringDto.LeggTilOppstartsdato(
+        startdatoFraArrangor = hendelseType.startdato,
+        sluttdatoFraArrangor = hendelseType.sluttdato,
+    )
 }
 
 private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?): String {
