@@ -18,9 +18,6 @@ import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
-import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
-import no.nav.amt.distribusjon.utils.SingletonKafkaProvider
-import no.nav.amt.distribusjon.utils.SingletonPostgresContainer
 import no.nav.amt.distribusjon.utils.mockAmtPersonClient
 import no.nav.amt.distribusjon.utils.mockAzureAdClient
 import no.nav.amt.distribusjon.utils.mockDokarkivClient
@@ -33,6 +30,9 @@ import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
+import no.nav.amt.lib.kafka.config.LocalKafkaConfig
+import no.nav.amt.lib.testing.SingletonKafkaProvider
+import no.nav.amt.lib.testing.SingletonPostgres16Container
 import java.util.UUID
 
 class TestApp {
@@ -59,7 +59,7 @@ class TestApp {
     val environment: Environment = testEnvironment
 
     init {
-        SingletonPostgresContainer.start()
+        SingletonPostgres16Container
         SingletonKafkaProvider.start()
 
         unleash = FakeUnleash()

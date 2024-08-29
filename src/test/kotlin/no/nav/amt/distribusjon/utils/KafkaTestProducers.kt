@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.utils
 
+import no.nav.amt.lib.testing.SingletonKafkaProvider
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord

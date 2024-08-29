@@ -5,8 +5,8 @@ import no.nav.amt.distribusjon.hendelse.consumer.assertProducedBeskjed
 import no.nav.amt.distribusjon.hendelse.consumer.assertProducedInaktiver
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.data.Varselsdata
-import no.nav.amt.distribusjon.utils.shouldBeCloseTo
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.util.UUID
@@ -66,7 +66,10 @@ class VarselServiceTest {
 
             app.varselService.sendVentendeVarsler()
 
-            app.varselRepository.get(aktivtVarsel.id).getOrThrow().erAktiv shouldBe false
+            app.varselRepository
+                .get(aktivtVarsel.id)
+                .getOrThrow()
+                .erAktiv shouldBe false
 
             val oppdatertVarsel = app.varselRepository.get(nyttVarsel.id).getOrThrow()
             oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
@@ -87,7 +90,10 @@ class VarselServiceTest {
 
         app.varselService.sendRevarsler()
 
-        app.varselRepository.get(skalRevarsles.id).getOrThrow().revarsles shouldBe null
+        app.varselRepository
+            .get(skalRevarsles.id)
+            .getOrThrow()
+            .revarsles shouldBe null
 
         val revarsel = app.varselRepository.getAktivt(skalRevarsles.deltakerId).getOrThrow()
         revarsel.erRevarsel shouldBe true
@@ -171,6 +177,9 @@ class VarselServiceTest {
 
         app.varselService.utlopBeskjed(utloptBeskjed)
 
-        app.varselRepository.get(utloptBeskjed.id).getOrThrow().status shouldBe Varsel.Status.UTLOPT
+        app.varselRepository
+            .get(utloptBeskjed.id)
+            .getOrThrow()
+            .status shouldBe Varsel.Status.UTLOPT
     }
 }

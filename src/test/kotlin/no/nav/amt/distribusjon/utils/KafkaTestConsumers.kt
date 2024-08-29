@@ -1,8 +1,9 @@
 package no.nav.amt.distribusjon.utils
 
 import kotlinx.coroutines.runBlocking
-import no.nav.amt.distribusjon.kafka.ManagedKafkaConsumer
-import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
+import no.nav.amt.lib.kafka.ManagedKafkaConsumer
+import no.nav.amt.lib.kafka.config.LocalKafkaConfig
+import no.nav.amt.lib.testing.SingletonKafkaProvider
 import org.apache.kafka.common.serialization.StringDeserializer
 import java.util.UUID
 

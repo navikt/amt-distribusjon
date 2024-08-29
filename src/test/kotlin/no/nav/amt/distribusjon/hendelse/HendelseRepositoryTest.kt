@@ -4,10 +4,10 @@ import io.kotest.matchers.shouldBe
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.journalforing.JournalforingstatusRepository
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
-import no.nav.amt.distribusjon.utils.SingletonPostgresContainer
 import no.nav.amt.distribusjon.utils.TestRepository
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
+import no.nav.amt.lib.testing.SingletonPostgres16Container
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -22,7 +22,7 @@ class HendelseRepositoryTest {
         @JvmStatic
         @BeforeClass
         fun setup() {
-            SingletonPostgresContainer.start()
+            SingletonPostgres16Container
             hendelseRepository = HendelseRepository()
             journalforingstatusRepository = JournalforingstatusRepository()
         }

@@ -37,6 +37,7 @@ val caffeineVersion = "3.1.8"
 val mockkVersion = "1.13.12"
 val unleashVersion = "9.2.4"
 val nimbusVersion = "9.40"
+val amtLibVersion = "1.2024.08.27_13.48-d7e7709c9b43"
 
 dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
@@ -75,12 +76,13 @@ dependencies {
 
     implementation("io.getunleash:unleash-client-java:$unleashVersion")
 
+    implementation("no.nav.amt.lib:kafka:$amtLibVersion")
+    implementation("no.nav.amt.lib:utils:$amtLibVersion")
+
+    testImplementation("no.nav.amt.lib:testing:$amtLibVersion")
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
-    testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
-    testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
-    testImplementation("org.testcontainers:kafka:$testcontainersVersion")
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json-jvm:$kotestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
