@@ -8,18 +8,18 @@ import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.integrationTest
-import no.nav.amt.distribusjon.utils.AsyncUtils
 import no.nav.amt.distribusjon.utils.assertProduced
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Varselsdata
 import no.nav.amt.distribusjon.utils.produceStringString
-import no.nav.amt.distribusjon.utils.shouldBeCloseTo
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.distribusjon.varsel.model.beskjedTekst
 import no.nav.amt.distribusjon.varsel.model.oppgaveTekst
 import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
+import no.nav.amt.lib.testing.AsyncUtils
+import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.Test
 import java.time.Duration
@@ -185,7 +185,10 @@ class VarselTest {
             app.varselRepository.upsert(forrigeVarsel)
             app.varselService.handleHendelse(hendelse)
 
-            app.varselRepository.get(forrigeVarsel.id).getOrThrow().revarsles shouldBe null
+            app.varselRepository
+                .get(forrigeVarsel.id)
+                .getOrThrow()
+                .revarsles shouldBe null
         }
 
     @Test

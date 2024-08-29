@@ -2,8 +2,8 @@ package no.nav.amt.distribusjon.journalforing
 
 import kotliquery.Row
 import kotliquery.queryOf
-import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
+import no.nav.amt.lib.utils.database.Database
 import java.util.UUID
 
 class JournalforingstatusRepository {

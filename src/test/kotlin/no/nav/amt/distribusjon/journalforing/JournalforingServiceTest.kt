@@ -10,12 +10,12 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.journalforing.model.HendelseMedJournalforingstatus
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
-import no.nav.amt.distribusjon.utils.AsyncUtils
 import no.nav.amt.distribusjon.utils.MockResponseHandler
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.produceStringString
+import no.nav.amt.lib.testing.AsyncUtils
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.Assert.assertThrows
 import org.junit.Test

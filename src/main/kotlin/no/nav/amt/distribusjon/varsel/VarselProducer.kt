@@ -1,11 +1,11 @@
 package no.nav.amt.distribusjon.varsel
 
 import no.nav.amt.distribusjon.Environment
-import no.nav.amt.distribusjon.kafka.Producer
-import no.nav.amt.distribusjon.kafka.config.KafkaConfig
-import no.nav.amt.distribusjon.kafka.config.KafkaConfigImpl
-import no.nav.amt.distribusjon.kafka.config.LocalKafkaConfig
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import no.nav.amt.lib.kafka.Producer
+import no.nav.amt.lib.kafka.config.KafkaConfig
+import no.nav.amt.lib.kafka.config.KafkaConfigImpl
+import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 
 class VarselProducer(
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),

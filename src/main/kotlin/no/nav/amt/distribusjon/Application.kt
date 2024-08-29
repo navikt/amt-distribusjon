@@ -17,7 +17,6 @@ import no.nav.amt.distribusjon.application.plugins.configureMonitoring
 import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
-import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.hendelse.HendelseConsumer
@@ -37,6 +36,7 @@ import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
+import no.nav.amt.lib.utils.database.Database
 
 fun main() {
     val server = embeddedServer(Netty, port = 8080, module = Application::module)
@@ -55,7 +55,7 @@ fun Application.module() {
 
     val environment = Environment()
 
-    Database.init(environment)
+    Database.init(environment.databaseConfig)
 
     val httpClient = HttpClient(Apache) {
         engine {
@@ -81,7 +81,8 @@ fun Application.module() {
     val digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
 
     val unleash = DefaultUnleash(
-        UnleashConfig.builder()
+        UnleashConfig
+            .builder()
             .appName(Environment.appName)
             .instanceId(Environment.appName)
             .unleashAPI("${Environment.unleashUrl}/api")

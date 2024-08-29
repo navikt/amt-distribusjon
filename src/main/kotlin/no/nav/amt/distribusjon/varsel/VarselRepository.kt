@@ -2,8 +2,8 @@ package no.nav.amt.distribusjon.varsel
 
 import kotliquery.Row
 import kotliquery.queryOf
-import no.nav.amt.distribusjon.db.Database
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import no.nav.amt.lib.utils.database.Database
 import java.time.ZoneId
 import java.util.NoSuchElementException
 import java.util.UUID
