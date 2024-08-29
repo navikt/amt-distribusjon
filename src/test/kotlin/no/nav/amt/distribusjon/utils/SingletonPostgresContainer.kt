@@ -83,11 +83,5 @@ object SingletonPostgresContainer {
         }
     }
 
-    private fun getPostgresImage(): String {
-        val digest = when (System.getProperty("os.arch")) {
-            "aarch64" -> "@sha256:58ddae4817fc2b7ed43ac43c91f3cf146290379b7b615210c33fa62a03645e70"
-            else -> ""
-        }
-        return "postgres:14-alpine$digest"
-    }
+    private fun getPostgresImage(): String = "postgres:16-alpine"
 }
