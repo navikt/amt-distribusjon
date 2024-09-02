@@ -50,6 +50,7 @@ data class Environment(
         const val DELTAKER_HENDELSE_TOPIC = "amt.deltaker-hendelse-v1"
         const val MINSIDE_VARSEL_TOPIC = "min-side.aapen-brukervarsel-v1"
         const val MINSIDE_VARSEL_HENDELSE_TOPIC = "min-side.aapen-varsel-hendelse-v1"
+        const val TILTAKSHENDELSE_TOPIC = "obo.tiltakshendelse-v1"
 
         val cluster: String = getEnvVar("NAIS_CLUSTER_NAME", "lokal")
         val appName: String = getEnvVar("NAIS_APP_NAME", "amt-distribusjon")

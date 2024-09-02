@@ -18,6 +18,9 @@ import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
+import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseProducer
+import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseRepository
+import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
 import no.nav.amt.distribusjon.utils.mockAmtPersonClient
 import no.nav.amt.distribusjon.utils.mockAzureAdClient
 import no.nav.amt.distribusjon.utils.mockDokarkivClient
@@ -54,6 +57,9 @@ class TestApp {
     val journalforingService: JournalforingService
     val digitalBrukerService: DigitalBrukerService
 
+    val tiltakshendelseRepository: TiltakshendelseRepository
+    val tiltakshendelseService: TiltakshendelseService
+
     val unleash: FakeUnleash
 
     val environment: Environment = testEnvironment
@@ -61,6 +67,7 @@ class TestApp {
     init {
         SingletonPostgres16Container
         SingletonKafkaProvider.start()
+        val kafakConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
 
         unleash = FakeUnleash()
         unleash.enableAll()
@@ -77,7 +84,7 @@ class TestApp {
         dokdistfordelingClient = mockDokdistfordelingClient(azureAdTokenClient, environment)
 
         varselRepository = VarselRepository()
-        varselService = VarselService(varselRepository, VarselProducer(LocalKafkaConfig(SingletonKafkaProvider.getHost())), unleash)
+        varselService = VarselService(varselRepository, VarselProducer(kafkaConfig = kafakConfig), unleash)
 
         journalforingstatusRepository = JournalforingstatusRepository()
         hendelseRepository = HendelseRepository()
@@ -93,12 +100,16 @@ class TestApp {
 
         digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
 
+        tiltakshendelseRepository = TiltakshendelseRepository()
+        tiltakshendelseService = TiltakshendelseService(tiltakshendelseRepository, TiltakshendelseProducer(kafkaConfig = kafakConfig))
+
         val consumerId = UUID.randomUUID().toString()
         val kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
         val consumers = listOf(
             HendelseConsumer(
                 varselService,
                 journalforingService,
+                tiltakshendelseService,
                 hendelseRepository,
                 dokdistkanalClient,
                 veilarboppfolgingClient,

@@ -23,31 +23,13 @@ data class HendelseDeltaker(
             val overordnetArrangor: Arrangor?,
         )
 
-        data class Tiltak(
-            val navn: String,
-            val type: Type,
-            val ledetekst: String,
-        ) {
-            enum class Type {
-                INDOPPFAG,
-                ARBFORB,
-                AVKLARAG,
-                VASV,
-                ARBRRHDAG,
-                DIGIOPPARB,
-                JOBBK,
-                GRUPPEAMO,
-                GRUFAGYRKE,
-            }
-        }
-
         fun deltakerAdresseDeles() = !tiltakUtenDeltakerAdresse.contains(this.tiltak.type)
     }
 }
 
 private val tiltakUtenDeltakerAdresse = setOf(
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.DIGIOPPARB,
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.JOBBK,
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.GRUPPEAMO,
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.GRUFAGYRKE,
+    Tiltak.Type.DIGIOPPARB,
+    Tiltak.Type.JOBBK,
+    Tiltak.Type.GRUPPEAMO,
+    Tiltak.Type.GRUFAGYRKE,
 )
