@@ -28,6 +28,9 @@ import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingCl
 import no.nav.amt.distribusjon.journalforing.job.EndringsvedtakJob
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
+import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseProducer
+import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseRepository
+import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
 import no.nav.amt.distribusjon.utils.job.JobManager
 import no.nav.amt.distribusjon.utils.job.leaderelection.LeaderElection
 import no.nav.amt.distribusjon.varsel.VarselJobService
@@ -102,8 +105,17 @@ fun Application.module() {
         dokdistfordelingClient,
     )
 
+    val tiltakshendelseService = TiltakshendelseService(TiltakshendelseRepository(), TiltakshendelseProducer())
+
     val consumers = listOf(
-        HendelseConsumer(varselService, journalforingService, hendelseRepository, dokdistkanalClient, veilarboppfolgingClient),
+        HendelseConsumer(
+            varselService,
+            journalforingService,
+            tiltakshendelseService,
+            hendelseRepository,
+            dokdistkanalClient,
+            veilarboppfolgingClient,
+        ),
         VarselHendelseConsumer(varselService),
     )
     consumers.forEach { it.run() }

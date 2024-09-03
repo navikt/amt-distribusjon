@@ -5,6 +5,7 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
+import no.nav.amt.distribusjon.hendelse.model.Tiltak
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.toTitleCase
@@ -92,27 +93,26 @@ private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hend
     .sortedByDescending { it.opprettet }
     .distinctBy { it.payload.javaClass }
 
-private fun skalViseDeltakelsesmengde(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak.Type): Boolean =
-    tiltakstype == HendelseDeltaker.Deltakerliste.Tiltak.Type.VASV ||
-        tiltakstype == HendelseDeltaker.Deltakerliste.Tiltak.Type.ARBFORB
+private fun skalViseDeltakelsesmengde(tiltakstype: Tiltak.Type): Boolean = tiltakstype == Tiltak.Type.VASV ||
+    tiltakstype == Tiltak.Type.ARBFORB
 
 fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.type) {
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.INDOPPFAG -> 4
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.ARBFORB -> 13
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.AVKLARAG -> 2
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.VASV -> 14
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.ARBRRHDAG -> 12
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.DIGIOPPARB -> 4
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.JOBBK -> 4
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.GRUPPEAMO -> 7
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.GRUFAGYRKE -> 7
+    Tiltak.Type.INDOPPFAG -> 4
+    Tiltak.Type.ARBFORB -> 13
+    Tiltak.Type.AVKLARAG -> 2
+    Tiltak.Type.VASV -> 14
+    Tiltak.Type.ARBRRHDAG -> 12
+    Tiltak.Type.DIGIOPPARB -> 4
+    Tiltak.Type.JOBBK -> 4
+    Tiltak.Type.GRUPPEAMO -> 7
+    Tiltak.Type.GRUFAGYRKE -> 7
 }
 
 fun HendelseDeltaker.Deltakerliste.visningsnavn() = when (this.tiltak.type) {
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.DIGIOPPARB -> "Digital oppfølging hos ${this.arrangor.visningsnavn()}"
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.JOBBK -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.GRUPPEAMO -> if (this.erKurs) "Kurs: ${this.navn}" else this.navn
-    HendelseDeltaker.Deltakerliste.Tiltak.Type.GRUFAGYRKE -> this.navn
+    Tiltak.Type.DIGIOPPARB -> "Digital oppfølging hos ${this.arrangor.visningsnavn()}"
+    Tiltak.Type.JOBBK -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
+    Tiltak.Type.GRUPPEAMO -> if (this.erKurs) "Kurs: ${this.navn}" else this.navn
+    Tiltak.Type.GRUFAGYRKE -> this.navn
     else -> "${this.tiltak.navn} hos ${arrangor.visningsnavn()}"
 }
 

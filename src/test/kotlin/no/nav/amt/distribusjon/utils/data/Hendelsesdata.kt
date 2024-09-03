@@ -7,6 +7,7 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
+import no.nav.amt.distribusjon.hendelse.model.Tiltak
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -70,7 +71,7 @@ object Hendelsesdata {
         id: UUID = UUID.randomUUID(),
         navn: String = "Deltakerlistenavn",
         arrangor: HendelseDeltaker.Deltakerliste.Arrangor = arrangor(),
-        tiltak: HendelseDeltaker.Deltakerliste.Tiltak = tiltak(),
+        tiltak: Tiltak = tiltak(),
     ) = HendelseDeltaker.Deltakerliste(id, navn, arrangor, tiltak)
 
     fun arrangor(
@@ -82,9 +83,9 @@ object Hendelsesdata {
 
     fun tiltak(
         navn: String = "Tiltaksnavn",
-        type: HendelseDeltaker.Deltakerliste.Tiltak.Type = HendelseDeltaker.Deltakerliste.Tiltak.Type.ARBFORB,
+        type: Tiltak.Type = Tiltak.Type.ARBFORB,
         ledetekst: String = "Beskrivelse av hva tiltaket går ut på",
-    ) = HendelseDeltaker.Deltakerliste.Tiltak(navn, type, ledetekst)
+    ) = Tiltak(navn, type, ledetekst)
 }
 
 object HendelseTypeData {

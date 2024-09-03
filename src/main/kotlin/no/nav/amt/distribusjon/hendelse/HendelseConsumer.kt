@@ -6,6 +6,7 @@ import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.journalforing.JournalforingService
+import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import no.nav.amt.lib.kafka.Consumer
@@ -21,6 +22,7 @@ import java.util.UUID
 class HendelseConsumer(
     private val varselService: VarselService,
     private val journalforingService: JournalforingService,
+    private val tiltakshendelseService: TiltakshendelseService,
     private val hendelseRepository: HendelseRepository,
     private val dokdistkanalClient: DokdistkanalClient,
     private val veilarboppfolgingClient: VeilarboppfolgingClient,
@@ -51,6 +53,7 @@ class HendelseConsumer(
 
         varselService.handleHendelse(hendelse)
         journalforingService.handleHendelse(hendelse)
+        tiltakshendelseService.handleHendelse(hendelse)
     }
 
     override fun run() = consumer.run()
