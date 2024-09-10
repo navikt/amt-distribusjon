@@ -2,7 +2,7 @@ package no.nav.amt.distribusjon.tiltakshendelse
 
 import kotliquery.Row
 import kotliquery.queryOf
-import no.nav.amt.distribusjon.hendelse.model.Tiltak
+import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
 import no.nav.amt.lib.utils.database.Database
 import java.util.UUID
@@ -17,7 +17,7 @@ class TiltakshendelseRepository {
         personident = row.string("personident"),
         aktiv = row.boolean("aktiv"),
         tekst = row.string("tekst"),
-        tiltakstype = row.string("tiltakstype").let { Tiltak.Type.valueOf(it) },
+        tiltakstype = row.string("tiltakstype").let { ArenaTiltakTypeKode.valueOf(it) },
         opprettet = row.localDateTime("created_at"),
     )
 
@@ -84,7 +84,7 @@ class TiltakshendelseRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse $id"))
     }
 
-    fun getUtkastHendelse(deltakerId: UUID) = Database.query {
+    fun getHendelse(deltakerId: UUID, hendelseType: Tiltakshendelse.Type) = Database.query {
         val sql =
             """
             select * 
@@ -94,12 +94,27 @@ class TiltakshendelseRepository {
 
         val params = mapOf(
             "deltaker_id" to deltakerId,
-            "type" to Tiltakshendelse.Type.UTKAST.name,
+            "type" to hendelseType.name,
         )
 
         it.run(queryOf(sql, params).map(::rowmapper).asSingle)?.let { tiltakshendelse ->
             Result.success(tiltakshendelse)
         } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse for deltaker $deltakerId"))
+    }
+
+    fun getForslagHendelse(forslagId: UUID) = Database.query {
+        val sql =
+            """
+            select * 
+            from tiltakshendelse
+            where forslag_id = :forslag_id
+            """.trimIndent()
+
+        val params = mapOf("forslag_id" to forslagId)
+
+        it.run(queryOf(sql, params).map(::rowmapper).asSingle)?.let { tiltakshendelse ->
+            Result.success(tiltakshendelse)
+        } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse for med forslagId $forslagId"))
     }
 
     fun getByHendelseId(hendelseId: UUID) = Database.query {

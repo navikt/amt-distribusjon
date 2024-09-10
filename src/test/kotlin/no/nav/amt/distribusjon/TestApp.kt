@@ -3,10 +3,12 @@ package no.nav.amt.distribusjon
 import io.getunleash.FakeUnleash
 import io.ktor.client.HttpClient
 import io.ktor.server.testing.testApplication
+import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.application.isReadyKey
 import no.nav.amt.distribusjon.application.plugins.configureAuthentication
 import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
+import no.nav.amt.distribusjon.arrangormelding.ArrangorMeldingConsumer
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
@@ -21,6 +23,7 @@ import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseProducer
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseRepository
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
+import no.nav.amt.distribusjon.utils.mockAmtDeltakerClient
 import no.nav.amt.distribusjon.utils.mockAmtPersonClient
 import no.nav.amt.distribusjon.utils.mockAzureAdClient
 import no.nav.amt.distribusjon.utils.mockDokarkivClient
@@ -59,6 +62,8 @@ class TestApp {
 
     val tiltakshendelseRepository: TiltakshendelseRepository
     val tiltakshendelseService: TiltakshendelseService
+    val tiltakshendelseProducer: TiltakshendelseProducer
+    val amtDeltakerClient: AmtDeltakerClient
 
     val unleash: FakeUnleash
 
@@ -99,9 +104,14 @@ class TestApp {
         )
 
         digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
-
+        tiltakshendelseProducer = TiltakshendelseProducer(kafkaConfig = kafakConfig)
+        amtDeltakerClient = mockAmtDeltakerClient(azureAdTokenClient, environment)
         tiltakshendelseRepository = TiltakshendelseRepository()
-        tiltakshendelseService = TiltakshendelseService(tiltakshendelseRepository, TiltakshendelseProducer(kafkaConfig = kafakConfig))
+        tiltakshendelseService = TiltakshendelseService(
+            tiltakshendelseRepository,
+            tiltakshendelseProducer,
+            amtDeltakerClient,
+        )
 
         val consumerId = UUID.randomUUID().toString()
         val kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
@@ -117,6 +127,7 @@ class TestApp {
                 kafkaConfig,
             ),
             VarselHendelseConsumer(varselService, consumerId, kafkaConfig),
+            ArrangorMeldingConsumer(tiltakshendelseService),
         )
 
         consumers.forEach { it.run() }

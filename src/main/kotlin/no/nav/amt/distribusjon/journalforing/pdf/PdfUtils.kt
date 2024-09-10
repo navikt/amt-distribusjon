@@ -1,11 +1,11 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
+import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
-import no.nav.amt.distribusjon.hendelse.model.Tiltak
 import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.toTitleCase
@@ -93,26 +93,26 @@ private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hend
     .sortedByDescending { it.opprettet }
     .distinctBy { it.payload.javaClass }
 
-private fun skalViseDeltakelsesmengde(tiltakstype: Tiltak.Type): Boolean = tiltakstype == Tiltak.Type.VASV ||
-    tiltakstype == Tiltak.Type.ARBFORB
+private fun skalViseDeltakelsesmengde(tiltakstype: ArenaTiltakTypeKode): Boolean = tiltakstype == ArenaTiltakTypeKode.VASV ||
+    tiltakstype == ArenaTiltakTypeKode.ARBFORB
 
 fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.type) {
-    Tiltak.Type.INDOPPFAG -> 4
-    Tiltak.Type.ARBFORB -> 13
-    Tiltak.Type.AVKLARAG -> 2
-    Tiltak.Type.VASV -> 14
-    Tiltak.Type.ARBRRHDAG -> 12
-    Tiltak.Type.DIGIOPPARB -> 4
-    Tiltak.Type.JOBBK -> 4
-    Tiltak.Type.GRUPPEAMO -> 7
-    Tiltak.Type.GRUFAGYRKE -> 7
+    ArenaTiltakTypeKode.INDOPPFAG -> 4
+    ArenaTiltakTypeKode.ARBFORB -> 13
+    ArenaTiltakTypeKode.AVKLARAG -> 2
+    ArenaTiltakTypeKode.VASV -> 14
+    ArenaTiltakTypeKode.ARBRRHDAG -> 12
+    ArenaTiltakTypeKode.DIGIOPPARB -> 4
+    ArenaTiltakTypeKode.JOBBK -> 4
+    ArenaTiltakTypeKode.GRUPPEAMO -> 7
+    ArenaTiltakTypeKode.GRUFAGYRKE -> 7
 }
 
 fun HendelseDeltaker.Deltakerliste.visningsnavn() = when (this.tiltak.type) {
-    Tiltak.Type.DIGIOPPARB -> "Digital oppfølging hos ${this.arrangor.visningsnavn()}"
-    Tiltak.Type.JOBBK -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
-    Tiltak.Type.GRUPPEAMO -> if (this.erKurs) "Kurs: ${this.navn}" else this.navn
-    Tiltak.Type.GRUFAGYRKE -> this.navn
+    ArenaTiltakTypeKode.DIGIOPPARB -> "Digital oppfølging hos ${this.arrangor.visningsnavn()}"
+    ArenaTiltakTypeKode.JOBBK -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
+    ArenaTiltakTypeKode.GRUPPEAMO -> if (this.erKurs) "Kurs: ${this.navn}" else this.navn
+    ArenaTiltakTypeKode.GRUFAGYRKE -> this.navn
     else -> "${this.tiltak.navn} hos ${arrangor.visningsnavn()}"
 }
 

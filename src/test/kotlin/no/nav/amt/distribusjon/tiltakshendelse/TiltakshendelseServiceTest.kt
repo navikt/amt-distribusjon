@@ -2,18 +2,27 @@ package no.nav.amt.distribusjon.tiltakshendelse
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.coEvery
+import io.mockk.mockk
 import kotlinx.coroutines.time.delay
 import no.nav.amt.distribusjon.Environment
+import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
+import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
 import no.nav.amt.distribusjon.utils.assertProduced
+import no.nav.amt.distribusjon.utils.data.DeltakerData
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
+import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
+import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.testing.AsyncUtils
 import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.junit.Test
 import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 class TiltakshendelseServiceTest {
@@ -64,6 +73,105 @@ class TiltakshendelseServiceTest {
 
         tiltakshendelse.aktiv shouldBe false
         assertNotProduced(tiltakshendelse.id)
+    }
+
+    @Test
+    fun `handleHendelse - ny ForlengDeltakelse venter på svar - oppretter ny tiltakshendelse`() = integrationTest { app, _ ->
+        val forslag = Forslag(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            LocalDateTime.now(),
+            "begrunnelse",
+            Forslag.ForlengDeltakelse(LocalDate.now()),
+            Forslag.Status.VenterPaSvar,
+        )
+
+        app.tiltakshendelseService.handleForslag(forslag)
+        val tiltakshendelse = app.tiltakshendelseRepository.getForslagHendelse(forslag.id).getOrThrow()
+
+        tiltakshendelse.hendelser shouldBe emptyList()
+        tiltakshendelse.tekst shouldBe "Forslag: Forleng deltakelse"
+        tiltakshendelse.tiltakstype shouldBe ArenaTiltakTypeKode.ARBFORB
+        tiltakshendelse.aktiv shouldBe true
+    }
+
+    @Test
+    fun `handleHendelse - ny ForlengDeltakelse godkjennes - oppretter ny tiltakshendelsee`() = integrationTest { app, _ ->
+        val amtDeltakerClient = mockk<AmtDeltakerClient>()
+        val tiltakHendelseService = TiltakshendelseService(app.tiltakshendelseRepository, app.tiltakshendelseProducer, amtDeltakerClient)
+        val deltaker = DeltakerData.lagDeltaker()
+        val forslag = Forslag(
+            UUID.randomUUID(),
+            deltaker.id,
+            UUID.randomUUID(),
+            LocalDateTime.now(),
+            "begrunnelse",
+            Forslag.ForlengDeltakelse(LocalDate.now()),
+            Forslag.Status.VenterPaSvar,
+        )
+
+        coEvery { amtDeltakerClient.getDeltaker(deltaker.id) } returns deltaker
+
+        tiltakHendelseService.handleForslag(forslag)
+
+        val godkjentForslag = forslag.copy(
+            status = Forslag.Status.Godkjent(Forslag.NavAnsatt(UUID.randomUUID(), UUID.randomUUID()), LocalDateTime.now()),
+        )
+
+        tiltakHendelseService.handleForslag(godkjentForslag)
+
+        val tiltakhendelseFerdig = app.tiltakshendelseRepository.getForslagHendelse(forslag.id).getOrThrow()
+
+        tiltakhendelseFerdig.aktiv shouldBe false
+    }
+
+    @Test
+    fun `handleHendelse - Flere hendelser på samme bruker - oppretter nye tiltakshendelsee`() = integrationTest { app, _ ->
+        val amtDeltakerClient = mockk<AmtDeltakerClient>()
+        val tiltakHendelseService = TiltakshendelseService(app.tiltakshendelseRepository, app.tiltakshendelseProducer, amtDeltakerClient)
+        val deltaker = DeltakerData.lagDeltaker()
+        val forslag1 = Forslag(
+            UUID.randomUUID(),
+            deltaker.id,
+            UUID.randomUUID(),
+            LocalDateTime.now(),
+            "begrunnelse",
+            Forslag.ForlengDeltakelse(LocalDate.now()),
+            Forslag.Status.VenterPaSvar,
+        )
+
+        val forslag2 = Forslag(
+            UUID.randomUUID(),
+            deltaker.id,
+            UUID.randomUUID(),
+            LocalDateTime.now(),
+            "begrunnelse",
+            Forslag.AvsluttDeltakelse(LocalDate.now(), EndringAarsak.FattJobb),
+            Forslag.Status.VenterPaSvar,
+        )
+
+        coEvery { amtDeltakerClient.getDeltaker(deltaker.id) } returns deltaker
+
+        tiltakHendelseService.handleForslag(forslag1)
+        tiltakHendelseService.handleForslag(forslag2)
+
+        val tiltakshendelse1 = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).getOrThrow()
+        val tiltakshendelse2 = app.tiltakshendelseRepository.getForslagHendelse(forslag2.id).getOrThrow()
+
+        tiltakshendelse1.forslagId shouldBe forslag1.id
+        tiltakshendelse2.forslagId shouldBe forslag2.id
+
+        val forslag1Godkjent = forslag1.copy(
+            status = Forslag.Status.Godkjent(Forslag.NavAnsatt(UUID.randomUUID(), UUID.randomUUID()), LocalDateTime.now()),
+        )
+        tiltakHendelseService.handleForslag(forslag1Godkjent)
+
+        val tiltakshendelse1Godkjent = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).getOrThrow()
+        val tiltakshendelse2IkkeGodkjent = app.tiltakshendelseRepository.getForslagHendelse(forslag2.id).getOrThrow()
+
+        tiltakshendelse1Godkjent.aktiv shouldBe false
+        tiltakshendelse2IkkeGodkjent.aktiv shouldBe true
     }
 
     private fun testInaktiveringAvTiltakshendelse(hendelseType: HendelseType) = integrationTest { app, _ ->

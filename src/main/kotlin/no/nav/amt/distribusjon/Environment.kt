@@ -12,6 +12,8 @@ data class Environment(
     val amtPdfgenUrl: String = getEnvVar(AMT_PDFGEN_URL_KEY),
     val amtPersonUrl: String = getEnvVar(AMT_PERSONSERVICE_URL_KEY),
     val amtPersonScope: String = getEnvVar(AMT_PERSONSERVICE_SCOPE_KEY),
+    val amtDeltakerUrl: String = getEnvVar(AMT_DELTAKER_URL_KEY),
+    val amtDeltakerScope: String = getEnvVar(AMT_DELTAKER_SCOPE_KEY),
     val veilarboppfolgingUrl: String = getEnvVar(VEILARBOPPFOLGING_URL_KEY),
     val veilarboppfolgingScope: String = getEnvVar(VEILARBOPPFOLGING_SCOPE_KEY),
     val dokarkivUrl: String = getEnvVar(DOKARKIV_URL_KEY),
@@ -34,6 +36,8 @@ data class Environment(
         const val AMT_PDFGEN_URL_KEY = "AMT_PDFGEN"
         const val AMT_PERSONSERVICE_SCOPE_KEY = "AMT_PERSONSERVICE_SCOPE"
         const val AMT_PERSONSERVICE_URL_KEY = "AMT_PERSONSERVICE_URL"
+        const val AMT_DELTAKER_URL_KEY = "AMT_DELTAKER_URL"
+        const val AMT_DELTAKER_SCOPE_KEY = "AMT_DELTAKER_SCOPE"
         const val VEILARBOPPFOLGING_SCOPE_KEY = "VEILARBOPPFOLGING_SCOPE"
         const val VEILARBOPPFOLGING_URL_KEY = "VEILARBOPPFOLGING_URL"
         const val DOKARKIV_URL_KEY = "DOKARKIV_URL"
@@ -51,6 +55,7 @@ data class Environment(
         const val MINSIDE_VARSEL_TOPIC = "min-side.aapen-brukervarsel-v1"
         const val MINSIDE_VARSEL_HENDELSE_TOPIC = "min-side.aapen-varsel-hendelse-v1"
         const val TILTAKSHENDELSE_TOPIC = "obo.tiltakshendelse-v1"
+        const val ARRANGOR_MELDING_TOPIC = "amt.arrangor-melding-v1"
 
         val cluster: String = getEnvVar("NAIS_CLUSTER_NAME", "lokal")
         val appName: String = getEnvVar("NAIS_APP_NAME", "amt-distribusjon")
