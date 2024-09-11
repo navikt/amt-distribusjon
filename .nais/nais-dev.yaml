@@ -49,6 +49,7 @@ spec:
       rules:
         - application: amt-pdfgen
         - application: amt-person-service
+        - application: amt-deltaker
       external:
         - host: amt-unleash-api.nav.cloud.nais.io
         - host: veilarboppfolging.dev-fss-pub.nais.io
@@ -77,6 +78,10 @@ spec:
       value: api://dev-gcp.amt.amt-person-service/.default
     - name: AMT_PERSONSERVICE_URL
       value: http://amt-person-service
+    - name: AMT_DELTAKER_SCOPE
+      value: api://dev-gcp.amt.amt-deltaker/.default
+    - name: AMT_DELTAKER_URL
+      value: http://amt-deltaker
     - name: AMT_PDFGEN_SCOPE
       value: api://dev-gcp.amt.amt-pdfgen/.default
     - name: AMT_PDFGEN

@@ -10,12 +10,14 @@ import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import no.nav.amt.distribusjon.Environment.Companion.HTTP_CLIENT_TIMEOUT_MS
+import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.application.isReadyKey
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
 import no.nav.amt.distribusjon.application.plugins.configureAuthentication
 import no.nav.amt.distribusjon.application.plugins.configureMonitoring
 import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
+import no.nav.amt.distribusjon.arrangormelding.ArrangorMeldingConsumer
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
@@ -76,6 +78,7 @@ fun Application.module() {
     val azureAdTokenClient = AzureAdTokenClient(httpClient, environment)
     val pdfgenClient = PdfgenClient(httpClient, environment)
     val amtPersonClient = AmtPersonClient(httpClient, azureAdTokenClient, environment)
+    val amtDeltakerClient = AmtDeltakerClient(httpClient, azureAdTokenClient, environment)
     val veilarboppfolgingClient = VeilarboppfolgingClient(httpClient, azureAdTokenClient, environment)
     val dokarkivClient = DokarkivClient(httpClient, azureAdTokenClient, environment)
     val dokdistkanalClient = DokdistkanalClient(httpClient, azureAdTokenClient, environment)
@@ -105,7 +108,7 @@ fun Application.module() {
         dokdistfordelingClient,
     )
 
-    val tiltakshendelseService = TiltakshendelseService(TiltakshendelseRepository(), TiltakshendelseProducer())
+    val tiltakshendelseService = TiltakshendelseService(TiltakshendelseRepository(), TiltakshendelseProducer(), amtDeltakerClient)
 
     val consumers = listOf(
         HendelseConsumer(
@@ -117,6 +120,7 @@ fun Application.module() {
             veilarboppfolgingClient,
         ),
         VarselHendelseConsumer(varselService),
+        ArrangorMeldingConsumer(tiltakshendelseService),
     )
     consumers.forEach { it.run() }
 

@@ -2,6 +2,7 @@ package no.nav.amt.distribusjon.utils.data
 
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.Aarsak
+import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
@@ -83,7 +84,7 @@ object Hendelsesdata {
 
     fun tiltak(
         navn: String = "Tiltaksnavn",
-        type: Tiltak.Type = Tiltak.Type.ARBFORB,
+        type: ArenaTiltakTypeKode = ArenaTiltakTypeKode.ARBFORB,
         ledetekst: String = "Beskrivelse av hva tiltaket går ut på",
     ) = Tiltak(navn, type, ledetekst)
 }
@@ -96,9 +97,6 @@ object HendelseTypeData {
     fun innbyggerGodkjennUtkast(utkast: Utkast = utkast()) = HendelseType.InnbyggerGodkjennUtkast(utkast)
 
     fun navGodkjennUtkast(utkast: Utkast = utkast()) = HendelseType.NavGodkjennUtkast(utkast)
-
-    fun endreBakgrunnsinformasjon(bakgrunnsinformasjon: String = "Ny bakgrunn") =
-        HendelseType.EndreBakgrunnsinformasjon(bakgrunnsinformasjon)
 
     fun endreInnhold(innhold: List<Innhold> = listOf(innhold())) = HendelseType.EndreInnhold(innhold)
 

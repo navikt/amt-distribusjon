@@ -28,8 +28,8 @@ data class HendelseDeltaker(
 }
 
 private val tiltakUtenDeltakerAdresse = setOf(
-    Tiltak.Type.DIGIOPPARB,
-    Tiltak.Type.JOBBK,
-    Tiltak.Type.GRUPPEAMO,
-    Tiltak.Type.GRUFAGYRKE,
+    ArenaTiltakTypeKode.DIGIOPPARB,
+    ArenaTiltakTypeKode.JOBBK,
+    ArenaTiltakTypeKode.GRUPPEAMO,
+    ArenaTiltakTypeKode.GRUFAGYRKE,
 )

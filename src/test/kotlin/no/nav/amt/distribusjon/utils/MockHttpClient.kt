@@ -16,6 +16,7 @@ import io.ktor.serialization.jackson.jackson
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.core.toByteArray
 import no.nav.amt.distribusjon.Environment
+import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
@@ -32,11 +33,11 @@ import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.NavBrukerRequest
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.testEnvironment
+import no.nav.amt.distribusjon.utils.data.DeltakerData
 import no.nav.amt.distribusjon.utils.data.Journalforingdata
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.veilarboppfolging.ManuellStatusRequest
 import no.nav.amt.distribusjon.veilarboppfolging.ManuellV2Response
-import no.nav.amt.distribusjon.veilarboppfolging.Sak
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import java.util.UUID
 
@@ -127,6 +128,12 @@ fun mockDokdistfordelingClient(azureAdTokenClient: AzureAdTokenClient, environme
     environment,
 )
 
+fun mockAmtDeltakerClient(azureAdTokenClient: AzureAdTokenClient, environment: Environment) = AmtDeltakerClient(
+    mockHttpClient(DeltakerData.lagDeltaker()),
+    azureAdTokenClient,
+    environment,
+)
+
 object MockResponseHandler {
     data class Request(
         val url: String,
@@ -168,12 +175,6 @@ object MockResponseHandler {
         "${testEnvironment.amtPersonUrl}/api/nav-bruker",
         NavBrukerRequest(personident),
         navBruker,
-    )
-
-    fun addSakResponse(oppfolgingsperiodeId: UUID, sak: Sak) = post(
-        "${testEnvironment.veilarboppfolgingUrl}/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId",
-        null,
-        sak,
     )
 
     fun addManuellOppfolgingResponse(personident: String, manuellOppfolging: Boolean) = post(

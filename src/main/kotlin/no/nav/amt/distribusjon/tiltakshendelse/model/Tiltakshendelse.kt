@@ -1,6 +1,6 @@
 package no.nav.amt.distribusjon.tiltakshendelse.model
 
-import no.nav.amt.distribusjon.hendelse.model.Tiltak
+import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -13,7 +13,7 @@ data class Tiltakshendelse(
     val personident: String,
     val aktiv: Boolean,
     val tekst: String,
-    val tiltakstype: Tiltak.Type,
+    val tiltakstype: ArenaTiltakTypeKode,
     val opprettet: LocalDateTime,
 ) {
     val lenke get() = "/arbeidsmarkedstiltak/deltakelse/deltaker/$deltakerId"

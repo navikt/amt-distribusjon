@@ -2,18 +2,18 @@ package no.nav.amt.distribusjon.hendelse.model
 
 data class Tiltak(
     val navn: String,
-    val type: Type,
+    val type: ArenaTiltakTypeKode,
     val ledetekst: String,
-) {
-    enum class Type {
-        INDOPPFAG,
-        ARBFORB,
-        AVKLARAG,
-        VASV,
-        ARBRRHDAG,
-        DIGIOPPARB,
-        JOBBK,
-        GRUPPEAMO,
-        GRUFAGYRKE,
-    }
+)
+
+enum class ArenaTiltakTypeKode {
+    INDOPPFAG,
+    ARBFORB,
+    AVKLARAG,
+    VASV,
+    ARBRRHDAG,
+    DIGIOPPARB,
+    JOBBK,
+    GRUPPEAMO,
+    GRUFAGYRKE,
 }
