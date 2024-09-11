@@ -65,7 +65,7 @@ class TiltakshendelseServiceTest {
     @Test
     fun `handleHendelse - utkast er håndtert - håndterer ikke på nytt`() = integrationTest { app, _ ->
         val opprettHendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
-        app.tiltakshendelseRepository.upsert(opprettHendelse.tilTiltakshendelse().copy(aktiv = false))
+        app.tiltakshendelseRepository.upsert(opprettHendelse.toTiltakshendelse().copy(aktiv = false))
 
         app.tiltakshendelseService.handleHendelse(opprettHendelse)
 
@@ -176,7 +176,7 @@ class TiltakshendelseServiceTest {
 
     private fun testInaktiveringAvTiltakshendelse(hendelseType: HendelseType) = integrationTest { app, _ ->
         val opprettHendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
-        app.tiltakshendelseRepository.upsert(opprettHendelse.tilTiltakshendelse())
+        app.tiltakshendelseRepository.upsert(opprettHendelse.toTiltakshendelse())
 
         val godkjennHendelse = Hendelsesdata.hendelse(hendelseType, deltaker = opprettHendelse.deltaker)
         app.tiltakshendelseService.handleHendelse(godkjennHendelse)

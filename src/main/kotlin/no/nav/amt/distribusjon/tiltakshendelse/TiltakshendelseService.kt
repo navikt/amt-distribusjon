@@ -50,14 +50,14 @@ class TiltakshendelseService(
     }
 
     fun opprettStartHendelse(hendelse: Hendelse) {
-        lagreOgDistribuer(hendelse.tilTiltakshendelse())
+        lagreOgDistribuer(hendelse.toTiltakshendelse())
     }
 
     suspend fun opprettStartHendelse(forslag: Forslag) {
         val deltaker = amtDeltakerClient.getDeltaker(forslag.deltakerId)
 
         lagreOgDistribuer(
-            forslag.tilHendelse(
+            forslag.toHendelse(
                 personIdent = deltaker.navBruker.personident,
                 tiltakType = deltaker.deltakerliste.tiltakstype.arenaKode,
                 aktiv = true,
@@ -91,7 +91,7 @@ class TiltakshendelseService(
     }
 }
 
-fun Forslag.tilHendelse(
+fun Forslag.toHendelse(
     personIdent: String,
     tiltakType: ArenaTiltakTypeKode,
     aktiv: Boolean,
@@ -108,7 +108,7 @@ fun Forslag.tilHendelse(
     opprettet = opprettet,
 )
 
-fun Hendelse.tilTiltakshendelse() = when (this.payload) {
+fun Hendelse.toTiltakshendelse() = when (this.payload) {
     is HendelseType.OpprettUtkast -> Tiltakshendelse(
         id = UUID.randomUUID(),
         type = Tiltakshendelse.Type.UTKAST,

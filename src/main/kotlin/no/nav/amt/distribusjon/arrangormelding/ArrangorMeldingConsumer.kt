@@ -36,7 +36,7 @@ class ArrangorMeldingConsumer(
     override suspend fun consume(key: UUID, value: String?) {
         val melding = value?.let { objectMapper.readValue<Melding>(value) }
         if (melding is Forslag) {
-            log.info("Mottok forslag som skal distribueres på ${melding.deltakerId}")
+            log.info("Mottok forslag som skal distribueres på tiltakhendelse topic. deltakerId:${melding.deltakerId}")
             tiltakshendelseService.handleForslag(melding)
         }
     }

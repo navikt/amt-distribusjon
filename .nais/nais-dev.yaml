@@ -49,6 +49,7 @@ spec:
       rules:
         - application: amt-pdfgen
         - application: amt-person-service
+        - application: amt-deltaker
       external:
         - host: amt-unleash-api.nav.cloud.nais.io
         - host: veilarboppfolging.dev-fss-pub.nais.io
