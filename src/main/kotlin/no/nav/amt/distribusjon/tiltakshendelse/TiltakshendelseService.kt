@@ -132,10 +132,10 @@ fun getForslagHendelseTekst(forslag: Forslag): String {
     when (forslag.endring) {
         is Forslag.ForlengDeltakelse -> return "$forslagtekst Forleng deltakelse"
         is Forslag.AvsluttDeltakelse -> return "$forslagtekst Avslutt deltakelse"
-        is Forslag.IkkeAktuell -> return "$forslagtekst Ikke aktuell"
+        is Forslag.IkkeAktuell -> return "$forslagtekst Er ikke aktuell"
         is Forslag.Deltakelsesmengde -> return "$forslagtekst Deltakelsesmengde"
-        is Forslag.Startdato -> return "$forslagtekst Startdato"
+        is Forslag.Startdato -> return "$forslagtekst Oppstartsdato"
         is Forslag.Sluttdato -> return "$forslagtekst Sluttdato"
-        is Forslag.Sluttarsak -> return "$forslagtekst Sluttarsak"
+        is Forslag.Sluttarsak -> return "$forslagtekst Sluttårsak"
     }
 }
