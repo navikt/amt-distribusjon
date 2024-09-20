@@ -50,9 +50,11 @@ spec:
         - application: amt-pdfgen
         - application: amt-person-service
         - application: amt-deltaker
+        - application: veilarboppfolging
+          namespace: poao
+          cluster: dev-gcp
       external:
         - host: amt-unleash-api.nav.cloud.nais.io
-        - host: veilarboppfolging.dev-fss-pub.nais.io
         - host: dokarkiv-q2.dev-fss-pub.nais.io
   envFrom:
     - secret: amt-distribusjon-unleash-api-token
@@ -87,9 +89,9 @@ spec:
     - name: AMT_PDFGEN
       value: http://amt-pdfgen
     - name: VEILARBOPPFOLGING_SCOPE
-      value: api://dev-fss.pto.veilarboppfolging/.default
+      value: api://dev-gcp.poao.veilarboppfolging/.default
     - name: VEILARBOPPFOLGING_URL
-      value: https://veilarboppfolging.dev-fss-pub.nais.io
+      value: http://veilarboppfolging.poao
     - name: DOKARKIV_URL
       value: https://dokarkiv-q2.dev-fss-pub.nais.io
     - name: DOKARKIV_SCOPE
