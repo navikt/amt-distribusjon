@@ -1,4 +1,10 @@
 # amt-distribusjon
+amt-distribusjon har ansvar for å journalføre vedtak og varsle tiltaksdeltaker og veileder om viktige endringer. NAV-veileder varsles gjennom OBO sitt filter i Modia Arbeidsrettet oppfølging, 
+mens deltakeren varsles gjennom minside-varsel på navno. Ikke-digitale deltakere får varsel som brev. 
+
+## Feature toggles
+Appen bruker Unleash og har en toggle: 
+- `amt.minside-varsel`: Brukes for å skru av/på ekstern varsling
 
 ## Utvikling
 **Lint fix:** 
