@@ -17,6 +17,7 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.core.toByteArray
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
+import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerResponse
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
@@ -158,6 +159,15 @@ object MockResponseHandler {
             responseCode,
         )
     }
+
+    fun addDeltakerResponse(deltaker: AmtDeltakerResponse) = addResponse(
+        Request(
+            url = "${testEnvironment.amtDeltakerUrl}/deltaker/${deltaker.id}",
+            method = HttpMethod.Get,
+            body = null,
+        ),
+        deltaker,
+    )
 
     fun addDistribusjonskanalResponse(personident: String, distribusjonskanal: Distribusjonskanal) = post(
         "${testEnvironment.dokdistkanalUrl}/rest/bestemDistribusjonskanal",

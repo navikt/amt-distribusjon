@@ -2,15 +2,13 @@ package no.nav.amt.distribusjon.tiltakshendelse
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.coEvery
-import io.mockk.mockk
 import kotlinx.coroutines.time.delay
 import no.nav.amt.distribusjon.Environment
-import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
+import no.nav.amt.distribusjon.utils.MockResponseHandler
 import no.nav.amt.distribusjon.utils.assertProduced
 import no.nav.amt.distribusjon.utils.data.DeltakerData
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
@@ -98,8 +96,6 @@ class TiltakshendelseServiceTest {
 
     @Test
     fun `handleHendelse - ny ForlengDeltakelse godkjennes - oppretter ny tiltakshendelsee`() = integrationTest { app, _ ->
-        val amtDeltakerClient = mockk<AmtDeltakerClient>()
-        val tiltakHendelseService = TiltakshendelseService(app.tiltakshendelseRepository, app.tiltakshendelseProducer, amtDeltakerClient)
         val deltaker = DeltakerData.lagDeltaker()
         val forslag = Forslag(
             UUID.randomUUID(),
@@ -111,15 +107,15 @@ class TiltakshendelseServiceTest {
             Forslag.Status.VenterPaSvar,
         )
 
-        coEvery { amtDeltakerClient.getDeltaker(deltaker.id) } returns deltaker
+        MockResponseHandler.addDeltakerResponse(deltaker)
 
-        tiltakHendelseService.handleForslag(forslag)
+        app.tiltakshendelseService.handleForslag(forslag)
 
         val godkjentForslag = forslag.copy(
             status = Forslag.Status.Godkjent(Forslag.NavAnsatt(UUID.randomUUID(), UUID.randomUUID()), LocalDateTime.now()),
         )
 
-        tiltakHendelseService.handleForslag(godkjentForslag)
+        app.tiltakshendelseService.handleForslag(godkjentForslag)
 
         val tiltakhendelseFerdig = app.tiltakshendelseRepository.getForslagHendelse(forslag.id).getOrThrow()
 
@@ -128,8 +124,6 @@ class TiltakshendelseServiceTest {
 
     @Test
     fun `handleHendelse - Flere hendelser på samme bruker - oppretter nye tiltakshendelsee`() = integrationTest { app, _ ->
-        val amtDeltakerClient = mockk<AmtDeltakerClient>()
-        val tiltakHendelseService = TiltakshendelseService(app.tiltakshendelseRepository, app.tiltakshendelseProducer, amtDeltakerClient)
         val deltaker = DeltakerData.lagDeltaker()
         val forslag1 = Forslag(
             UUID.randomUUID(),
@@ -147,14 +141,14 @@ class TiltakshendelseServiceTest {
             UUID.randomUUID(),
             LocalDateTime.now(),
             "begrunnelse",
-            Forslag.AvsluttDeltakelse(LocalDate.now(), EndringAarsak.FattJobb),
+            Forslag.AvsluttDeltakelse(LocalDate.now(), EndringAarsak.FattJobb, null),
             Forslag.Status.VenterPaSvar,
         )
 
-        coEvery { amtDeltakerClient.getDeltaker(deltaker.id) } returns deltaker
+        MockResponseHandler.addDeltakerResponse(deltaker)
 
-        tiltakHendelseService.handleForslag(forslag1)
-        tiltakHendelseService.handleForslag(forslag2)
+        app.tiltakshendelseService.handleForslag(forslag1)
+        app.tiltakshendelseService.handleForslag(forslag2)
 
         val tiltakshendelse1 = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).getOrThrow()
         val tiltakshendelse2 = app.tiltakshendelseRepository.getForslagHendelse(forslag2.id).getOrThrow()
@@ -165,7 +159,7 @@ class TiltakshendelseServiceTest {
         val forslag1Godkjent = forslag1.copy(
             status = Forslag.Status.Godkjent(Forslag.NavAnsatt(UUID.randomUUID(), UUID.randomUUID()), LocalDateTime.now()),
         )
-        tiltakHendelseService.handleForslag(forslag1Godkjent)
+        app.tiltakshendelseService.handleForslag(forslag1Godkjent)
 
         val tiltakshendelse1Godkjent = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).getOrThrow()
         val tiltakshendelse2IkkeGodkjent = app.tiltakshendelseRepository.getForslagHendelse(forslag2.id).getOrThrow()
