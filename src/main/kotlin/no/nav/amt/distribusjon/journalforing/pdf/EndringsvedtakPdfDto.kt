@@ -1,6 +1,5 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.time.LocalDate
 
@@ -36,75 +35,68 @@ data class EndringsvedtakPdfDto(
     )
 }
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-@JsonSubTypes(
-    JsonSubTypes.Type(value = EndringDto.EndreDeltakelsesmengde::class, name = "Deltakelsesmengde"),
-    JsonSubTypes.Type(value = EndringDto.EndreStartdato::class, name = "Oppstartsdato"),
-    JsonSubTypes.Type(value = EndringDto.EndreStartdatoOgVarighet::class, name = "Oppstartsdato og varighet"),
-    JsonSubTypes.Type(value = EndringDto.EndreSluttdato::class, name = "Sluttdato"),
-    JsonSubTypes.Type(value = EndringDto.ForlengDeltakelse::class, name = "Forlengelse"),
-    JsonSubTypes.Type(value = EndringDto.IkkeAktuell::class, name = "Er ikke aktuell"),
-    JsonSubTypes.Type(value = EndringDto.AvsluttDeltakelse::class, name = "Avslutt deltakelse"),
-    JsonSubTypes.Type(value = EndringDto.EndreInnhold::class, name = "Innhold"),
-    JsonSubTypes.Type(value = EndringDto.EndreBakgrunnsinformasjon::class, name = "Bakgrunnsinfo"),
-    JsonSubTypes.Type(value = EndringDto.LeggTilOppstartsdato::class, name = "Oppstartsdato"),
-)
+@JsonTypeInfo(use = JsonTypeInfo.Id.SIMPLE_NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 sealed interface EndringDto {
+    val tittel: String
+
     data class EndreDeltakelsesmengde(
-        val deltakelsesprosent: Int?,
-        val dagerPerUkeTekst: String?,
         val begrunnelseFraNav: String?,
-        val begrunnelseFraArrangor: String?,
+        val forslagFraArrangor: ForslagDto?,
+        override val tittel: String,
     ) : EndringDto
 
     data class EndreStartdato(
-        val startdato: LocalDate?,
         val begrunnelseFraNav: String?,
-        val begrunnelseFraArrangor: String?,
+        val forslagFraArrangor: ForslagDto?,
+        override val tittel: String,
     ) : EndringDto
 
     data class EndreStartdatoOgVarighet(
-        val startdato: LocalDate?,
         val sluttdato: LocalDate,
         val begrunnelseFraNav: String?,
-        val begrunnelseFraArrangor: String?,
+        val forslagFraArrangor: ForslagDto?,
+        override val tittel: String,
     ) : EndringDto
 
     data class EndreSluttdato(
-        val sluttdato: LocalDate,
         val begrunnelseFraNav: String?,
-        val begrunnelseFraArrangor: String?,
+        val forslagFraArrangor: ForslagDto?,
+        override val tittel: String,
     ) : EndringDto
 
     data class ForlengDeltakelse(
-        val sluttdato: LocalDate,
         val begrunnelseFraNav: String?,
-        val begrunnelseFraArrangor: String?,
+        val forslagFraArrangor: ForslagDto?,
+        override val tittel: String,
     ) : EndringDto
 
     data class IkkeAktuell(
         val aarsak: String,
         val begrunnelseFraNav: String?,
-        val begrunnelseFraArrangor: String?,
+        val forslagFraArrangor: ForslagDto?,
+        override val tittel: String = "Deltakelsen er ikke aktuell",
     ) : EndringDto
 
     data class AvsluttDeltakelse(
         val aarsak: String,
-        val sluttdato: LocalDate,
         val begrunnelseFraNav: String?,
-        val begrunnelseFraArrangor: String?,
+        val forslagFraArrangor: ForslagDto?,
+        override val tittel: String,
     ) : EndringDto
 
     data class EndreBakgrunnsinformasjon(
         val bakgrunnsinformasjon: String?,
+        override val tittel: String = "Bakgrunnsinfo er endret",
     ) : EndringDto
 
     data class EndreInnhold(
         val innhold: List<String>,
+        override val tittel: String = "Innholdet er endret",
     ) : EndringDto
 
     data class LeggTilOppstartsdato(
-        val startdatoFraArrangor: LocalDate,
         val sluttdatoFraArrangor: LocalDate?,
+        val endringFraArrangor: Boolean = true,
+        override val tittel: String,
     ) : EndringDto
 }

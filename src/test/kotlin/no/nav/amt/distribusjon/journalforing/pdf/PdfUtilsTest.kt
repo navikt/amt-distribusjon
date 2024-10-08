@@ -7,6 +7,7 @@ import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Persondata
+import no.nav.amt.distribusjon.utils.formatDate
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -35,7 +36,9 @@ class PdfUtilsTest {
         val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser, LocalDate.now())
 
         pdfDto.endringer.size shouldBe 1
-        (pdfDto.endringer.first() as EndringDto.ForlengDeltakelse).sluttdato shouldBe LocalDate.now().plusWeeks(4)
+        (pdfDto.endringer.first() as EndringDto.ForlengDeltakelse).tittel shouldBe "Deltakelsen er forlenget til ${formatDate(
+            LocalDate.now().plusWeeks(4),
+        )}"
     }
 
     @Test

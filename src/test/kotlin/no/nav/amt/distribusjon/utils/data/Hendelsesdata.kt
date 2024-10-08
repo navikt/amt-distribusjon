@@ -10,6 +10,8 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.hendelse.model.Tiltak
 import no.nav.amt.distribusjon.hendelse.model.Utkast
+import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
+import no.nav.amt.lib.models.arrangor.melding.Forslag
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
@@ -105,45 +107,52 @@ object HendelseTypeData {
         dagerPerUke: Float? = 5F,
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
-    ) = HendelseType.EndreDeltakelsesmengde(deltakelsesprosent, dagerPerUke, begrunnelseFraNav, begrunnelseFraArrangor)
+        endringFraForslag: Forslag.Endring? = Forslag.Deltakelsesmengde(50, 3),
+    ) = HendelseType.EndreDeltakelsesmengde(deltakelsesprosent, dagerPerUke, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun endreStartdato(
         startdato: LocalDate? = LocalDate.now().plusDays(7),
         sluttdato: LocalDate? = null,
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
-    ) = HendelseType.EndreStartdato(startdato, sluttdato, begrunnelseFraNav, begrunnelseFraArrangor)
+        endringFraForslag: Forslag.Endring? = Forslag.Startdato(LocalDate.now().plusDays(5), null),
+    ) = HendelseType.EndreStartdato(startdato, sluttdato, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun endreSluttdato(
         sluttdato: LocalDate = LocalDate.now().plusDays(7),
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
-    ) = HendelseType.EndreSluttdato(sluttdato, begrunnelseFraNav, begrunnelseFraArrangor)
+        endringFraForslag: Forslag.Endring? = Forslag.Sluttdato(sluttdato),
+    ) = HendelseType.EndreSluttdato(sluttdato, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun forlengDeltakelse(
         sluttdato: LocalDate = LocalDate.now().plusMonths(2),
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
-    ) = HendelseType.ForlengDeltakelse(sluttdato, begrunnelseFraNav, begrunnelseFraArrangor)
+        endringFraForslag: Forslag.Endring? = Forslag.ForlengDeltakelse(sluttdato),
+    ) = HendelseType.ForlengDeltakelse(sluttdato, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun ikkeAktuell(
         aarsak: Aarsak = Aarsak(Aarsak.Type.FATT_JOBB, null),
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
-    ) = HendelseType.IkkeAktuell(aarsak, begrunnelseFraNav, begrunnelseFraArrangor)
+        endringFraForslag: Forslag.Endring? = Forslag.IkkeAktuell(EndringAarsak.FattJobb),
+    ) = HendelseType.IkkeAktuell(aarsak, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun avsluttDeltakelse(
         aarsak: Aarsak = Aarsak(Aarsak.Type.FATT_JOBB, null),
         sluttdato: LocalDate = LocalDate.now().plusDays(7),
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
-    ) = HendelseType.AvsluttDeltakelse(aarsak, sluttdato, begrunnelseFraNav, begrunnelseFraArrangor)
+        endringFraForslag: Forslag.Endring? = Forslag.AvsluttDeltakelse(sluttdato, EndringAarsak.FattJobb, true),
+    ) = HendelseType.AvsluttDeltakelse(aarsak, sluttdato, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun endreSluttarsak(
         aarsak: Aarsak = Aarsak(Aarsak.Type.ANNET, "Noe annet"),
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
-    ) = HendelseType.EndreSluttarsak(aarsak, begrunnelseFraNav, begrunnelseFraArrangor)
+        endringFraForslag: Forslag.Endring? = Forslag.Sluttarsak(EndringAarsak.Annet("annet")),
+    ) = HendelseType.EndreSluttarsak(aarsak, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun sistBesokt(sistBesokt: ZonedDateTime = ZonedDateTime.now()) = HendelseType.DeltakerSistBesokt(sistBesokt)
 

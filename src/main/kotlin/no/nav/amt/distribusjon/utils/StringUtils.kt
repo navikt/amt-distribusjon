@@ -1,5 +1,9 @@
 package no.nav.amt.distribusjon.utils
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
 val FORKORTELSER_MED_STORE_BOKSTAVER = listOf(
     "as",
     "a/s",
@@ -24,4 +28,10 @@ fun toTitleCase(tekst: String): String {
             }
         }
     }
+}
+
+fun formatDate(date: LocalDate): String {
+    val locale = Locale.Builder().setLanguageTag("no").setLanguageTag("no").setRegion("NO").build()
+    val formatter = DateTimeFormatter.ofPattern("d. MMMM yyyy", locale)
+    return date.format(formatter)
 }
