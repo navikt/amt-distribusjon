@@ -36,6 +36,7 @@ import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
+import no.nav.amt.lib.kafka.Producer
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.testing.SingletonKafkaProvider
 import no.nav.amt.lib.testing.SingletonPostgres16Container
@@ -73,6 +74,7 @@ class TestApp {
         SingletonPostgres16Container
         SingletonKafkaProvider.start()
         val kafakConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
+        val kafkaProducer = Producer<String, String>(kafakConfig)
 
         unleash = FakeUnleash()
         unleash.enableAll()
@@ -89,7 +91,7 @@ class TestApp {
         dokdistfordelingClient = mockDokdistfordelingClient(azureAdTokenClient, environment)
 
         varselRepository = VarselRepository()
-        varselService = VarselService(varselRepository, VarselProducer(kafkaConfig = kafakConfig), unleash)
+        varselService = VarselService(varselRepository, VarselProducer(kafkaProducer), unleash)
 
         journalforingstatusRepository = JournalforingstatusRepository()
         hendelseRepository = HendelseRepository()
@@ -104,7 +106,7 @@ class TestApp {
         )
 
         digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
-        tiltakshendelseProducer = TiltakshendelseProducer(kafkaConfig = kafakConfig)
+        tiltakshendelseProducer = TiltakshendelseProducer(kafkaProducer)
         amtDeltakerClient = mockAmtDeltakerClient(azureAdTokenClient, environment)
         tiltakshendelseRepository = TiltakshendelseRepository()
         tiltakshendelseService = TiltakshendelseService(
