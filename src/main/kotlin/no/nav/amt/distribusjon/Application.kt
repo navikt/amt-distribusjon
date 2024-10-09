@@ -41,6 +41,9 @@ import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
+import no.nav.amt.lib.kafka.Producer
+import no.nav.amt.lib.kafka.config.KafkaConfigImpl
+import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.utils.database.Database
 
 fun main() {
@@ -96,9 +99,11 @@ fun Application.module() {
             .build(),
     )
 
+    val kafkaProducer = Producer<String, String>(if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl())
+
     val hendelseRepository = HendelseRepository()
 
-    val varselService = VarselService(VarselRepository(), VarselProducer(), unleash)
+    val varselService = VarselService(VarselRepository(), VarselProducer(kafkaProducer), unleash)
     val journalforingService = JournalforingService(
         JournalforingstatusRepository(),
         amtPersonClient,
@@ -108,7 +113,8 @@ fun Application.module() {
         dokdistfordelingClient,
     )
 
-    val tiltakshendelseService = TiltakshendelseService(TiltakshendelseRepository(), TiltakshendelseProducer(), amtDeltakerClient)
+    val tiltakshendelseService =
+        TiltakshendelseService(TiltakshendelseRepository(), TiltakshendelseProducer(kafkaProducer), amtDeltakerClient)
 
     val consumers = listOf(
         HendelseConsumer(
