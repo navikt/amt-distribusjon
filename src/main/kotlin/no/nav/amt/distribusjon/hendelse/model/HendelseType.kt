@@ -1,6 +1,7 @@
 package no.nav.amt.distribusjon.hendelse.model
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import no.nav.amt.lib.models.arrangor.melding.Forslag
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -9,6 +10,7 @@ sealed interface HendelseType {
     sealed interface HendelseMedForslag : HendelseType {
         val begrunnelseFraNav: String?
         val begrunnelseFraArrangor: String?
+        val endringFraForslag: Forslag.Endring?
     }
 
     data class OpprettUtkast(
@@ -44,6 +46,7 @@ sealed interface HendelseType {
         val dagerPerUke: Float?,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
+        override val endringFraForslag: Forslag.Endring?,
     ) : HendelseMedForslag
 
     data class EndreStartdato(
@@ -51,24 +54,28 @@ sealed interface HendelseType {
         val sluttdato: LocalDate? = null,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
+        override val endringFraForslag: Forslag.Endring?,
     ) : HendelseMedForslag
 
     data class EndreSluttdato(
         val sluttdato: LocalDate,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
+        override val endringFraForslag: Forslag.Endring?,
     ) : HendelseMedForslag
 
     data class ForlengDeltakelse(
         val sluttdato: LocalDate,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
+        override val endringFraForslag: Forslag.Endring?,
     ) : HendelseMedForslag
 
     data class IkkeAktuell(
         val aarsak: Aarsak,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
+        override val endringFraForslag: Forslag.Endring?,
     ) : HendelseMedForslag
 
     data class AvsluttDeltakelse(
@@ -76,12 +83,14 @@ sealed interface HendelseType {
         val sluttdato: LocalDate,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
+        override val endringFraForslag: Forslag.Endring?,
     ) : HendelseMedForslag
 
     data class EndreSluttarsak(
         val aarsak: Aarsak,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
+        override val endringFraForslag: Forslag.Endring?,
     ) : HendelseMedForslag
 
     data class DeltakerSistBesokt(
