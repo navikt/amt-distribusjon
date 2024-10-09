@@ -167,14 +167,14 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto = when (hendel
     is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
         begrunnelseFraNav = hendelseType.begrunnelseFraNav,
         forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
-        tittel = "Sluttdato er endret til ${formatDate(hendelseType.sluttdato)}",
+        tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
     )
 
     is HendelseType.EndreStartdato -> {
         val tittel = if (hendelseType.startdato != null) {
             "Oppstartsdato er endret til ${formatDate(hendelseType.startdato)}"
         } else {
-            "Oppstartsdato er endret"
+            "Oppstartsdato er fjernet"
         }
         if (hendelseType.sluttdato != null) {
             EndringDto.EndreStartdatoOgVarighet(
