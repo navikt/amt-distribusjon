@@ -5,7 +5,7 @@ import java.time.LocalDate
 data class HovedvedtakPdfDto(
     val deltaker: DeltakerDto,
     val deltakerliste: DeltakerlisteDto,
-    val navVeileder: NavVeilederDto,
+    val avsender: AvsenderDto,
     val vedtaksdato: LocalDate,
     val begrunnelseFraNav: String? = null,
 ) {
@@ -29,7 +29,7 @@ data class HovedvedtakPdfDto(
 
     data class ArrangorDto(val navn: String)
 
-    data class NavVeilederDto(
+    data class AvsenderDto(
         val navn: String,
         val enhet: String,
     )
