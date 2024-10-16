@@ -14,7 +14,6 @@ import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
-import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import org.slf4j.LoggerFactory
 
@@ -183,11 +182,7 @@ class JournalforingService(
     private suspend fun journalforEndringsvedtak(ikkeJournalforteHendelser: List<Hendelse>): String {
         val nyesteHendelse = ikkeJournalforteHendelser.maxBy { it.opprettet }
 
-        val veileder = when (nyesteHendelse.ansvarlig) {
-            is HendelseAnsvarlig.NavVeileder -> nyesteHendelse.ansvarlig
-            is HendelseAnsvarlig.Arrangor -> null
-            is HendelseAnsvarlig.Deltaker -> throw IllegalArgumentException("Deltaker kan ikke være ansvarlig for vedtaket")
-        }
+        val ansvarlig = getAnsvarlig(nyesteHendelse, ikkeJournalforteHendelser)
         val navBruker = amtPersonClient.hentNavBruker(nyesteHendelse.deltaker.personident)
         val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
             ?: throw IllegalArgumentException(
@@ -198,7 +193,7 @@ class JournalforingService(
             lagEndringsvedtakPdfDto(
                 nyesteHendelse.deltaker,
                 navBruker,
-                veileder,
+                ansvarlig,
                 ikkeJournalforteHendelser,
                 nyesteHendelse.opprettet.toLocalDate(),
             ),
@@ -209,7 +204,7 @@ class JournalforingService(
             fnr = nyesteHendelse.deltaker.personident,
             sak = sak,
             pdf = pdf,
-            journalforendeEnhet = getJournalforendeEnhet(veileder, navBruker),
+            journalforendeEnhet = getJournalforendeEnhet(ansvarlig),
             tiltakstype = nyesteHendelse.deltaker.deltakerliste.tiltak,
             endring = true,
         )
@@ -260,8 +255,19 @@ class JournalforingService(
         )
     }
 
-    private fun getJournalforendeEnhet(veileder: HendelseAnsvarlig.NavVeileder?, navBruker: NavBruker): String {
-        veileder?.enhet?.let { return it.enhetsnummer }
-        return navBruker.navEnhet?.enhetId ?: throw IllegalArgumentException("Kan ikke journalføre uten journalførende enhet")
+    private fun getAnsvarlig(nyesteHendelse: Hendelse, ikkeJournalforteHendelser: List<Hendelse>): HendelseAnsvarlig {
+        if (nyesteHendelse.ansvarlig is HendelseAnsvarlig.NavVeileder) {
+            return nyesteHendelse.ansvarlig
+        }
+        ikkeJournalforteHendelser.firstOrNull { it.ansvarlig is HendelseAnsvarlig.NavVeileder }?.let { return it.ansvarlig }
+        ikkeJournalforteHendelser.firstOrNull { it.ansvarlig is HendelseAnsvarlig.Arrangor }?.let { return it.ansvarlig }
+
+        throw IllegalArgumentException("Må ha en ansvarlig som er enten veileder eller arrangør")
+    }
+
+    private fun getJournalforendeEnhet(ansvarlig: HendelseAnsvarlig): String = when (ansvarlig) {
+        is HendelseAnsvarlig.NavVeileder -> ansvarlig.enhet.enhetsnummer
+        is HendelseAnsvarlig.Arrangor -> ansvarlig.enhet.enhetsnummer
+        is HendelseAnsvarlig.Deltaker -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker")
     }
 }

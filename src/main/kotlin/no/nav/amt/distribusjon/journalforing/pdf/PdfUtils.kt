@@ -61,7 +61,7 @@ fun lagHovedvedtakPdfDto(
 fun lagEndringsvedtakPdfDto(
     deltaker: HendelseDeltaker,
     navBruker: NavBruker,
-    veileder: HendelseAnsvarlig.NavVeileder?,
+    ansvarlig: HendelseAnsvarlig,
     hendelser: List<Hendelse>,
     vedtaksdato: LocalDate,
 ): EndringsvedtakPdfDto {
@@ -84,13 +84,19 @@ fun lagEndringsvedtakPdfDto(
         ),
         endringer = endringer.map { tilEndringDto(it) },
         avsender = EndringsvedtakPdfDto.AvsenderDto(
-            navn = veileder?.navn,
+            navn = ansvarlig.getAvsendernavn(),
             enhet = navBruker.navEnhet?.navn ?: "NAV",
         ),
         vedtaksdato = vedtaksdato,
         forsteVedtakFattet = deltaker.forsteVedtakFattet
             ?: throw IllegalStateException("Kan ikke journalføre endringsvedtak hvis opprinnelig vedtak ikke er fattet"),
     )
+}
+
+private fun HendelseAnsvarlig.getAvsendernavn() = when (this) {
+    is HendelseAnsvarlig.NavVeileder -> navn
+    is HendelseAnsvarlig.Arrangor -> null
+    is HendelseAnsvarlig.Deltaker -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker")
 }
 
 private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> = hendelser
