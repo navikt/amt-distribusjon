@@ -50,9 +50,9 @@ fun lagHovedvedtakPdfDto(
         ),
         forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
     ),
-    navVeileder = HovedvedtakPdfDto.NavVeilederDto(
+    avsender = HovedvedtakPdfDto.AvsenderDto(
         navn = veileder.navn,
-        enhet = navBruker.navEnhet?.navn ?: "",
+        enhet = navBruker.navEnhet?.navn ?: "NAV",
     ),
     vedtaksdato = vedtaksdato,
     begrunnelseFraNav = begrunnelseFraNav,
@@ -61,7 +61,7 @@ fun lagHovedvedtakPdfDto(
 fun lagEndringsvedtakPdfDto(
     deltaker: HendelseDeltaker,
     navBruker: NavBruker,
-    veileder: HendelseAnsvarlig.NavVeileder,
+    veileder: HendelseAnsvarlig.NavVeileder?,
     hendelser: List<Hendelse>,
     vedtaksdato: LocalDate,
 ): EndringsvedtakPdfDto {
@@ -83,9 +83,9 @@ fun lagEndringsvedtakPdfDto(
             forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
         ),
         endringer = endringer.map { tilEndringDto(it) },
-        navVeileder = EndringsvedtakPdfDto.NavVeilederDto(
-            navn = veileder.navn,
-            enhet = navBruker.navEnhet?.navn ?: "",
+        avsender = EndringsvedtakPdfDto.AvsenderDto(
+            navn = veileder?.navn,
+            enhet = navBruker.navEnhet?.navn ?: "NAV",
         ),
         vedtaksdato = vedtaksdato,
         forsteVedtakFattet = deltaker.forsteVedtakFattet
