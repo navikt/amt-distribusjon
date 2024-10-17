@@ -1,6 +1,5 @@
 package no.nav.amt.distribusjon.digitalbruker.api
 
-import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
