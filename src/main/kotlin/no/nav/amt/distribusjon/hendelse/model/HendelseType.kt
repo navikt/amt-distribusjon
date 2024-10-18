@@ -114,7 +114,7 @@ data class Utkast(
     val dagerPerUke: Float?,
     val deltakelsesprosent: Float?,
     val bakgrunnsinformasjon: String?,
-    val innhold: List<Innhold>,
+    val innhold: List<Innhold> = emptyList(),
 )
 
 data class Aarsak(
