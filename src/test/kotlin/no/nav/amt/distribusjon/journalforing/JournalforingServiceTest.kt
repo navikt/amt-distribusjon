@@ -85,6 +85,29 @@ class JournalforingServiceTest {
     }
 
     @Test
+    fun `handleHendelse - NavGodkjennUtkast, ikke digital, ingen adresse - sender ikke brev`() = integrationTest { app, _ ->
+        val navBruker = Persondata.lagNavBruker(
+            adresse = null,
+        )
+
+        val hendelse = Hendelsesdata.hendelse(
+            HendelseTypeData.navGodkjennUtkast(),
+            distribusjonskanal = Distribusjonskanal.PRINT,
+            manuellOppfolging = false,
+        )
+
+        MockResponseHandler.addNavBrukerResponse(hendelse.deltaker.personident, navBruker)
+
+        app.hendelseRepository.insert(hendelse)
+
+        app.journalforingService.handleHendelse(hendelse)
+
+        val status = app.journalforingstatusRepository.get(hendelse.id)
+        status!!.journalpostId shouldNotBe null
+        status.bestillingsId shouldBe null
+    }
+
+    @Test
     fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort, skal ikke sende brev - ignorerer hendelse`() = integrationTest {
             app,
             _,
