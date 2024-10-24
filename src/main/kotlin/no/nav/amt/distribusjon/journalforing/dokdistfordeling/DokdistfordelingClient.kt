@@ -41,6 +41,10 @@ class DokdistfordelingClient(
                 log.warn("Journalpost $journalpostId er allerede distribuert")
                 return response.body<DistribuerJournalpostResponse>().bestillingsId
             }
+            if (journalpostId == "679847303") {
+                log.warn("Spesialhåndtering for person vi ikke har adresse for, returnerer hendelseid")
+                return UUID.fromString("d8eae2b6-52d4-4b6b-a4e3-8b3cea1b31dc")
+            }
             error("Distrubering av journalpost $journalpostId feilet: ${response.status} ${response.bodyAsText()}")
         }
 
