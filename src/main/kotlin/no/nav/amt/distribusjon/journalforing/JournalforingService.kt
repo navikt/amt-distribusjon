@@ -14,6 +14,7 @@ import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
+import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import org.slf4j.LoggerFactory
 
@@ -75,6 +76,7 @@ class JournalforingService(
         utkast: Utkast,
         journalforingstatus: Journalforingstatus?,
     ) {
+        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
         if (journalforingstatus == null || !journalforingstatus.erJournalfort()) {
             val veileder = when (hendelse.ansvarlig) {
                 is HendelseAnsvarlig.NavVeileder -> hendelse.ansvarlig
@@ -84,7 +86,6 @@ class JournalforingService(
                     "Deltaker eller arrangør kan ikke være ansvarlig for vedtaket",
                 )
             }
-            val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
             val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
                 ?: throw IllegalArgumentException(
                     "Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
@@ -118,9 +119,9 @@ class JournalforingService(
             )
             journalforingstatusRepository.upsert(nyJournalforingstatus)
 
-            distribuer(listOf(hendelse), journalpostId)
+            distribuer(listOf(hendelse), journalpostId, navBruker.harAdresse())
         } else {
-            distribuer(listOf(hendelse), journalforingstatus.journalpostId!!)
+            distribuer(listOf(hendelse), journalforingstatus.journalpostId!!, navBruker.harAdresse())
         }
 
         log.info("Journalførte hovedvedtak for deltaker ${hendelse.deltaker.id}")
@@ -155,9 +156,10 @@ class JournalforingService(
         val ikkeJournalforteHendelser = hendelseMedJournalforingstatuser.filter { !it.journalforingstatus.erJournalfort() }
             .map { it.hendelse }
 
+        val navBruker = amtPersonClient.hentNavBruker(sisteHendelse.hendelse.deltaker.personident)
         if (ikkeJournalforteHendelser.isNotEmpty()) {
-            val journalpostId = journalforEndringsvedtak(ikkeJournalforteHendelser)
-            distribuer(ikkeJournalforteHendelser, journalpostId)
+            val journalpostId = journalforEndringsvedtak(ikkeJournalforteHendelser, navBruker)
+            distribuer(ikkeJournalforteHendelser, journalpostId, navBruker.harAdresse())
         }
 
         if (journalforteHendelser.isNotEmpty()) {
@@ -169,7 +171,7 @@ class JournalforingService(
                     journalforteHendelser.filter { it.journalforingstatus.journalpostId == journalpostid }
                 }
             journalpostHendelseMap.entries.forEach { entry ->
-                distribuer(journalpostId = entry.key, hendelser = entry.value.map { it.hendelse })
+                distribuer(journalpostId = entry.key, hendelser = entry.value.map { it.hendelse }, harAdresse = navBruker.harAdresse())
             }
         }
 
@@ -179,11 +181,9 @@ class JournalforingService(
         )
     }
 
-    private suspend fun journalforEndringsvedtak(ikkeJournalforteHendelser: List<Hendelse>): String {
+    private suspend fun journalforEndringsvedtak(ikkeJournalforteHendelser: List<Hendelse>, navBruker: NavBruker): String {
         val nyesteHendelse = ikkeJournalforteHendelser.maxBy { it.opprettet }
-
         val ansvarlig = getAnsvarlig(nyesteHendelse, ikkeJournalforteHendelser)
-        val navBruker = amtPersonClient.hentNavBruker(nyesteHendelse.deltaker.personident)
         val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
             ?: throw IllegalArgumentException(
                 "Kan ikke endre på deltaker ${nyesteHendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
@@ -225,12 +225,20 @@ class JournalforingService(
         return journalpostId
     }
 
-    private suspend fun distribuer(hendelser: List<Hendelse>, journalpostId: String) {
+    private suspend fun distribuer(
+        hendelser: List<Hendelse>,
+        journalpostId: String,
+        harAdresse: Boolean,
+    ) {
         if (hendelser.isEmpty()) {
             return
         }
         val nyesteHendelse = hendelser.maxBy { it.opprettet }
         if (!DigitalBrukerService.skalDistribueresDigitalt(nyesteHendelse.distribusjonskanal, nyesteHendelse.manuellOppfolging)) {
+            if (!harAdresse) {
+                log.warn("Kan ikke distribuere journalpost $journalpostId fordi bruker mangler adresse i PDL")
+                return
+            }
             val bestillingsId = dokdistfordelingClient.distribuerJournalpost(journalpostId)
             hendelser.forEach {
                 journalforingstatusRepository.upsert(

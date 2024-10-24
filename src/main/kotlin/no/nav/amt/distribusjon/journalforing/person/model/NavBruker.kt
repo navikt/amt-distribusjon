@@ -11,8 +11,11 @@ data class NavBruker(
     val navEnhet: NavEnhet?,
     val oppfolgingsperioder: List<Oppfolgingsperiode>,
     val adressebeskyttelse: Adressebeskyttelse?,
+    val adresse: Adresse?,
 ) {
     fun getAktivOppfolgingsperiode(): Oppfolgingsperiode? = oppfolgingsperioder.find { it.erAktiv() }
+
+    fun harAdresse(): Boolean = adresse != null
 }
 
 data class Oppfolgingsperiode(
