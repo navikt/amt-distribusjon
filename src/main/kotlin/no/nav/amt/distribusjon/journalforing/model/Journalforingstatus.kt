@@ -8,6 +8,7 @@ data class Journalforingstatus(
     val hendelseId: UUID,
     val journalpostId: String?,
     val bestillingsId: UUID?,
+    val kanIkkeDistribueres: Boolean?,
 ) {
     fun erJournalfort(): Boolean {
         return journalpostId != null
@@ -17,7 +18,7 @@ data class Journalforingstatus(
         return if (DigitalBrukerService.skalDistribueresDigitalt(distribusjonskanal, erUnderManuellOppfolging)) {
             true
         } else {
-            bestillingsId != null
+            bestillingsId != null || kanIkkeDistribueres == true
         }
     }
 }

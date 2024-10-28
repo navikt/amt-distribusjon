@@ -42,6 +42,7 @@ class HendelseRepositoryTest {
                 hendelseId = hendelse.id,
                 journalpostId = null,
                 bestillingsId = null,
+                kanIkkeDistribueres = null,
             ),
         )
 
@@ -60,6 +61,7 @@ class HendelseRepositoryTest {
                 hendelseId = hendelse.id,
                 journalpostId = null,
                 bestillingsId = null,
+                kanIkkeDistribueres = null,
             ),
         )
 
@@ -77,6 +79,29 @@ class HendelseRepositoryTest {
                 hendelseId = hendelse.id,
                 journalpostId = "12345",
                 bestillingsId = null,
+                kanIkkeDistribueres = null,
+            ),
+        )
+
+        val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
+
+        ikkeJournalforteHendelser.size shouldBe 0
+    }
+
+    @Test
+    fun `getIkkeJournalforteHendelser - hendelse er journalfort, kan ikke distribueres - returnerer tom liste`() {
+        val hendelse = Hendelsesdata.hendelse(
+            HendelseTypeData.forlengDeltakelse(),
+            opprettet = LocalDateTime.now().minusHours(1),
+            distribusjonskanal = Distribusjonskanal.PRINT,
+        )
+        TestRepository.insert(hendelse)
+        journalforingstatusRepository.upsert(
+            Journalforingstatus(
+                hendelseId = hendelse.id,
+                journalpostId = "12345",
+                bestillingsId = null,
+                kanIkkeDistribueres = true,
             ),
         )
 
@@ -98,6 +123,7 @@ class HendelseRepositoryTest {
                 hendelseId = hendelse.id,
                 journalpostId = "12345",
                 bestillingsId = null,
+                kanIkkeDistribueres = null,
             ),
         )
 
@@ -116,6 +142,7 @@ class HendelseRepositoryTest {
                 hendelseId = hendelse.id,
                 journalpostId = "12345",
                 bestillingsId = UUID.randomUUID(),
+                kanIkkeDistribueres = false,
             ),
         )
 

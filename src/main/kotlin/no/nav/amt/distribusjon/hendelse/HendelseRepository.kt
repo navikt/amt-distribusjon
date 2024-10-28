@@ -37,6 +37,7 @@ class HendelseRepository {
             hendelseId = row.uuid("id"),
             journalpostId = row.stringOrNull("journalpost_id"),
             bestillingsId = row.uuidOrNull("bestillingsid"),
+            kanIkkeDistribueres = row.boolean("kan_ikke_distribueres"),
         ),
     )
 
@@ -72,12 +73,15 @@ class HendelseRepository {
                 h.distribusjonskanal as "distribusjonskanal",
                 h.manuelloppfolging as "manuelloppfolging",
                 js.journalpost_id as "journalpost_id",
-                js.bestillingsid as "bestillingsid"
+                js.bestillingsid as "bestillingsid",
+                js.kan_ikke_distribueres as "kan_ikke_distribueres"
             from hendelse h
                 left join journalforingstatus js on h.id = js.hendelse_id
             where h.created_at < :opprettet 
                 and js.hendelse_id is not null
-                and (js.journalpost_id is null or (js.bestillingsid is null and h.distribusjonskanal not in ('DITT_NAV','SDP')))
+                and (js.journalpost_id is null 
+                    or (js.bestillingsid is null and h.distribusjonskanal not in ('DITT_NAV','SDP') 
+                    and (js.kan_ikke_distribueres is null or js.kan_ikke_distribueres = false)))
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("opprettet" to opprettet))
