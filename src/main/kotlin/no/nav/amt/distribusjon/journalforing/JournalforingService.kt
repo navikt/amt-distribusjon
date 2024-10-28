@@ -116,6 +116,7 @@ class JournalforingService(
                 hendelseId = hendelse.id,
                 journalpostId = journalpostId,
                 bestillingsId = null,
+                kanIkkeDistribueres = null,
             )
             journalforingstatusRepository.upsert(nyJournalforingstatus)
 
@@ -137,6 +138,7 @@ class JournalforingService(
                 hendelseId = hendelse.id,
                 journalpostId = journalforingstatus?.journalpostId,
                 bestillingsId = journalforingstatus?.bestillingsId,
+                kanIkkeDistribueres = journalforingstatus?.kanIkkeDistribueres,
             ),
         )
         log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
@@ -215,6 +217,7 @@ class JournalforingService(
                     hendelseId = it.id,
                     journalpostId = journalpostId,
                     bestillingsId = null,
+                    kanIkkeDistribueres = null,
                 ),
             )
         }
@@ -237,17 +240,28 @@ class JournalforingService(
         if (!DigitalBrukerService.skalDistribueresDigitalt(nyesteHendelse.distribusjonskanal, nyesteHendelse.manuellOppfolging)) {
             if (!harAdresse) {
                 log.warn("Kan ikke distribuere journalpost $journalpostId fordi bruker mangler adresse i PDL")
-                return
-            }
-            val bestillingsId = dokdistfordelingClient.distribuerJournalpost(journalpostId)
-            hendelser.forEach {
-                journalforingstatusRepository.upsert(
-                    Journalforingstatus(
-                        hendelseId = it.id,
-                        journalpostId = journalpostId,
-                        bestillingsId = bestillingsId,
-                    ),
-                )
+                hendelser.forEach {
+                    journalforingstatusRepository.upsert(
+                        Journalforingstatus(
+                            hendelseId = it.id,
+                            journalpostId = journalpostId,
+                            bestillingsId = null,
+                            kanIkkeDistribueres = true,
+                        ),
+                    )
+                }
+            } else {
+                val bestillingsId = dokdistfordelingClient.distribuerJournalpost(journalpostId)
+                hendelser.forEach {
+                    journalforingstatusRepository.upsert(
+                        Journalforingstatus(
+                            hendelseId = it.id,
+                            journalpostId = journalpostId,
+                            bestillingsId = bestillingsId,
+                            kanIkkeDistribueres = false,
+                        ),
+                    )
+                }
             }
         }
     }
