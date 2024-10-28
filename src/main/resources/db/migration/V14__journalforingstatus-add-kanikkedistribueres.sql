@@ -1,1 +1,1 @@
-alter table journalforingstatus add column kan_ikke_distribueres boolean default null;
+alter table journalforingstatus add column kan_ikke_distribueres boolean;
