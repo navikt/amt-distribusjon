@@ -3,7 +3,6 @@ package no.nav.amt.distribusjon.application.plugins
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.httpMethod
@@ -15,9 +14,11 @@ import io.ktor.server.routing.routing
 import no.nav.amt.distribusjon.application.registerHealthApi
 import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.digitalbruker.api.registerDigitalBrukerApi
+import no.nav.amt.distribusjon.internal.registerInternalApi
+import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
 import org.slf4j.LoggerFactory
 
-fun Application.configureRouting(digitalBrukerService: DigitalBrukerService) {
+fun Application.configureRouting(digitalBrukerService: DigitalBrukerService, tiltakshendelseService: TiltakshendelseService) {
     install(StatusPages) {
         exception<IllegalArgumentException> { call, cause ->
             StatusPageLogger.log(HttpStatusCode.BadRequest, call, cause)
@@ -44,6 +45,7 @@ fun Application.configureRouting(digitalBrukerService: DigitalBrukerService) {
         registerHealthApi()
 
         registerDigitalBrukerApi(digitalBrukerService)
+        registerInternalApi(tiltakshendelseService)
 
         val catchAllRoute = "{...}"
         route(catchAllRoute) {
