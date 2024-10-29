@@ -131,7 +131,7 @@ fun Application.module() {
     consumers.forEach { it.run() }
 
     configureAuthentication(environment)
-    configureRouting(digitalBrukerService)
+    configureRouting(digitalBrukerService, tiltakshendelseService)
     configureMonitoring()
 
     val jobManager = JobManager(leaderElection, ::isReady)
