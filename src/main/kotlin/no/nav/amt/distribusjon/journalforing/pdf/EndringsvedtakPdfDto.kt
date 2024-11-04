@@ -42,6 +42,7 @@ sealed interface EndringDto {
     data class EndreDeltakelsesmengde(
         val begrunnelseFraNav: String?,
         val forslagFraArrangor: ForslagDto?,
+        val gyldigFra: LocalDate?,
         override val tittel: String,
     ) : EndringDto
 
