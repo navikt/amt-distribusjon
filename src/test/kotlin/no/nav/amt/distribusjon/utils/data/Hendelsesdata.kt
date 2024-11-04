@@ -105,10 +105,18 @@ object HendelseTypeData {
     fun endreDeltakelsesmengde(
         deltakelsesprosent: Float? = 99F,
         dagerPerUke: Float? = 5F,
+        gyldigFra: LocalDate = LocalDate.now(),
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
-        endringFraForslag: Forslag.Endring? = Forslag.Deltakelsesmengde(50, 3),
-    ) = HendelseType.EndreDeltakelsesmengde(deltakelsesprosent, dagerPerUke, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
+        endringFraForslag: Forslag.Endring? = Forslag.Deltakelsesmengde(50, 3, LocalDate.now()),
+    ) = HendelseType.EndreDeltakelsesmengde(
+        deltakelsesprosent,
+        dagerPerUke,
+        gyldigFra,
+        begrunnelseFraNav,
+        begrunnelseFraArrangor,
+        endringFraForslag,
+    )
 
     fun endreStartdato(
         startdato: LocalDate? = LocalDate.now().plusDays(7),

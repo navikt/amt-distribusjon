@@ -168,6 +168,7 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto = when (hendel
             deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
             dagerPerUke = hendelseType.dagerPerUke?.toInt(),
         )}",
+        gyldigFra = hendelseType.gyldigFra,
     )
 
     is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(

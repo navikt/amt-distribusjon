@@ -44,6 +44,7 @@ sealed interface HendelseType {
     data class EndreDeltakelsesmengde(
         val deltakelsesprosent: Float?,
         val dagerPerUke: Float?,
+        val gyldigFra: LocalDate?,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
         override val endringFraForslag: Forslag.Endring?,
