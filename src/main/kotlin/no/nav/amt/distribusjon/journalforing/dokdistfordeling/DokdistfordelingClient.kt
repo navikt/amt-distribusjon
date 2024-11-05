@@ -27,7 +27,7 @@ class DokdistfordelingClient(
     private val navCallId = Environment.appName
     private val log = LoggerFactory.getLogger(javaClass)
 
-    suspend fun distribuerJournalpost(journalpostId: String, tvingSentralPrint: Boolean = false): UUID {
+    suspend fun distribuerJournalpost(journalpostId: String, tvingSentralPrint: Boolean = false): UUID? {
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
         val response = httpClient.post("$url/rest/v1/distribuerjournalpost") {
             header(HttpHeaders.Authorization, token)
@@ -40,6 +40,10 @@ class DokdistfordelingClient(
             if (response.status == HttpStatusCode.Conflict) {
                 log.warn("Journalpost $journalpostId er allerede distribuert")
                 return response.body<DistribuerJournalpostResponse>().bestillingsId
+            }
+            if (response.status == HttpStatusCode.Gone) {
+                log.warn("Journalpost $journalpostId tilhører bruker som er død og som mangler adresse i PDL. Kan ikke sende brev.")
+                return null
             }
             error("Distrubering av journalpost $journalpostId feilet: ${response.status} ${response.bodyAsText()}")
         }

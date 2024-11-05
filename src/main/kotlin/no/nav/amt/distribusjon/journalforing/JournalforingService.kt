@@ -258,7 +258,7 @@ class JournalforingService(
                             hendelseId = it.id,
                             journalpostId = journalpostId,
                             bestillingsId = bestillingsId,
-                            kanIkkeDistribueres = false,
+                            kanIkkeDistribueres = bestillingsId == null,
                         ),
                     )
                 }
