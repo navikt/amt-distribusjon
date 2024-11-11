@@ -3,6 +3,7 @@ package no.nav.amt.distribusjon.varsel
 import io.getunleash.Unleash
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
+import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
@@ -17,6 +18,7 @@ class VarselService(
     private val repository: VarselRepository,
     private val producer: VarselProducer,
     private val unleash: Unleash,
+    private val hendelseRepository: HendelseRepository,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -98,7 +100,7 @@ class VarselService(
         repository.upsert(oppdatertVarsel)
 
         when (varsel.type) {
-            Varsel.Type.BESKJED -> producer.opprettBeskjed(oppdatertVarsel)
+            Varsel.Type.BESKJED -> producer.opprettBeskjed(oppdatertVarsel, skalViseEndringsmodal(oppdatertVarsel.hendelser))
             Varsel.Type.OPPGAVE -> producer.opprettOppgave(oppdatertVarsel)
         }
 
@@ -206,6 +208,11 @@ class VarselService(
         val revarsler = varsler.map { slaSammenMedVentendeVarsel(Varsel.revarsel(it)) }
 
         revarsler.forEach { handleNyttVarsel(it, true) }
+    }
+
+    private fun skalViseEndringsmodal(hendelseIder: List<UUID>): Boolean {
+        val hendelser = hendelseRepository.getHendelser(hendelseIder)
+        return hendelser.firstOrNull { it.payload !is HendelseType.NavGodkjennUtkast } != null
     }
 }
 

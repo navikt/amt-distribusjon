@@ -27,7 +27,7 @@ class VarselProducer(
         )
     }
 
-    fun opprettBeskjed(varsel: Varsel) {
+    fun opprettBeskjed(varsel: Varsel, visEndringsmodal: Boolean) {
         require(varsel.type == Varsel.Type.BESKJED) {
             "Kan ikke opprette beskjed, feil varseltype ${varsel.type}"
         }
@@ -35,7 +35,7 @@ class VarselProducer(
         producer.produce(
             topic = Environment.MINSIDE_VARSEL_TOPIC,
             key = varsel.id.toString(),
-            value = varsel.toBeskjedDto(),
+            value = varsel.toBeskjedDto(visEndringsmodal),
         )
     }
 }

@@ -122,11 +122,11 @@ data class Varsel(
     }
 
     fun toOppgaveDto() = VarselActionBuilder.opprett {
-        varselConfig(Varseltype.Oppgave)
+        varselConfig(Varseltype.Oppgave, visEndringsmodal = false)
     }
 
-    fun toBeskjedDto() = VarselActionBuilder.opprett {
-        varselConfig(Varseltype.Beskjed)
+    fun toBeskjedDto(visEndringsmodal: Boolean) = VarselActionBuilder.opprett {
+        varselConfig(Varseltype.Beskjed, visEndringsmodal)
     }
 
     fun toInaktiverDto() = VarselActionBuilder.inaktiver {
@@ -134,7 +134,7 @@ data class Varsel(
         produsent = produsent()
     }
 
-    private fun VarselActionBuilder.OpprettVarselInstance.varselConfig(varseltype: Varseltype) {
+    private fun VarselActionBuilder.OpprettVarselInstance.varselConfig(varseltype: Varseltype, visEndringsmodal: Boolean) {
         varselId = this@Varsel.id.toString()
         type = varseltype
         sensitivitet = Sensitivitet.High
@@ -145,7 +145,7 @@ data class Varsel(
             default = true,
         )
         aktivFremTil = aktivTil
-        link = innbyggerDeltakerUrl(deltakerId)
+        link = innbyggerDeltakerUrl(deltakerId, visEndringsmodal)
         produsent = produsent()
 
         if (erEksterntVarsel) {
@@ -168,10 +168,16 @@ data class Varsel(
     )
 }
 
-fun innbyggerDeltakerUrl(deltakerId: UUID): String {
-    return if (Environment.isProd()) {
+fun innbyggerDeltakerUrl(deltakerId: UUID, visEndringsmodal: Boolean): String {
+    val url = if (Environment.isProd()) {
         "https://www.nav.no/arbeidsmarkedstiltak/$deltakerId"
     } else {
         "https://amt.intern.dev.nav.no/arbeidsmarkedstiltak/$deltakerId"
+    }
+
+    return if (visEndringsmodal) {
+        "$url?vis_endringer"
+    } else {
+        url
     }
 }

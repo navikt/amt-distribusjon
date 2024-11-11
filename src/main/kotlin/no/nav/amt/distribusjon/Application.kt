@@ -103,7 +103,7 @@ fun Application.module() {
 
     val hendelseRepository = HendelseRepository()
 
-    val varselService = VarselService(VarselRepository(), VarselProducer(kafkaProducer), unleash)
+    val varselService = VarselService(VarselRepository(), VarselProducer(kafkaProducer), unleash, hendelseRepository)
     val journalforingService = JournalforingService(
         JournalforingstatusRepository(),
         amtPersonClient,

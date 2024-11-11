@@ -90,11 +90,11 @@ class TestApp {
         dokdistkanalClient = mockDokdistkanalClient(azureAdTokenClient, environment)
         dokdistfordelingClient = mockDokdistfordelingClient(azureAdTokenClient, environment)
 
-        varselRepository = VarselRepository()
-        varselService = VarselService(varselRepository, VarselProducer(kafkaProducer), unleash)
-
         journalforingstatusRepository = JournalforingstatusRepository()
         hendelseRepository = HendelseRepository()
+        varselRepository = VarselRepository()
+
+        varselService = VarselService(varselRepository, VarselProducer(kafkaProducer), unleash, hendelseRepository)
 
         journalforingService = JournalforingService(
             journalforingstatusRepository,
