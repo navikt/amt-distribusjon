@@ -7,6 +7,7 @@ import no.nav.amt.distribusjon.TestApp
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
+import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.assertProduced
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
@@ -15,6 +16,7 @@ import no.nav.amt.distribusjon.utils.data.Varselsdata
 import no.nav.amt.distribusjon.utils.produceStringString
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.distribusjon.varsel.model.beskjedTekst
+import no.nav.amt.distribusjon.varsel.model.innbyggerDeltakerUrl
 import no.nav.amt.distribusjon.varsel.model.oppgaveTekst
 import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
@@ -301,7 +303,8 @@ class VarselTest {
         varsel.erEksterntVarsel shouldBe hendelse.skalVarslesEksternt()
 
         if (varsel.erAktiv) {
-            assertProducedBeskjed(varsel.id)
+            val forventetUrl = innbyggerDeltakerUrl(varsel.deltakerId, hendelse.payload !is HendelseType.NavGodkjennUtkast)
+            assertProducedBeskjed(varsel.id, forventetUrl)
         }
     }
 }
@@ -332,12 +335,13 @@ fun assertProducedOppgave(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_
     }
 }
 
-fun assertProducedBeskjed(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
+fun assertProducedBeskjed(id: UUID, forventetUrl: String) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
     AsyncUtils.eventually {
         val json = objectMapper.readTree(it[id])
         json["varselId"].asText() shouldBe id.toString()
         json["@event_name"].asText() shouldBe "opprett"
         json["type"].asText() shouldBe "beskjed"
+        json["link"].asText() shouldBe forventetUrl
     }
 }
 

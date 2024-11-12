@@ -4,8 +4,11 @@ import io.kotest.matchers.shouldBe
 import no.nav.amt.distribusjon.hendelse.consumer.assertProducedBeskjed
 import no.nav.amt.distribusjon.hendelse.consumer.assertProducedInaktiver
 import no.nav.amt.distribusjon.integrationTest
+import no.nav.amt.distribusjon.utils.data.HendelseTypeData
+import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Varselsdata
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import no.nav.amt.distribusjon.varsel.model.innbyggerDeltakerUrl
 import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -20,10 +23,16 @@ class VarselServiceTest {
             aktivFra = nowUTC().minusMinutes(5),
         )
         app.varselRepository.upsert(varsel)
+        val hendelse = Hendelsesdata.hendelse(
+            payload = HendelseTypeData.endreDeltakelsesmengde(),
+            id = varsel.hendelser.first(),
+        )
+        app.hendelseRepository.insert(hendelse)
+        val forventetUrl = innbyggerDeltakerUrl(varsel.deltakerId, true)
 
         app.varselService.sendVentendeVarsler()
 
-        assertProducedBeskjed(varsel.id)
+        assertProducedBeskjed(varsel.id, forventetUrl)
         val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
         oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
     }
@@ -61,8 +70,13 @@ class VarselServiceTest {
                 deltakerId = deltakerId,
                 aktivFra = nowUTC().minusMinutes(5),
             )
-
             app.varselRepository.upsert(nyttVarsel)
+            val hendelse = Hendelsesdata.hendelse(
+                payload = HendelseTypeData.endreInnhold(),
+                id = nyttVarsel.hendelser.first(),
+            )
+            app.hendelseRepository.insert(hendelse)
+            val forventetUrl = innbyggerDeltakerUrl(nyttVarsel.deltakerId, true)
 
             app.varselService.sendVentendeVarsler()
 
@@ -75,7 +89,7 @@ class VarselServiceTest {
             oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
 
             assertProducedInaktiver(aktivtVarsel.id)
-            assertProducedBeskjed(nyttVarsel.id)
+            assertProducedBeskjed(nyttVarsel.id, forventetUrl)
         }
 
     @Test
@@ -85,8 +99,13 @@ class VarselServiceTest {
             aktivFra = nowUTC().minusDays(7).plusMinutes(1),
             revarsles = nowUTC().minusMinutes(1),
         )
-
         app.varselRepository.upsert(skalRevarsles)
+        val hendelse = Hendelsesdata.hendelse(
+            payload = HendelseTypeData.navGodkjennUtkast(),
+            id = skalRevarsles.hendelser.first(),
+        )
+        app.hendelseRepository.insert(hendelse)
+        val forventetUrl = innbyggerDeltakerUrl(skalRevarsles.deltakerId, false)
 
         app.varselService.sendRevarsler()
 
@@ -102,7 +121,7 @@ class VarselServiceTest {
         revarsel.aktivTil!! shouldBeCloseTo nowUTC().plus(Varsel.beskjedAktivLengde)
         revarsel.revarselForVarsel shouldBe skalRevarsles.id
 
-        assertProducedBeskjed(revarsel.id)
+        assertProducedBeskjed(revarsel.id, forventetUrl)
     }
 
     @Test
@@ -114,6 +133,12 @@ class VarselServiceTest {
         )
 
         app.varselRepository.upsert(skalRevarsles)
+        val hendelse = Hendelsesdata.hendelse(
+            payload = HendelseTypeData.navGodkjennUtkast(),
+            id = skalRevarsles.hendelser.first(),
+        )
+        app.hendelseRepository.insert(hendelse)
+        val forventetUrl = innbyggerDeltakerUrl(skalRevarsles.deltakerId, false)
 
         app.varselService.sendRevarsler()
 
@@ -131,7 +156,7 @@ class VarselServiceTest {
         revarsel.aktivTil!! shouldBeCloseTo nowUTC().plus(Varsel.beskjedAktivLengde)
         revarsel.revarselForVarsel shouldBe skalRevarsles.id
 
-        assertProducedBeskjed(revarsel.id)
+        assertProducedBeskjed(revarsel.id, forventetUrl)
     }
 
     @Test
