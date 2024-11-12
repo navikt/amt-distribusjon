@@ -11,6 +11,7 @@ import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.lib.utils.database.Database
 import no.nav.amt.lib.utils.database.toPGObject
 import java.time.LocalDateTime
+import java.util.UUID
 
 class HendelseRepository {
     private fun rowmapper(row: Row) = Hendelse(
@@ -18,7 +19,7 @@ class HendelseRepository {
         deltaker = objectMapper.readValue(row.string("deltaker")),
         ansvarlig = objectMapper.readValue(row.string("ansvarlig")),
         payload = objectMapper.readValue(row.string("payload")),
-        opprettet = row.localDateTime("h.created_at"),
+        opprettet = row.localDateTime("created_at"),
         distribusjonskanal = row.string("distribusjonskanal").let { Distribusjonskanal.valueOf(it) },
         manuellOppfolging = row.boolean("manuelloppfolging"),
     )
@@ -87,5 +88,23 @@ class HendelseRepository {
         val query = queryOf(sql, mapOf("opprettet" to opprettet))
 
         it.run(query.map(::rowmapperHendelseMedJournalforingstatus).asList)
+    }
+
+    fun getHendelser(hendelseIder: List<UUID>) = Database.query {
+        if (hendelseIder.isEmpty()) {
+            return@query emptyList<Hendelse>()
+        }
+        val sql =
+            """
+            select * from hendelse
+            where id in (${hendelseIder.joinToString { "?" }})
+            """.trimIndent()
+
+        val query = queryOf(
+            sql,
+            *hendelseIder.toTypedArray(),
+        ).map(::rowmapper).asList
+
+        it.run(query)
     }
 }
