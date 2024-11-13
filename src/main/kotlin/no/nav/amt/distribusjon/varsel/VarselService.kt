@@ -141,30 +141,32 @@ class VarselService(
     }
 
     private fun utforBeskjed(deltaker: HendelseDeltaker, sistBesokt: ZonedDateTime) {
-        val sisteBeskjed = repository.getSisteVarsel(deltaker.id, Varsel.Type.BESKJED).getOrNull() ?: return
-
-        if (erBesokTidligereEnnBeskjed(sistBesokt, sisteBeskjed)) {
+        val beskjeder = repository.getAktiveEllerVentendeBeskjeder(deltaker.id)
+        if (beskjeder.isEmpty()) {
             return
         }
 
-        when (sisteBeskjed.status) {
-            Varsel.Status.VENTER_PA_UTSENDELSE -> {
-                val now = nowUTC()
-                repository.upsert(
-                    sisteBeskjed.copy(
-                        aktivFra = now,
-                        aktivTil = now,
-                        status = Varsel.Status.UTFORT,
-                        revarsles = null,
-                    ),
-                )
+        beskjeder.forEach {
+            if (erBesokTidligereEnnBeskjed(sistBesokt, it)) {
+                return
             }
-
-            Varsel.Status.AKTIV -> {
-                ferdigstillSendtVarsel(sisteBeskjed, Varsel.Status.UTFORT)
+            when (it.status) {
+                Varsel.Status.VENTER_PA_UTSENDELSE -> {
+                    val now = nowUTC()
+                    repository.upsert(
+                        it.copy(
+                            aktivFra = now,
+                            aktivTil = now,
+                            status = Varsel.Status.UTFORT,
+                            revarsles = null,
+                        ),
+                    )
+                }
+                Varsel.Status.AKTIV -> {
+                    ferdigstillSendtVarsel(it, Varsel.Status.UTFORT)
+                }
+                else -> {}
             }
-
-            else -> {}
         }
     }
 
