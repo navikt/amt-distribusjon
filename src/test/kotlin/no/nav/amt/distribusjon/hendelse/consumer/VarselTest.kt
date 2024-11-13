@@ -249,6 +249,40 @@ class VarselTest {
     }
 
     @Test
+    fun `deltakerSistBesokt - to beskjeder, en aktiv og en venter - inaktiverer begge`() = integrationTest { app, _ ->
+        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
+        val aktivtVarsel = Varselsdata.varsel(
+            Varsel.Type.BESKJED,
+            Varsel.Status.AKTIV,
+            deltakerId = hendelse.deltaker.id,
+            aktivFra = nowUTC().minusMinutes(1),
+        )
+        val ventendeVarsel = Varselsdata.varsel(
+            Varsel.Type.BESKJED,
+            Varsel.Status.VENTER_PA_UTSENDELSE,
+            deltakerId = hendelse.deltaker.id,
+            aktivFra = nowUTC().plusMinutes(10),
+        )
+        app.varselRepository.upsert(aktivtVarsel)
+        app.varselRepository.upsert(ventendeVarsel)
+
+        produce(hendelse)
+
+        AsyncUtils.eventually {
+            val oppdatertAktivtVarsel = app.varselRepository.get(aktivtVarsel.id).getOrThrow()
+            oppdatertAktivtVarsel.status shouldBe Varsel.Status.UTFORT
+            oppdatertAktivtVarsel.aktivFra shouldBeCloseTo aktivtVarsel.aktivFra
+            oppdatertAktivtVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+
+            val oppdatertVentendeVarsel = app.varselRepository.get(ventendeVarsel.id).getOrThrow()
+            oppdatertVentendeVarsel.status shouldBe Varsel.Status.UTFORT
+            oppdatertVentendeVarsel.aktivFra shouldBeCloseTo nowUTC()
+            oppdatertVentendeVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+        }
+        assertProducedInaktiver(aktivtVarsel.id)
+    }
+
+    @Test
     fun `deltakerSistBesokt - siste besøk er før beskjed var sendt - inaktiverer ikke`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.sistBesokt(sistBesokt = ZonedDateTime.now().minusMinutes(10)))
         val varsel = Varselsdata.varsel(
