@@ -29,7 +29,11 @@ class EndringsvedtakJob(
 
         endringsvedtakPrDeltaker.forEach { entry ->
             log.info("Behandler endringsvedtak for deltaker med id ${entry.key}")
-            journalforingService.journalforOgDistribuerEndringsvedtak(entry.value)
+            try {
+                journalforingService.journalforOgDistribuerEndringsvedtak(entry.value)
+            } catch (e: Exception) {
+                log.error("Behandling av endringsvedtak for deltaker med id ${entry.key} feilet", e)
+            }
         }
         log.info("Ferdig med å behandle ${endringsvedtak.size} endringsvedtak")
     }
