@@ -120,6 +120,7 @@ fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.type
 
 fun HendelseDeltaker.Deltakerliste.visningsnavn() = when (this.tiltak.type) {
     ArenaTiltakTypeKode.DIGIOPPARB -> "Digital oppfølging hos ${this.arrangor.visningsnavn()}"
+    ArenaTiltakTypeKode.VASV -> "Varig tilrettelagt arbeid hos ${this.arrangor.visningsnavn()}"
     ArenaTiltakTypeKode.JOBBK -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
     ArenaTiltakTypeKode.GRUPPEAMO -> if (this.erKurs) "Kurs: ${this.navn}" else this.navn
     ArenaTiltakTypeKode.GRUFAGYRKE -> this.navn
