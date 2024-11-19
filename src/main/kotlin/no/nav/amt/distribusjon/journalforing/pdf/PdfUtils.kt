@@ -8,6 +8,7 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.hendelse.model.Utkast
+import no.nav.amt.distribusjon.hendelse.model.toTiltakskode
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.formatDate
 import no.nav.amt.distribusjon.utils.toTitleCase
@@ -44,6 +45,7 @@ fun lagHovedvedtakPdfDto(
     ),
     deltakerliste = HovedvedtakPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.visningsnavn(),
+        tiltakskode = deltaker.deltakerliste.tiltak.type.toTiltakskode(),
         ledetekst = deltaker.deltakerliste.tiltak.ledetekst,
         arrangor = HovedvedtakPdfDto.ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
