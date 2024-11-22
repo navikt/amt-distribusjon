@@ -30,6 +30,7 @@ fun lagHovedvedtakPdfDto(
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
         innhold = utkast.innhold?.toVisingstekst() ?: emptyList(),
+        innholdBeskrivelse = utkast.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
         bakgrunnsinformasjon = utkast.bakgrunnsinformasjon,
         deltakelsesmengdeTekst = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak.type)) {
             utkast.deltakelsesprosent?.let {
@@ -121,7 +122,6 @@ fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.type
 }
 
 fun HendelseDeltaker.Deltakerliste.visningsnavn() = when (this.tiltak.type) {
-    ArenaTiltakTypeKode.DIGIOPPARB -> "Digitalt jobbsøkerkurs hos ${this.arrangor.visningsnavn()}"
     ArenaTiltakTypeKode.VASV -> "Varig tilrettelagt arbeid hos ${this.arrangor.visningsnavn()}"
     ArenaTiltakTypeKode.JOBBK -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
     ArenaTiltakTypeKode.GRUPPEAMO -> if (this.erKurs) "Kurs: ${this.navn}" else this.navn
