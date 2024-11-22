@@ -14,7 +14,7 @@ import no.nav.amt.distribusjon.application.plugins.objectMapper
 class PdfgenClient(private val httpClient: HttpClient, private val environment: Environment) {
     private val url = environment.amtPdfgenUrl + "/api/v1/genpdf/amt"
 
-    suspend fun hovedvedtak(hovedvedtakPdfDto: HovedvedtakPdfDto): ByteArray {
+    suspend fun genererHovedvedtak(hovedvedtakPdfDto: HovedvedtakPdfDto): ByteArray {
         val response = httpClient.post("$url/hovedvedtak") {
             contentType(ContentType.Application.Json)
             setBody(objectMapper.writeValueAsString(hovedvedtakPdfDto))
