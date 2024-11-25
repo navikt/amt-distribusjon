@@ -91,7 +91,7 @@ class JournalforingService(
                     "Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
                 )
             val sak = veilarboppfolgingClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
-            val pdf = pdfgenClient.hovedvedtak(
+            val pdf = pdfgenClient.genererHovedvedtak(
                 lagHovedvedtakPdfDto(
                     deltaker = hendelse.deltaker,
                     navBruker = navBruker,

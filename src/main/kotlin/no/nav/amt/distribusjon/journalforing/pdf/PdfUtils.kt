@@ -8,6 +8,7 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.hendelse.model.Utkast
+import no.nav.amt.distribusjon.hendelse.model.toTiltakskode
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.formatDate
 import no.nav.amt.distribusjon.utils.toTitleCase
@@ -29,6 +30,7 @@ fun lagHovedvedtakPdfDto(
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
         innhold = utkast.innhold?.toVisingstekst() ?: emptyList(),
+        innholdBeskrivelse = utkast.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
         bakgrunnsinformasjon = utkast.bakgrunnsinformasjon,
         deltakelsesmengdeTekst = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak.type)) {
             utkast.deltakelsesprosent?.let {
@@ -44,6 +46,7 @@ fun lagHovedvedtakPdfDto(
     ),
     deltakerliste = HovedvedtakPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.visningsnavn(),
+        tiltakskode = deltaker.deltakerliste.tiltak.type.toTiltakskode(),
         ledetekst = deltaker.deltakerliste.tiltak.ledetekst,
         arrangor = HovedvedtakPdfDto.ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
@@ -119,7 +122,7 @@ fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.type
 }
 
 fun HendelseDeltaker.Deltakerliste.visningsnavn() = when (this.tiltak.type) {
-    ArenaTiltakTypeKode.DIGIOPPARB -> "Digital oppfølging hos ${this.arrangor.visningsnavn()}"
+    ArenaTiltakTypeKode.VASV -> "Varig tilrettelagt arbeid hos ${this.arrangor.visningsnavn()}"
     ArenaTiltakTypeKode.JOBBK -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
     ArenaTiltakTypeKode.GRUPPEAMO -> if (this.erKurs) "Kurs: ${this.navn}" else this.navn
     ArenaTiltakTypeKode.GRUFAGYRKE -> this.navn
