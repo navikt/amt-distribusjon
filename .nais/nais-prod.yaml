@@ -69,6 +69,11 @@ spec:
         databases:
           - name: amt-distribusjon
             envVarPrefix: DB
+            users:
+              - name: datastream
+        flags:
+          - name: cloudsql.logical_decoding
+            value: "on"
         diskAutoresize: true
         highAvailability: true
         insights:
