@@ -67,6 +67,11 @@ spec:
         databases:
           - name: amt-distribusjon
             envVarPrefix: DB
+            users:
+              - name: datastream
+        flags:
+          - name: cloudsql.logical_decoding
+            value: "on"
   observability:
     autoInstrumentation:
       enabled: true
