@@ -9,9 +9,10 @@ data class Journalforingstatus(
     val journalpostId: String?,
     val bestillingsId: UUID?,
     val kanIkkeDistribueres: Boolean?,
+    val kanIkkeJournalfores: Boolean?,
 ) {
     fun erJournalfort(): Boolean {
-        return journalpostId != null
+        return journalpostId != null || kanIkkeJournalfores == true
     }
 
     fun erDistribuert(distribusjonskanal: Distribusjonskanal, erUnderManuellOppfolging: Boolean): Boolean {

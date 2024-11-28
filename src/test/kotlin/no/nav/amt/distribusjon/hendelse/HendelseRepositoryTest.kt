@@ -43,6 +43,7 @@ class HendelseRepositoryTest {
                 journalpostId = null,
                 bestillingsId = null,
                 kanIkkeDistribueres = null,
+                kanIkkeJournalfores = null,
             ),
         )
 
@@ -50,6 +51,25 @@ class HendelseRepositoryTest {
 
         ikkeJournalforteHendelser.size shouldBe 1
         ikkeJournalforteHendelser.first().hendelse.id shouldBe hendelse.id
+    }
+
+    @Test
+    fun `getIkkeJournalforteHendelser - hendelse kan ikke journalfores - returnerer tom liste`() {
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
+        TestRepository.insert(hendelse)
+        journalforingstatusRepository.upsert(
+            Journalforingstatus(
+                hendelseId = hendelse.id,
+                journalpostId = null,
+                bestillingsId = null,
+                kanIkkeDistribueres = null,
+                kanIkkeJournalfores = true,
+            ),
+        )
+
+        val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
+
+        ikkeJournalforteHendelser.size shouldBe 0
     }
 
     @Test
@@ -62,6 +82,7 @@ class HendelseRepositoryTest {
                 journalpostId = null,
                 bestillingsId = null,
                 kanIkkeDistribueres = null,
+                kanIkkeJournalfores = null,
             ),
         )
 
@@ -80,6 +101,7 @@ class HendelseRepositoryTest {
                 journalpostId = "12345",
                 bestillingsId = null,
                 kanIkkeDistribueres = null,
+                kanIkkeJournalfores = false,
             ),
         )
 
@@ -102,6 +124,7 @@ class HendelseRepositoryTest {
                 journalpostId = "12345",
                 bestillingsId = null,
                 kanIkkeDistribueres = true,
+                kanIkkeJournalfores = false,
             ),
         )
 
@@ -124,6 +147,7 @@ class HendelseRepositoryTest {
                 journalpostId = "12345",
                 bestillingsId = null,
                 kanIkkeDistribueres = null,
+                kanIkkeJournalfores = false,
             ),
         )
 
@@ -143,6 +167,7 @@ class HendelseRepositoryTest {
                 journalpostId = "12345",
                 bestillingsId = UUID.randomUUID(),
                 kanIkkeDistribueres = false,
+                kanIkkeJournalfores = false,
             ),
         )
 

@@ -117,6 +117,7 @@ class JournalforingService(
                 journalpostId = journalpostId,
                 bestillingsId = null,
                 kanIkkeDistribueres = null,
+                kanIkkeJournalfores = false,
             )
             journalforingstatusRepository.upsert(nyJournalforingstatus)
 
@@ -139,6 +140,7 @@ class JournalforingService(
                 journalpostId = journalforingstatus?.journalpostId,
                 bestillingsId = journalforingstatus?.bestillingsId,
                 kanIkkeDistribueres = journalforingstatus?.kanIkkeDistribueres,
+                kanIkkeJournalfores = journalforingstatus?.kanIkkeJournalfores,
             ),
         )
         log.info("Endringsvedtak for hendelse ${hendelse.id} er lagret og plukkes opp av asynkron jobb")
@@ -160,7 +162,7 @@ class JournalforingService(
 
         val navBruker = amtPersonClient.hentNavBruker(sisteHendelse.hendelse.deltaker.personident)
         if (ikkeJournalforteHendelser.isNotEmpty()) {
-            val journalpostId = journalforEndringsvedtak(ikkeJournalforteHendelser, navBruker)
+            val journalpostId = journalforEndringsvedtak(ikkeJournalforteHendelser, navBruker) ?: return
             distribuer(ikkeJournalforteHendelser, journalpostId, navBruker.harAdresse())
         }
 
@@ -183,13 +185,32 @@ class JournalforingService(
         )
     }
 
-    private suspend fun journalforEndringsvedtak(ikkeJournalforteHendelser: List<Hendelse>, navBruker: NavBruker): String {
+    private suspend fun journalforEndringsvedtak(ikkeJournalforteHendelser: List<Hendelse>, navBruker: NavBruker): String? {
         val nyesteHendelse = ikkeJournalforteHendelser.maxBy { it.opprettet }
         val ansvarlig = getAnsvarlig(nyesteHendelse, ikkeJournalforteHendelser)
         val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
-            ?: throw IllegalArgumentException(
-                "Kan ikke endre på deltaker ${nyesteHendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
-            )
+
+        if (aktivOppfolgingsperiode == null) {
+            val kanIkkeJournalfores = ikkeJournalforteHendelser.filter { it.tillattEndringUtenAktivOppfolgingsperiode() }
+            kanIkkeJournalfores.forEach {
+                journalforingstatusRepository.upsert(
+                    Journalforingstatus(
+                        hendelseId = it.id,
+                        journalpostId = null,
+                        bestillingsId = null,
+                        kanIkkeDistribueres = null,
+                        kanIkkeJournalfores = true,
+                    ),
+                )
+                log.warn("Lar være å journalføre endring som kan gjøres uten oppfølging, hendelseId ${it.id}")
+            }
+            if (kanIkkeJournalfores.size != ikkeJournalforteHendelser.size) {
+                throw IllegalArgumentException(
+                    "Kan ikke endre på deltaker ${nyesteHendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
+                )
+            }
+            return null
+        }
         val sak = veilarboppfolgingClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
         val pdf = pdfgenClient.endringsvedtak(
             lagEndringsvedtakPdfDto(
@@ -218,6 +239,7 @@ class JournalforingService(
                     journalpostId = journalpostId,
                     bestillingsId = null,
                     kanIkkeDistribueres = null,
+                    kanIkkeJournalfores = false,
                 ),
             )
         }
@@ -247,6 +269,7 @@ class JournalforingService(
                             journalpostId = journalpostId,
                             bestillingsId = null,
                             kanIkkeDistribueres = true,
+                            kanIkkeJournalfores = false,
                         ),
                     )
                 }
@@ -259,6 +282,7 @@ class JournalforingService(
                             journalpostId = journalpostId,
                             bestillingsId = bestillingsId,
                             kanIkkeDistribueres = bestillingsId == null,
+                            kanIkkeJournalfores = false,
                         ),
                     )
                 }
