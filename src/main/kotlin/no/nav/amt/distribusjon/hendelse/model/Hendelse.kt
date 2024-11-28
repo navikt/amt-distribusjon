@@ -61,4 +61,27 @@ data class Hendelse(
             -> payload.begrunnelseFraNav
         }
     }
+
+    fun tillattEndringUtenAktivOppfolgingsperiode() = when (payload) {
+        is HendelseType.AvsluttDeltakelse,
+        is HendelseType.EndreSluttarsak,
+        is HendelseType.EndreSluttdato,
+        is HendelseType.IkkeAktuell,
+        -> true
+
+        is HendelseType.InnbyggerGodkjennUtkast,
+        is HendelseType.NavGodkjennUtkast,
+        is HendelseType.EndreUtkast,
+        is HendelseType.OpprettUtkast,
+        is HendelseType.AvbrytUtkast,
+        is HendelseType.DeltakerSistBesokt,
+        is HendelseType.ReaktiverDeltakelse,
+        is HendelseType.EndreDeltakelsesmengde,
+        is HendelseType.EndreStartdato,
+        is HendelseType.ForlengDeltakelse,
+        is HendelseType.EndreInnhold,
+        is HendelseType.EndreBakgrunnsinformasjon,
+        is HendelseType.LeggTilOppstartsdato,
+        -> false
+    }
 }

@@ -39,6 +39,7 @@ class HendelseRepository {
             journalpostId = row.stringOrNull("journalpost_id"),
             bestillingsId = row.uuidOrNull("bestillingsid"),
             kanIkkeDistribueres = row.boolean("kan_ikke_distribueres"),
+            kanIkkeJournalfores = row.boolean("kan_ikke_journalfores"),
         ),
     )
 
@@ -75,12 +76,13 @@ class HendelseRepository {
                 h.manuelloppfolging as "manuelloppfolging",
                 js.journalpost_id as "journalpost_id",
                 js.bestillingsid as "bestillingsid",
-                js.kan_ikke_distribueres as "kan_ikke_distribueres"
+                js.kan_ikke_distribueres as "kan_ikke_distribueres",
+                js.kan_ikke_journalfores as "kan_ikke_journalfores"
             from hendelse h
                 left join journalforingstatus js on h.id = js.hendelse_id
             where h.created_at < :opprettet 
                 and js.hendelse_id is not null
-                and (js.journalpost_id is null 
+                and (js.journalpost_id is null and (js.kan_ikke_journalfores is null or js.kan_ikke_journalfores = false)
                     or (js.bestillingsid is null and h.distribusjonskanal not in ('DITT_NAV','SDP') 
                     and (js.kan_ikke_distribueres is null or js.kan_ikke_distribueres = false)))
             """.trimIndent()

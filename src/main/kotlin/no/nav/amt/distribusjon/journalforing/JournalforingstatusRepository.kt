@@ -12,17 +12,19 @@ class JournalforingstatusRepository {
         journalpostId = row.stringOrNull("journalpost_id"),
         bestillingsId = row.uuidOrNull("bestillingsid"),
         kanIkkeDistribueres = row.boolean("kan_ikke_distribueres"),
+        kanIkkeJournalfores = row.boolean("kan_ikke_journalfores"),
     )
 
     fun upsert(journalforingstatus: Journalforingstatus) = Database.query {
         val sql =
             """
-            insert into journalforingstatus (hendelse_id, journalpost_id, bestillingsid, kan_ikke_distribueres)
-            values(:hendelse_id, :journalpost_id, :bestillingsid, :kan_ikke_distribueres)
+            insert into journalforingstatus (hendelse_id, journalpost_id, bestillingsid, kan_ikke_distribueres, kan_ikke_journalfores)
+            values(:hendelse_id, :journalpost_id, :bestillingsid, :kan_ikke_distribueres, :kan_ikke_journalfores)
             on conflict (hendelse_id) do update set
                 journalpost_id = :journalpost_id,
                 bestillingsid = :bestillingsid,
                 kan_ikke_distribueres = :kan_ikke_distribueres,
+                kan_ikke_journalfores = :kan_ikke_journalfores,
                 modified_at = current_timestamp
             """.trimIndent()
 
@@ -31,6 +33,7 @@ class JournalforingstatusRepository {
             "journalpost_id" to journalforingstatus.journalpostId,
             "bestillingsid" to journalforingstatus.bestillingsId,
             "kan_ikke_distribueres" to journalforingstatus.kanIkkeDistribueres,
+            "kan_ikke_journalfores" to journalforingstatus.kanIkkeJournalfores,
         )
 
         it.update(queryOf(sql, params))
