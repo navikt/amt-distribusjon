@@ -2,6 +2,7 @@ package no.nav.amt.distribusjon.journalforing.pdf
 
 import io.kotest.matchers.shouldBe
 import no.nav.amt.distribusjon.hendelse.model.Aarsak
+import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
@@ -70,6 +71,7 @@ class PdfUtilsTest {
         val innhold = listOf(
             Innhold("tekst 1", "kode 1", null),
             Innhold("tekst 2", "kode 2", null),
+            Innhold("annet tekst", "annet", "beskrivelse"),
         )
         val hendelser: List<Hendelse> = listOf(
             Hendelsesdata.hendelse(
@@ -83,6 +85,34 @@ class PdfUtilsTest {
         val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser, LocalDate.now())
 
         pdfDto.endringer.size shouldBe 1
-        (pdfDto.endringer.first() as EndringDto.EndreInnhold).innhold shouldBe listOf("tekst 1", "tekst 2")
+        (pdfDto.endringer.first() as EndringDto.EndreInnhold).innhold shouldBe listOf("tekst 1", "tekst 2", "beskrivelse")
+        (pdfDto.endringer.first() as EndringDto.EndreInnhold).innholdBeskrivelse shouldBe null
+    }
+
+    @Test
+    fun `lagEndringsvedtakPdfDto - EndreInnhold, VTA - inneholder innholdsbeskrivelse`() {
+        val deltaker =
+            Hendelsesdata.deltaker(
+                deltakerliste = Hendelsesdata.deltakerliste(tiltak = Hendelsesdata.tiltak(type = ArenaTiltakTypeKode.VASV)),
+            )
+        val navBruker = Persondata.lagNavBruker()
+        val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()
+        val innhold = listOf(
+            Innhold("annet tekst", "annet", "beskrivelse"),
+        )
+        val hendelser: List<Hendelse> = listOf(
+            Hendelsesdata.hendelse(
+                HendelseTypeData.endreInnhold(innhold),
+                deltaker = deltaker,
+                ansvarlig = ansvarligNavVeileder,
+                opprettet = LocalDateTime.now().minusMinutes(20),
+            ),
+        )
+
+        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser, LocalDate.now())
+
+        pdfDto.endringer.size shouldBe 1
+        (pdfDto.endringer.first() as EndringDto.EndreInnhold).innhold shouldBe listOf("beskrivelse")
+        (pdfDto.endringer.first() as EndringDto.EndreInnhold).innholdBeskrivelse shouldBe "beskrivelse"
     }
 }
