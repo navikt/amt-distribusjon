@@ -85,7 +85,7 @@ fun lagEndringsvedtakPdfDto(
             ),
             forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
         ),
-        endringer = endringer.map { tilEndringDto(it) },
+        endringer = endringer.map { tilEndringDto(it, deltaker.deltakerliste.tiltak.type) },
         avsender = EndringsvedtakPdfDto.AvsenderDto(
             navn = ansvarlig.getAvsendernavn(),
             enhet = navBruker.navEnhet?.navn ?: "NAV",
@@ -146,7 +146,7 @@ private fun List<Innhold>.toVisingstekst() = this.map { innhold ->
     "${innhold.tekst}${innhold.beskrivelse?.let { ": $it" } ?: ""}"
 }
 
-private fun tilEndringDto(hendelseType: HendelseType): EndringDto = when (hendelseType) {
+private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: ArenaTiltakTypeKode): EndringDto = when (hendelseType) {
     is HendelseType.InnbyggerGodkjennUtkast,
     is HendelseType.NavGodkjennUtkast,
     is HendelseType.ReaktiverDeltakelse,
@@ -226,6 +226,11 @@ private fun tilEndringDto(hendelseType: HendelseType): EndringDto = when (hendel
 
     is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
         innhold = hendelseType.innhold.map { it.visningsnavn() },
+        innholdBeskrivelse = if (tiltakskode == ArenaTiltakTypeKode.VASV) {
+            hendelseType.innhold.firstOrNull { it.innholdskode == "annet" }?.beskrivelse
+        } else {
+            null
+        },
     )
 
     is HendelseType.EndreBakgrunnsinformasjon -> EndringDto.EndreBakgrunnsinformasjon(
