@@ -24,6 +24,7 @@ data class Hendelse(
             is HendelseType.EndreInnhold,
             is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.LeggTilOppstartsdato,
+            is HendelseType.FjernOppstartsdato,
             -> true
 
             is HendelseType.InnbyggerGodkjennUtkast,
@@ -56,6 +57,7 @@ data class Hendelse(
             is HendelseType.AvbrytUtkast,
             is HendelseType.DeltakerSistBesokt,
             is HendelseType.LeggTilOppstartsdato,
+            is HendelseType.FjernOppstartsdato,
             -> null
             is HendelseType.ReaktiverDeltakelse,
             -> payload.begrunnelseFraNav
@@ -82,6 +84,7 @@ data class Hendelse(
         is HendelseType.EndreInnhold,
         is HendelseType.EndreBakgrunnsinformasjon,
         is HendelseType.LeggTilOppstartsdato,
+        is HendelseType.FjernOppstartsdato,
         -> false
     }
 }
