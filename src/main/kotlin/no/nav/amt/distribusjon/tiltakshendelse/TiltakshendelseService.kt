@@ -129,13 +129,14 @@ fun Hendelse.toTiltakshendelse() = when (this.payload) {
 
 fun getForslagHendelseTekst(forslag: Forslag): String {
     val forslagtekst = "Forslag:"
-    when (forslag.endring) {
-        is Forslag.ForlengDeltakelse -> return "$forslagtekst Forleng deltakelse"
-        is Forslag.AvsluttDeltakelse -> return "$forslagtekst Avslutt deltakelse"
-        is Forslag.IkkeAktuell -> return "$forslagtekst Er ikke aktuell"
-        is Forslag.Deltakelsesmengde -> return "$forslagtekst Deltakelsesmengde"
-        is Forslag.Startdato -> return "$forslagtekst Oppstartsdato"
-        is Forslag.Sluttdato -> return "$forslagtekst Sluttdato"
-        is Forslag.Sluttarsak -> return "$forslagtekst Sluttårsak"
+    return when (forslag.endring) {
+        is Forslag.ForlengDeltakelse -> "$forslagtekst Forleng deltakelse"
+        is Forslag.AvsluttDeltakelse -> "$forslagtekst Avslutt deltakelse"
+        is Forslag.IkkeAktuell -> "$forslagtekst Er ikke aktuell"
+        is Forslag.Deltakelsesmengde -> "$forslagtekst Deltakelsesmengde"
+        is Forslag.Startdato -> "$forslagtekst Oppstartsdato"
+        is Forslag.Sluttdato -> "$forslagtekst Sluttdato"
+        is Forslag.Sluttarsak -> "$forslagtekst Sluttårsak"
+        is Forslag.FjernOppstartsdato -> "$forslagtekst Fjern oppstartsdato"
     }
 }

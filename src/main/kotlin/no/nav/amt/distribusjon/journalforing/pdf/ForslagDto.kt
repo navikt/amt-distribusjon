@@ -13,6 +13,7 @@ import java.time.LocalDate
     JsonSubTypes.Type(value = ForslagDto.ForlengDeltakelse::class, name = "Forleng deltakelse"),
     JsonSubTypes.Type(value = ForslagDto.IkkeAktuell::class, name = "Er ikke aktuell"),
     JsonSubTypes.Type(value = ForslagDto.AvsluttDeltakelse::class, name = "Avslutt deltakelse"),
+    JsonSubTypes.Type(value = ForslagDto.FjernOppstartsdato::class, name = "Fjern oppstartsdato"),
 )
 sealed interface ForslagDto {
     data class EndreDeltakelsesmengde(
@@ -50,6 +51,10 @@ sealed interface ForslagDto {
         val aarsak: String,
         val sluttdato: LocalDate?,
         val harDeltatt: String?,
+        val begrunnelseFraArrangor: String?,
+    ) : ForslagDto
+
+    data class FjernOppstartsdato(
         val begrunnelseFraArrangor: String?,
     ) : ForslagDto
 }

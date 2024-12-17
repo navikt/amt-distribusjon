@@ -245,6 +245,11 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: ArenaTiltakTy
         sluttdatoFraArrangor = hendelseType.sluttdato,
         tittel = "Oppstartsdato er ${formatDate(hendelseType.startdato)}",
     )
+
+    is HendelseType.FjernOppstartsdato -> EndringDto.FjernOppstartsdato(
+        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+        forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
+    )
 }
 
 private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?): String {
@@ -306,6 +311,9 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
             )
         }
     }
+    is Forslag.FjernOppstartsdato -> ForslagDto.FjernOppstartsdato(
+        begrunnelseFraArrangor = begrunnelseFraArrangor,
+    )
     is Forslag.Sluttarsak -> throw IllegalArgumentException("Skal ikke opprette endringsvedtak ved endring av sluttårsak")
 }
 

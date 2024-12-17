@@ -94,6 +94,12 @@ sealed interface HendelseType {
         override val endringFraForslag: Forslag.Endring?,
     ) : HendelseMedForslag
 
+    data class FjernOppstartsdato(
+        override val begrunnelseFraNav: String?,
+        override val begrunnelseFraArrangor: String?,
+        override val endringFraForslag: Forslag.Endring?,
+    ) : HendelseMedForslag
+
     data class DeltakerSistBesokt(
         val sistBesokt: ZonedDateTime,
     ) : HendelseType
