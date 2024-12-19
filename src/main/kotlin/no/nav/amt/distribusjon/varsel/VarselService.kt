@@ -163,12 +163,16 @@ class VarselService(
                         ),
                     )
                 }
+
                 Varsel.Status.AKTIV -> {
                     ferdigstillSendtVarsel(it, Varsel.Status.UTFORT)
                 }
+
                 else -> {}
             }
         }
+
+        repository.stoppRevarsler(deltaker.id)
     }
 
     fun utlopBeskjed(varsel: Varsel) {
