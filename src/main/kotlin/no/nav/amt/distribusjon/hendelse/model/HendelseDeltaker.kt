@@ -23,13 +23,13 @@ data class HendelseDeltaker(
             val overordnetArrangor: Arrangor?,
         )
 
-        fun deltakerAdresseDeles() = !tiltakUtenDeltakerAdresse.contains(this.tiltak.type)
+        fun deltakerAdresseDeles() = !tiltakUtenDeltakerAdresse.contains(this.tiltak.tiltakskode)
     }
 }
 
 private val tiltakUtenDeltakerAdresse = setOf(
-    ArenaTiltakTypeKode.DIGIOPPARB,
-    ArenaTiltakTypeKode.JOBBK,
-    ArenaTiltakTypeKode.GRUPPEAMO,
-    ArenaTiltakTypeKode.GRUFAGYRKE,
+    Tiltakskode.DIGITALT_OPPFOLGINGSTILTAK,
+    Tiltakskode.JOBBKLUBB,
+    Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
+    Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
 )

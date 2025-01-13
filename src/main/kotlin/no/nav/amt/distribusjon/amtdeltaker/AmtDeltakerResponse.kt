@@ -1,6 +1,7 @@
 package no.nav.amt.distribusjon.amtdeltaker
 
 import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
+import no.nav.amt.distribusjon.hendelse.model.Tiltakskode
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -74,16 +75,4 @@ data class Tiltakstype(
     val arenaKode: ArenaTiltakTypeKode,
     val innsatsgrupper: Set<Any>,
     val innhold: Any?,
-) {
-    enum class Tiltakskode {
-        ARBEIDSFORBEREDENDE_TRENING,
-        ARBEIDSRETTET_REHABILITERING,
-        AVKLARING,
-        DIGITALT_OPPFOLGINGSTILTAK,
-        GRUPPE_ARBEIDSMARKEDSOPPLAERING,
-        GRUPPE_FAG_OG_YRKESOPPLAERING,
-        JOBBKLUBB,
-        OPPFOLGING,
-        VARIG_TILRETTELAGT_ARBEID_SKJERMET,
-    }
-}
+)

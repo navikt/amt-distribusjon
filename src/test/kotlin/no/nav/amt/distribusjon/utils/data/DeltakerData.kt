@@ -4,6 +4,7 @@ import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerResponse
 import no.nav.amt.distribusjon.amtdeltaker.Deltakerliste
 import no.nav.amt.distribusjon.amtdeltaker.Tiltakstype
 import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
+import no.nav.amt.distribusjon.hendelse.model.Tiltakskode
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -39,7 +40,7 @@ object DeltakerData {
     fun lagTiltakstype() = Tiltakstype(
         id = UUID.randomUUID(),
         navn = "Tiltaksnavn",
-        tiltakskode = Tiltakstype.Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
+        tiltakskode = Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
         arenaKode = ArenaTiltakTypeKode.ARBFORB,
         innsatsgrupper = setOf("SITUASJONSBESTEMT_INNSATS"),
         innhold = null,
