@@ -1,4 +1,4 @@
-package no.nav.amt.lib.utils.database
+package no.nav.amt.distribusjon.db
 
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import org.postgresql.util.PGobject

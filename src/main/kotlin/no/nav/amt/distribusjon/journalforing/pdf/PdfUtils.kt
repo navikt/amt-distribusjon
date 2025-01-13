@@ -46,7 +46,7 @@ fun lagHovedvedtakPdfDto(
     ),
     deltakerliste = HovedvedtakPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.visningsnavn(),
-        tiltakskode = deltaker.deltakerliste.tiltak.type.toTiltakskode(),
+        tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode ?: deltaker.deltakerliste.tiltak.type.toTiltakskode(),
         ledetekst = deltaker.deltakerliste.tiltak.ledetekst,
         arrangor = HovedvedtakPdfDto.ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),

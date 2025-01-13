@@ -1,9 +1,9 @@
 package no.nav.amt.distribusjon.utils
 
 import kotliquery.queryOf
+import no.nav.amt.distribusjon.db.toPGObject
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.lib.utils.database.Database
-import no.nav.amt.lib.utils.database.toPGObject
 
 object TestRepository {
     fun cleanDatabase() = Database.query { session ->

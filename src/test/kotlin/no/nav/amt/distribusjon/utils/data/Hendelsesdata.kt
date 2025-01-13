@@ -9,7 +9,9 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.hendelse.model.Tiltak
+import no.nav.amt.distribusjon.hendelse.model.Tiltakskode
 import no.nav.amt.distribusjon.hendelse.model.Utkast
+import no.nav.amt.distribusjon.hendelse.model.toTiltakskode
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import java.time.LocalDate
@@ -88,7 +90,8 @@ object Hendelsesdata {
         navn: String = "Tiltaksnavn",
         type: ArenaTiltakTypeKode = ArenaTiltakTypeKode.ARBFORB,
         ledetekst: String = "Beskrivelse av hva tiltaket går ut på",
-    ) = Tiltak(navn, type, ledetekst)
+        tiltakskode: Tiltakskode = type.toTiltakskode(),
+    ) = Tiltak(navn, type, ledetekst, tiltakskode)
 }
 
 object HendelseTypeData {
