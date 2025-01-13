@@ -7,8 +7,8 @@ import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
+import no.nav.amt.distribusjon.hendelse.model.Tiltakskode
 import no.nav.amt.distribusjon.hendelse.model.Utkast
-import no.nav.amt.distribusjon.hendelse.model.toTiltakskode
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.formatDate
 import no.nav.amt.distribusjon.utils.toTitleCase
@@ -46,7 +46,7 @@ fun lagHovedvedtakPdfDto(
     ),
     deltakerliste = HovedvedtakPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.visningsnavn(),
-        tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode ?: deltaker.deltakerliste.tiltak.type.toTiltakskode(),
+        tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
         ledetekst = deltaker.deltakerliste.tiltak.ledetekst,
         arrangor = HovedvedtakPdfDto.ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
@@ -85,7 +85,7 @@ fun lagEndringsvedtakPdfDto(
             ),
             forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
         ),
-        endringer = endringer.map { tilEndringDto(it, deltaker.deltakerliste.tiltak.type) },
+        endringer = endringer.map { tilEndringDto(it, deltaker.deltakerliste.tiltak.tiltakskode) },
         avsender = EndringsvedtakPdfDto.AvsenderDto(
             navn = ansvarlig.getAvsendernavn(),
             enhet = navBruker.navEnhet?.navn ?: "NAV",
@@ -146,7 +146,7 @@ private fun List<Innhold>.toVisingstekst() = this.map { innhold ->
     "${innhold.tekst}${innhold.beskrivelse?.let { ": $it" } ?: ""}"
 }
 
-private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: ArenaTiltakTypeKode): EndringDto = when (hendelseType) {
+private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakskode): EndringDto = when (hendelseType) {
     is HendelseType.InnbyggerGodkjennUtkast,
     is HendelseType.NavGodkjennUtkast,
     is HendelseType.ReaktiverDeltakelse,
@@ -226,7 +226,7 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: ArenaTiltakTy
 
     is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
         innhold = hendelseType.innhold.map { it.visningsnavn() },
-        innholdBeskrivelse = if (tiltakskode == ArenaTiltakTypeKode.VASV) {
+        innholdBeskrivelse = if (tiltakskode == Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET) {
             hendelseType.innhold.firstOrNull { it.innholdskode == "annet" }?.beskrivelse
         } else {
             null

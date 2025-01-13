@@ -23,7 +23,7 @@ data class HendelseDeltaker(
             val overordnetArrangor: Arrangor?,
         )
 
-        fun deltakerAdresseDeles() = !tiltakUtenDeltakerAdresse.contains(this.tiltak.tiltakskode ?: this.tiltak.type.toTiltakskode())
+        fun deltakerAdresseDeles() = !tiltakUtenDeltakerAdresse.contains(this.tiltak.tiltakskode)
     }
 }
 

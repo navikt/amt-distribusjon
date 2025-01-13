@@ -4,7 +4,7 @@ data class Tiltak(
     val navn: String,
     val type: ArenaTiltakTypeKode,
     val ledetekst: String,
-    val tiltakskode: Tiltakskode?,
+    val tiltakskode: Tiltakskode = type.toTiltakskode(),
 )
 
 enum class ArenaTiltakTypeKode {
