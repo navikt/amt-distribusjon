@@ -3,7 +3,6 @@ package no.nav.amt.distribusjon.journalforing
 import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
-import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.model.HendelseMedJournalforingstatus
@@ -14,6 +13,7 @@ import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
+import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.models.hendelse.UtkastDto
 import org.slf4j.LoggerFactory
@@ -83,8 +83,9 @@ class JournalforingService(
                 is HendelseAnsvarlig.NavVeileder -> hendelse.ansvarlig
                 is HendelseAnsvarlig.Deltaker,
                 is HendelseAnsvarlig.Arrangor,
+                is HendelseAnsvarlig.System,
                 -> throw IllegalArgumentException(
-                    "Deltaker eller arrangør kan ikke være ansvarlig for vedtaket",
+                    "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
                 )
             }
             val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
@@ -316,6 +317,8 @@ class JournalforingService(
     private fun getJournalforendeEnhet(ansvarlig: HendelseAnsvarlig): String = when (ansvarlig) {
         is HendelseAnsvarlig.NavVeileder -> ansvarlig.enhet.enhetsnummer
         is HendelseAnsvarlig.Arrangor -> ansvarlig.enhet.enhetsnummer
-        is HendelseAnsvarlig.Deltaker -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker")
+        is HendelseAnsvarlig.System,
+        is HendelseAnsvarlig.Deltaker,
+        -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker eller system")
     }
 }

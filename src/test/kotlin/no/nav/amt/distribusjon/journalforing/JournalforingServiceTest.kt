@@ -7,6 +7,7 @@ import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
+import no.nav.amt.distribusjon.hendelse.model.toModel
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.journalforing.model.HendelseMedJournalforingstatus
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
@@ -34,25 +35,23 @@ class JournalforingServiceTest {
     }
 
     @Test
-    fun `handleHendelse - InnbyggerGodkjennUtkast, er allerede journalfort, skal ikke sende brev - ignorerer hendelse`() = integrationTest {
-            app,
-            _,
-        ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast())
+    fun `handleHendelse - InnbyggerGodkjennUtkast, er allerede journalfort, skal ikke sende brev - ignorerer hendelse`() =
+        integrationTest { app, _ ->
+            val hendelse = Hendelsesdata.hendelse(HendelseTypeData.innbyggerGodkjennUtkast())
 
-        val journalpostId = "12345"
+            val journalpostId = "12345"
 
-        app.hendelseRepository.insert(hendelse)
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, null, null, false))
+            app.hendelseRepository.insert(hendelse)
+            app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, null, null, false))
 
-        app.journalforingService.handleHendelse(hendelse)
+            app.journalforingService.handleHendelse(hendelse)
 
-        val status = app.journalforingstatusRepository.get(hendelse.id)
-        status!!.journalpostId shouldBe journalpostId
-        status.bestillingsId shouldBe null
-        status.kanIkkeDistribueres shouldBe false
-        status.kanIkkeJournalfores shouldBe false
-    }
+            val status = app.journalforingstatusRepository.get(hendelse.id)
+            status!!.journalpostId shouldBe journalpostId
+            status.bestillingsId shouldBe null
+            status.kanIkkeDistribueres shouldBe false
+            status.kanIkkeJournalfores shouldBe false
+        }
 
     @Test
     fun `handleHendelse - NavGodkjennUtkast, er journalfort, ikke sendt brev - sender brev`() = integrationTest { app, _ ->
@@ -117,42 +116,54 @@ class JournalforingServiceTest {
     }
 
     @Test
-    fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort, skal ikke sende brev - ignorerer hendelse`() = integrationTest {
-            app,
-            _,
-        ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse())
+    fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort, skal ikke sende brev - ignorerer hendelse`() =
+        integrationTest { app, _ ->
+            val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse())
 
-        val journalpostId = "12345"
+            val journalpostId = "12345"
 
-        app.hendelseRepository.insert(hendelse)
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, null, false, kanIkkeJournalfores = false))
+            app.hendelseRepository.insert(hendelse)
+            app.journalforingstatusRepository.upsert(
+                Journalforingstatus(
+                    hendelse.id,
+                    journalpostId,
+                    null,
+                    false,
+                    kanIkkeJournalfores = false,
+                ),
+            )
 
-        app.journalforingService.handleHendelse(hendelse)
+            app.journalforingService.handleHendelse(hendelse)
 
-        val status = app.journalforingstatusRepository.get(hendelse.id)
-        status!!.journalpostId shouldNotBe null
-        status.kanIkkeJournalfores shouldBe false
-    }
+            val status = app.journalforingstatusRepository.get(hendelse.id)
+            status!!.journalpostId shouldNotBe null
+            status.kanIkkeJournalfores shouldBe false
+        }
 
     @Test
-    fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort, kan ikke sende brev - ignorerer hendelse`() = integrationTest {
-            app,
-            _,
-        ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse())
+    fun `handleHendelse - AvsluttDeltakelse, er allerede journalfort, kan ikke sende brev - ignorerer hendelse`() =
+        integrationTest { app, _ ->
+            val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse())
 
-        val journalpostId = "12345"
+            val journalpostId = "12345"
 
-        app.hendelseRepository.insert(hendelse)
-        app.journalforingstatusRepository.upsert(Journalforingstatus(hendelse.id, journalpostId, null, true, kanIkkeJournalfores = false))
+            app.hendelseRepository.insert(hendelse)
+            app.journalforingstatusRepository.upsert(
+                Journalforingstatus(
+                    hendelse.id,
+                    journalpostId,
+                    null,
+                    true,
+                    kanIkkeJournalfores = false,
+                ),
+            )
 
-        app.journalforingService.handleHendelse(hendelse)
+            app.journalforingService.handleHendelse(hendelse)
 
-        val status = app.journalforingstatusRepository.get(hendelse.id)
-        status!!.journalpostId shouldNotBe null
-        status.kanIkkeJournalfores shouldBe false
-    }
+            val status = app.journalforingstatusRepository.get(hendelse.id)
+            status!!.journalpostId shouldNotBe null
+            status.kanIkkeJournalfores shouldBe false
+        }
 
     @Test
     fun `handleHendelse - InnbyggerGodkjennUtkast, har ikke aktiv oppfolgingsperiode - feiler`() = integrationTest { app, _ ->
@@ -223,10 +234,7 @@ class JournalforingServiceTest {
 
     @Test
     fun `journalforOgDistribuerEndringsvedtak - to endringer, en allerede journalfort - journalforer 1, distribuerer 2`() =
-        integrationTest {
-                app,
-                _,
-            ->
+        integrationTest { app, _ ->
             val deltaker = Hendelsesdata.deltaker()
 
             val hendelseDeltakelsesmengde = Hendelsesdata.hendelse(
@@ -272,10 +280,7 @@ class JournalforingServiceTest {
 
     @Test
     fun `journalforOgDistribuerEndringsvedtak - avslutt deltakelse, ikke under oppfolging - journalforer endringsvedtak`() =
-        integrationTest {
-                app,
-                _,
-            ->
+        integrationTest { app, _ ->
             val navBruker = Persondata.lagNavBruker(
                 oppfolgingsperioder = listOf(
                     Persondata.lagOppfolgingsperiode(

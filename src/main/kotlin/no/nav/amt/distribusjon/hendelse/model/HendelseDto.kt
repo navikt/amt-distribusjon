@@ -1,25 +1,15 @@
 package no.nav.amt.distribusjon.hendelse.model
 
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
-import no.nav.amt.lib.models.hendelse.HendelseDeltaker
-import no.nav.amt.lib.models.hendelse.HendelseType
-import java.time.LocalDateTime
-import java.util.UUID
 
-data class HendelseDto(
-    val id: UUID,
-    val opprettet: LocalDateTime,
-    val deltaker: HendelseDeltaker,
-    val ansvarlig: HendelseAnsvarlig,
-    val payload: HendelseType,
-) {
-    fun toModel(distribusjonskanal: Distribusjonskanal, manuellOppfolging: Boolean) = Hendelse(
-        id,
-        opprettet,
-        deltaker,
-        ansvarlig,
-        payload,
-        distribusjonskanal,
-        manuellOppfolging,
-    )
-}
+typealias HendelseDto = no.nav.amt.lib.models.hendelse.Hendelse
+
+fun HendelseDto.toModel(distribusjonskanal: Distribusjonskanal, manuellOppfolging: Boolean) = Hendelse(
+    id,
+    opprettet,
+    deltaker,
+    ansvarlig,
+    payload,
+    distribusjonskanal,
+    manuellOppfolging,
+)

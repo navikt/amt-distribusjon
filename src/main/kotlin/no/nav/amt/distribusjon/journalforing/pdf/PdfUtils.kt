@@ -1,7 +1,6 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
-import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
 import no.nav.amt.distribusjon.hendelse.model.deltakerAdresseDeles
 import no.nav.amt.distribusjon.hendelse.model.visningsnavn
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
@@ -11,6 +10,7 @@ import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.models.hendelse.InnholdDto
@@ -100,7 +100,9 @@ fun lagEndringsvedtakPdfDto(
 private fun HendelseAnsvarlig.getAvsendernavn() = when (this) {
     is HendelseAnsvarlig.NavVeileder -> navn
     is HendelseAnsvarlig.Arrangor -> null
-    is HendelseAnsvarlig.Deltaker -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker")
+    is HendelseAnsvarlig.System,
+    is HendelseAnsvarlig.Deltaker,
+    -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker eller system")
 }
 
 private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> = hendelser

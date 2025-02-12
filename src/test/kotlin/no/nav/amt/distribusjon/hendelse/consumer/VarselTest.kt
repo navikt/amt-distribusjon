@@ -7,6 +7,7 @@ import no.nav.amt.distribusjon.TestApp
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
+import no.nav.amt.distribusjon.hendelse.model.toModel
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.assertProduced
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
