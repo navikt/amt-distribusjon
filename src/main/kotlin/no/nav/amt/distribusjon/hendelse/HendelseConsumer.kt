@@ -5,6 +5,7 @@ import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
+import no.nav.amt.distribusjon.hendelse.model.toModel
 import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
 import no.nav.amt.distribusjon.varsel.VarselService

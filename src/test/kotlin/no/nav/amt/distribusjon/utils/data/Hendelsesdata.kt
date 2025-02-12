@@ -1,19 +1,17 @@
 package no.nav.amt.distribusjon.utils.data
 
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
-import no.nav.amt.distribusjon.hendelse.model.Aarsak
-import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
-import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
-import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
-import no.nav.amt.distribusjon.hendelse.model.HendelseType
-import no.nav.amt.distribusjon.hendelse.model.Innhold
-import no.nav.amt.distribusjon.hendelse.model.Tiltak
-import no.nav.amt.distribusjon.hendelse.model.Tiltakskode
-import no.nav.amt.distribusjon.hendelse.model.Utkast
-import no.nav.amt.distribusjon.hendelse.model.toTiltakskode
+import no.nav.amt.distribusjon.hendelse.model.toModel
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
+import no.nav.amt.lib.models.deltaker.DeltakerEndring
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
+import no.nav.amt.lib.models.hendelse.HendelseDeltaker
+import no.nav.amt.lib.models.hendelse.HendelseType
+import no.nav.amt.lib.models.hendelse.InnholdDto
+import no.nav.amt.lib.models.hendelse.UtkastDto
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
@@ -76,7 +74,7 @@ object Hendelsesdata {
         id: UUID = UUID.randomUUID(),
         navn: String = "Deltakerlistenavn",
         arrangor: HendelseDeltaker.Deltakerliste.Arrangor = arrangor(),
-        tiltak: Tiltak = tiltak(),
+        tiltak: HendelseDeltaker.Deltakerliste.Tiltak = tiltak(),
     ) = HendelseDeltaker.Deltakerliste(id, navn, arrangor, tiltak)
 
     fun arrangor(
@@ -88,22 +86,22 @@ object Hendelsesdata {
 
     fun tiltak(
         navn: String = "Tiltaksnavn",
-        type: ArenaTiltakTypeKode = ArenaTiltakTypeKode.ARBFORB,
+        tiltakskode: Tiltakstype.Tiltakskode = Tiltakstype.Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
+        arenaKode: Tiltakstype.ArenaKode = tiltakskode.toArenaKode(),
         ledetekst: String = "Beskrivelse av hva tiltaket går ut på",
-        tiltakskode: Tiltakskode = type.toTiltakskode(),
-    ) = Tiltak(navn, type, ledetekst, tiltakskode)
+    ) = HendelseDeltaker.Deltakerliste.Tiltak(navn, arenaKode, ledetekst, tiltakskode)
 }
 
 object HendelseTypeData {
-    fun opprettUtkast(utkast: Utkast = utkast()) = HendelseType.OpprettUtkast(utkast)
+    fun opprettUtkast(utkast: UtkastDto = utkast()) = HendelseType.OpprettUtkast(utkast)
 
-    fun avbrytUtkast(utkast: Utkast = utkast()) = HendelseType.AvbrytUtkast(utkast)
+    fun avbrytUtkast(utkast: UtkastDto = utkast()) = HendelseType.AvbrytUtkast(utkast)
 
-    fun innbyggerGodkjennUtkast(utkast: Utkast = utkast()) = HendelseType.InnbyggerGodkjennUtkast(utkast)
+    fun innbyggerGodkjennUtkast(utkast: UtkastDto = utkast()) = HendelseType.InnbyggerGodkjennUtkast(utkast)
 
-    fun navGodkjennUtkast(utkast: Utkast = utkast()) = HendelseType.NavGodkjennUtkast(utkast)
+    fun navGodkjennUtkast(utkast: UtkastDto = utkast()) = HendelseType.NavGodkjennUtkast(utkast)
 
-    fun endreInnhold(innhold: List<Innhold> = listOf(innhold())) = HendelseType.EndreInnhold(innhold)
+    fun endreInnhold(innhold: List<InnholdDto> = listOf(innhold())) = HendelseType.EndreInnhold(innhold)
 
     fun endreDeltakelsesmengde(
         deltakelsesprosent: Float? = 99F,
@@ -144,14 +142,14 @@ object HendelseTypeData {
     ) = HendelseType.ForlengDeltakelse(sluttdato, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun ikkeAktuell(
-        aarsak: Aarsak = Aarsak(Aarsak.Type.FATT_JOBB, null),
+        aarsak: DeltakerEndring.Aarsak = DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.FATT_JOBB, null),
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
         endringFraForslag: Forslag.Endring? = Forslag.IkkeAktuell(EndringAarsak.FattJobb),
     ) = HendelseType.IkkeAktuell(aarsak, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun avsluttDeltakelse(
-        aarsak: Aarsak = Aarsak(Aarsak.Type.FATT_JOBB, null),
+        aarsak: DeltakerEndring.Aarsak = DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.FATT_JOBB, null),
         sluttdato: LocalDate = LocalDate.now().plusDays(7),
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
@@ -159,7 +157,7 @@ object HendelseTypeData {
     ) = HendelseType.AvsluttDeltakelse(aarsak, sluttdato, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun endreSluttarsak(
-        aarsak: Aarsak = Aarsak(Aarsak.Type.ANNET, "Noe annet"),
+        aarsak: DeltakerEndring.Aarsak = DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.ANNET, "Noe annet"),
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
         endringFraForslag: Forslag.Endring? = Forslag.Sluttarsak(EndringAarsak.Annet("annet")),
@@ -173,8 +171,8 @@ object HendelseTypeData {
         dagerPerUke: Float? = 4F,
         deltakelsesprosent: Float = 80F,
         bakgrunnsinformasjon: String = "Bakgrunn for deltakelse på tiltak",
-        innhold: List<Innhold> = listOf(innhold(), innhold(), innhold()),
-    ) = Utkast(
+        innhold: List<InnholdDto> = listOf(innhold(), innhold(), innhold()),
+    ) = UtkastDto(
         startdato,
         sluttdato,
         dagerPerUke,
@@ -183,7 +181,7 @@ object HendelseTypeData {
         innhold,
     )
 
-    fun innhold() = Innhold(
+    fun innhold() = InnholdDto(
         "Innholdstekst",
         "Innholdskode",
         "Beskrivelse av annet innhold",

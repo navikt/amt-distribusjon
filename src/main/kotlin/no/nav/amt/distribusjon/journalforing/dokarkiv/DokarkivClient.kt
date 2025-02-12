@@ -12,8 +12,8 @@ import io.ktor.http.isSuccess
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
-import no.nav.amt.distribusjon.hendelse.model.Tiltak
 import no.nav.amt.distribusjon.veilarboppfolging.Sak
+import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -32,7 +32,7 @@ class DokarkivClient(
         sak: Sak,
         pdf: ByteArray,
         journalforendeEnhet: String,
-        tiltakstype: Tiltak,
+        tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
         endring: Boolean,
     ): String {
         val request = getJournalpostRequest(
@@ -65,7 +65,7 @@ class DokarkivClient(
         sak: Sak,
         pdf: ByteArray,
         journalforendeEnhet: String,
-        tiltakstype: Tiltak,
+        tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
         endring: Boolean,
     ): OpprettJournalpostRequest {
         val tittel = getTittel(tiltakstype, endring)
@@ -98,11 +98,11 @@ class DokarkivClient(
         )
     }
 
-    private fun getTittel(tiltakstype: Tiltak, endring: Boolean): String = if (endring) {
+    private fun getTittel(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, endring: Boolean): String = if (endring) {
         "Endringsvedtak - ${tiltakstype.navn}"
     } else {
         "Vedtak - ${tiltakstype.navn}"
     }
 
-    private fun getBrevkode(tiltakstype: Tiltak): String = "tiltak-vedtak-${tiltakstype.type.name}"
+    private fun getBrevkode(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): String = "tiltak-vedtak-${tiltakstype.type.name}"
 }

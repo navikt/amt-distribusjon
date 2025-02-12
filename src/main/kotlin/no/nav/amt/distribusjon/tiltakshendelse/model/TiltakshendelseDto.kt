@@ -1,6 +1,6 @@
 package no.nav.amt.distribusjon.tiltakshendelse.model
 
-import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -10,7 +10,7 @@ data class TiltakshendelseDto(
     val aktiv: Boolean,
     val tekst: String,
     val lenke: String,
-    val tiltakstype: ArenaTiltakTypeKode,
+    val tiltakstype: Tiltakstype.ArenaKode,
     val opprettet: LocalDateTime,
     val avsender: String = "KOMET",
 )

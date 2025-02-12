@@ -5,9 +5,9 @@ import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
-import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
-import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.varsel.model.Varsel
+import no.nav.amt.lib.models.hendelse.HendelseDeltaker
+import no.nav.amt.lib.models.hendelse.HendelseType
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -60,16 +60,14 @@ class VarselService(
         }
     }
 
-    private fun skalIkkeVarsles(hendelse: Hendelse): Boolean {
-        return if (!unleash.isEnabled(Environment.VARSEL_TOGGLE)) {
-            log.info("Varsler er togglet av, håndterer ikke hendelse for deltaker ${hendelse.deltaker.id}.")
-            true
-        } else if (repository.getByHendelseId(hendelse.id).isSuccess) {
-            log.info("Varsel for hendelse ${hendelse.id} er allerede opprettet. Oppretter ikke nytt varsel.")
-            true
-        } else {
-            !DigitalBrukerService.skalDistribueresDigitalt(hendelse.distribusjonskanal, hendelse.manuellOppfolging)
-        }
+    private fun skalIkkeVarsles(hendelse: Hendelse): Boolean = if (!unleash.isEnabled(Environment.VARSEL_TOGGLE)) {
+        log.info("Varsler er togglet av, håndterer ikke hendelse for deltaker ${hendelse.deltaker.id}.")
+        true
+    } else if (repository.getByHendelseId(hendelse.id).isSuccess) {
+        log.info("Varsel for hendelse ${hendelse.id} er allerede opprettet. Oppretter ikke nytt varsel.")
+        true
+    } else {
+        !DigitalBrukerService.skalDistribueresDigitalt(hendelse.distribusjonskanal, hendelse.manuellOppfolging)
     }
 
     private fun slaSammenMedVentendeVarsel(nyttVarsel: Varsel): Varsel {
@@ -193,7 +191,8 @@ class VarselService(
         val besokForSendt = sistBesokt.withZoneSameInstant(ZoneOffset.UTC) < sisteBeskjed.aktivFra && sisteBeskjed.erAktiv
         val besokForIkkeSendt = sistBesokt.withZoneSameInstant(
             ZoneId.of("Z"),
-        ) < sisteBeskjed.aktivFra.minusMinutes(Varsel.BESKJED_FORSINKELSE_MINUTTER) && sisteBeskjed.venterPaUsendelse
+        ) < sisteBeskjed.aktivFra.minusMinutes(Varsel.BESKJED_FORSINKELSE_MINUTTER) &&
+            sisteBeskjed.venterPaUsendelse
 
         return besokForSendt || besokForIkkeSendt
     }

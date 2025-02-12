@@ -1,6 +1,9 @@
 package no.nav.amt.distribusjon.hendelse.model
 
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
+import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
+import no.nav.amt.lib.models.hendelse.HendelseDeltaker
+import no.nav.amt.lib.models.hendelse.HendelseType
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -13,55 +16,51 @@ data class Hendelse(
     val distribusjonskanal: Distribusjonskanal,
     val manuellOppfolging: Boolean,
 ) {
-    fun erEndringsVedtakSomSkalJournalfores(): Boolean {
-        return when (payload) {
-            is HendelseType.AvsluttDeltakelse,
-            is HendelseType.EndreDeltakelsesmengde,
-            is HendelseType.EndreSluttdato,
-            is HendelseType.EndreStartdato,
-            is HendelseType.ForlengDeltakelse,
-            is HendelseType.IkkeAktuell,
-            is HendelseType.EndreInnhold,
-            is HendelseType.EndreBakgrunnsinformasjon,
-            is HendelseType.LeggTilOppstartsdato,
-            is HendelseType.FjernOppstartsdato,
-            -> true
+    fun erEndringsVedtakSomSkalJournalfores(): Boolean = when (payload) {
+        is HendelseType.AvsluttDeltakelse,
+        is HendelseType.EndreDeltakelsesmengde,
+        is HendelseType.EndreSluttdato,
+        is HendelseType.EndreStartdato,
+        is HendelseType.ForlengDeltakelse,
+        is HendelseType.IkkeAktuell,
+        is HendelseType.EndreInnhold,
+        is HendelseType.EndreBakgrunnsinformasjon,
+        is HendelseType.LeggTilOppstartsdato,
+        is HendelseType.FjernOppstartsdato,
+        -> true
 
-            is HendelseType.InnbyggerGodkjennUtkast,
-            is HendelseType.NavGodkjennUtkast,
-            is HendelseType.EndreSluttarsak,
-            is HendelseType.EndreUtkast,
-            is HendelseType.OpprettUtkast,
-            is HendelseType.AvbrytUtkast,
-            is HendelseType.DeltakerSistBesokt,
-            is HendelseType.ReaktiverDeltakelse,
-            -> false
-        }
+        is HendelseType.InnbyggerGodkjennUtkast,
+        is HendelseType.NavGodkjennUtkast,
+        is HendelseType.EndreSluttarsak,
+        is HendelseType.EndreUtkast,
+        is HendelseType.OpprettUtkast,
+        is HendelseType.AvbrytUtkast,
+        is HendelseType.DeltakerSistBesokt,
+        is HendelseType.ReaktiverDeltakelse,
+        -> false
     }
 
-    fun getBegrunnelseForHovedvedtak(): String? {
-        return when (payload) {
-            is HendelseType.AvsluttDeltakelse,
-            is HendelseType.EndreDeltakelsesmengde,
-            is HendelseType.EndreSluttdato,
-            is HendelseType.EndreStartdato,
-            is HendelseType.ForlengDeltakelse,
-            is HendelseType.IkkeAktuell,
-            is HendelseType.EndreInnhold,
-            is HendelseType.EndreBakgrunnsinformasjon,
-            is HendelseType.InnbyggerGodkjennUtkast,
-            is HendelseType.NavGodkjennUtkast,
-            is HendelseType.EndreSluttarsak,
-            is HendelseType.EndreUtkast,
-            is HendelseType.OpprettUtkast,
-            is HendelseType.AvbrytUtkast,
-            is HendelseType.DeltakerSistBesokt,
-            is HendelseType.LeggTilOppstartsdato,
-            is HendelseType.FjernOppstartsdato,
-            -> null
-            is HendelseType.ReaktiverDeltakelse,
-            -> payload.begrunnelseFraNav
-        }
+    fun getBegrunnelseForHovedvedtak(): String? = when (payload) {
+        is HendelseType.AvsluttDeltakelse,
+        is HendelseType.EndreDeltakelsesmengde,
+        is HendelseType.EndreSluttdato,
+        is HendelseType.EndreStartdato,
+        is HendelseType.ForlengDeltakelse,
+        is HendelseType.IkkeAktuell,
+        is HendelseType.EndreInnhold,
+        is HendelseType.EndreBakgrunnsinformasjon,
+        is HendelseType.InnbyggerGodkjennUtkast,
+        is HendelseType.NavGodkjennUtkast,
+        is HendelseType.EndreSluttarsak,
+        is HendelseType.EndreUtkast,
+        is HendelseType.OpprettUtkast,
+        is HendelseType.AvbrytUtkast,
+        is HendelseType.DeltakerSistBesokt,
+        is HendelseType.LeggTilOppstartsdato,
+        is HendelseType.FjernOppstartsdato,
+        -> null
+        is HendelseType.ReaktiverDeltakelse,
+        -> payload.begrunnelseFraNav
     }
 
     fun tillattEndringUtenAktivOppfolgingsperiode() = when (payload) {

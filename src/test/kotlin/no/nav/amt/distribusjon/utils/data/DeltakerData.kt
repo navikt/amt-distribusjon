@@ -2,10 +2,9 @@ package no.nav.amt.distribusjon.utils.data
 
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerResponse
 import no.nav.amt.distribusjon.amtdeltaker.Deltakerliste
-import no.nav.amt.distribusjon.amtdeltaker.Tiltakstype
-import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
-import no.nav.amt.distribusjon.hendelse.model.Tiltakskode
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
+import no.nav.amt.lib.models.deltaker.Innsatsgruppe
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -40,9 +39,9 @@ object DeltakerData {
     fun lagTiltakstype() = Tiltakstype(
         id = UUID.randomUUID(),
         navn = "Tiltaksnavn",
-        tiltakskode = Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
-        arenaKode = ArenaTiltakTypeKode.ARBFORB,
-        innsatsgrupper = setOf("SITUASJONSBESTEMT_INNSATS"),
+        tiltakskode = Tiltakstype.Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
+        arenaKode = Tiltakstype.ArenaKode.ARBFORB,
+        innsatsgrupper = setOf(Innsatsgruppe.SITUASJONSBESTEMT_INNSATS),
         innhold = null,
     )
 }
