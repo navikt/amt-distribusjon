@@ -1,8 +1,8 @@
 package no.nav.amt.distribusjon.varsel.model
 
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
-import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.journalforing.pdf.visningsnavn
+import no.nav.amt.lib.models.hendelse.HendelseType
 
 const val OPPGAVE_TEKST = "Du har mottatt et utkast til påmelding på arbeidsmarkedstiltaket: %s hos %s. Svar på spørsmålet her."
 
@@ -13,7 +13,8 @@ const val MELDT_PA_DIREKTE_TEKST = "Du er meldt på arbeidsmarkedstiltaket: %s h
 fun oppgaveTekst(hendelse: Hendelse) = String.format(
     OPPGAVE_TEKST,
     hendelse.deltaker.deltakerliste.tiltak.navn,
-    hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+    hendelse.deltaker.deltakerliste.arrangor
+        .visningsnavn(),
 )
 
 fun beskjedTekst(hendelse: Hendelse): String {
@@ -26,6 +27,7 @@ fun beskjedTekst(hendelse: Hendelse): String {
     return String.format(
         tekst,
         hendelse.deltaker.deltakerliste.tiltak.navn,
-        hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+        hendelse.deltaker.deltakerliste.arrangor
+            .visningsnavn(),
     )
 }

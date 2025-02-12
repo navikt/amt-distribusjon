@@ -1,14 +1,15 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
 import io.kotest.matchers.shouldBe
-import no.nav.amt.distribusjon.hendelse.model.Aarsak
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
-import no.nav.amt.distribusjon.hendelse.model.Innhold
+import no.nav.amt.distribusjon.hendelse.model.visningsnavn
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.formatDate
+import no.nav.amt.lib.models.deltaker.DeltakerEndring
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.hendelse.InnholdDto
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -47,7 +48,7 @@ class PdfUtilsTest {
         val deltaker = Hendelsesdata.deltaker()
         val navBruker = Persondata.lagNavBruker()
         val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()
-        val arsak = Aarsak(Aarsak.Type.IKKE_MOTT)
+        val arsak = DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.IKKE_MOTT)
         val hendelser: List<Hendelse> = listOf(
             Hendelsesdata.hendelse(
                 HendelseTypeData.ikkeAktuell(arsak),
@@ -69,9 +70,9 @@ class PdfUtilsTest {
         val navBruker = Persondata.lagNavBruker()
         val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()
         val innhold = listOf(
-            Innhold("tekst 1", "kode 1", null),
-            Innhold("tekst 2", "kode 2", null),
-            Innhold("annet tekst", "annet", "beskrivelse"),
+            InnholdDto("tekst 1", "kode 1", null),
+            InnholdDto("tekst 2", "kode 2", null),
+            InnholdDto("annet tekst", "annet", "beskrivelse"),
         )
         val hendelser: List<Hendelse> = listOf(
             Hendelsesdata.hendelse(
@@ -100,7 +101,7 @@ class PdfUtilsTest {
         val navBruker = Persondata.lagNavBruker()
         val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()
         val innhold = listOf(
-            Innhold("annet tekst", "annet", "beskrivelse"),
+            InnholdDto("annet tekst", "annet", "beskrivelse"),
         )
         val hendelser: List<Hendelse> = listOf(
             Hendelsesdata.hendelse(

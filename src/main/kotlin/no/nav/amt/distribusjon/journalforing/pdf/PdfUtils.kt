@@ -1,25 +1,26 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
-import no.nav.amt.distribusjon.hendelse.model.Aarsak
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
-import no.nav.amt.distribusjon.hendelse.model.HendelseType
-import no.nav.amt.distribusjon.hendelse.model.Innhold
-import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.hendelse.model.deltakerAdresseDeles
+import no.nav.amt.distribusjon.hendelse.model.visningsnavn
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.formatDate
 import no.nav.amt.distribusjon.utils.toTitleCase
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
+import no.nav.amt.lib.models.deltaker.DeltakerEndring
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
+import no.nav.amt.lib.models.hendelse.HendelseType
+import no.nav.amt.lib.models.hendelse.InnholdDto
+import no.nav.amt.lib.models.hendelse.UtkastDto
 import java.time.LocalDate
 
 fun lagHovedvedtakPdfDto(
     deltaker: HendelseDeltaker,
     navBruker: NavBruker,
-    utkast: Utkast,
+    utkast: UtkastDto,
     veileder: HendelseAnsvarlig.NavVeileder,
     vedtaksdato: LocalDate,
     begrunnelseFraNav: String?,
@@ -143,7 +144,7 @@ fun HendelseDeltaker.Deltakerliste.Arrangor.visningsnavn(): String = with(overor
 private fun adresseDelesMedArrangor(deltaker: HendelseDeltaker, navBruker: NavBruker): Boolean =
     navBruker.adressebeskyttelse == null && deltaker.deltakerliste.deltakerAdresseDeles()
 
-private fun List<Innhold>.toVisingstekst() = this.map { innhold ->
+private fun List<InnholdDto>.toVisingstekst() = this.map { innhold ->
     "${innhold.tekst}${innhold.beskrivelse?.let { ": $it" } ?: ""}"
 }
 
@@ -184,14 +185,13 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakstype.T
     )
 
     is HendelseType.EndreStartdato -> {
-        val tittel = if (hendelseType.startdato != null) {
-            "Oppstartsdato er endret til ${formatDate(hendelseType.startdato)}"
-        } else {
-            "Oppstartsdato er fjernet"
-        }
-        if (hendelseType.sluttdato != null) {
+        val tittel = hendelseType.startdato?.let { "Oppstartsdato er endret til ${formatDate(it)}" } ?: "Oppstartsdato er fjernet"
+
+        val sluttdato = hendelseType.sluttdato
+
+        if (sluttdato != null) {
             EndringDto.EndreStartdatoOgVarighet(
-                sluttdato = hendelseType.sluttdato,
+                sluttdato = sluttdato,
                 begrunnelseFraNav = hendelseType.begrunnelseFraNav,
                 forslagFraArrangor = hendelseType.endringFraForslag?.let {
                     endringFraForslagToForslagDto(
@@ -281,7 +281,7 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
     )
 
     is Forslag.AvsluttDeltakelse -> ForslagDto.AvsluttDeltakelse(
-        aarsak = endring.aarsak.toAarsak().visningsnavn(),
+        aarsak = endring.aarsak.visningsnavn(),
         sluttdato = endring.sluttdato,
         harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
         begrunnelseFraArrangor = begrunnelseFraArrangor,
@@ -296,7 +296,7 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
     )
 
     is Forslag.IkkeAktuell -> ForslagDto.IkkeAktuell(
-        aarsak = endring.aarsak.toAarsak().visningsnavn(),
+        aarsak = endring.aarsak.visningsnavn(),
         begrunnelseFraArrangor = begrunnelseFraArrangor,
     )
 
@@ -327,11 +327,15 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
     is Forslag.Sluttarsak -> throw IllegalArgumentException("Skal ikke opprette endringsvedtak ved endring av sluttårsak")
 }
 
-private fun EndringAarsak.toAarsak(): Aarsak = when (this) {
-    is EndringAarsak.FattJobb -> Aarsak(Aarsak.Type.FATT_JOBB)
-    is EndringAarsak.Annet -> Aarsak(Aarsak.Type.ANNET, beskrivelse)
-    is EndringAarsak.IkkeMott -> Aarsak(Aarsak.Type.IKKE_MOTT)
-    is EndringAarsak.Syk -> Aarsak(Aarsak.Type.SYK)
-    is EndringAarsak.TrengerAnnenStotte -> Aarsak(Aarsak.Type.TRENGER_ANNEN_STOTTE)
-    is EndringAarsak.Utdanning -> Aarsak(Aarsak.Type.UTDANNING)
+private fun EndringAarsak.visningsnavn(): String {
+    val deltakerEndringAarsak = when (this) {
+        is EndringAarsak.FattJobb -> DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.FATT_JOBB)
+        is EndringAarsak.Annet -> DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.ANNET, beskrivelse)
+        is EndringAarsak.IkkeMott -> DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.IKKE_MOTT)
+        is EndringAarsak.Syk -> DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.SYK)
+        is EndringAarsak.TrengerAnnenStotte -> DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.TRENGER_ANNEN_STOTTE)
+        is EndringAarsak.Utdanning -> DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.UTDANNING)
+    }
+
+    return deltakerEndringAarsak.visningsnavn()
 }

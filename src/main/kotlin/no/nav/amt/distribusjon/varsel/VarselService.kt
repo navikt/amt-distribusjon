@@ -5,9 +5,9 @@ import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
-import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
+import no.nav.amt.lib.models.hendelse.HendelseType
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZoneOffset

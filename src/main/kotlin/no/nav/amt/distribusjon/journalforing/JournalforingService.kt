@@ -4,8 +4,6 @@ import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
-import no.nav.amt.distribusjon.hendelse.model.HendelseType
-import no.nav.amt.distribusjon.hendelse.model.Utkast
 import no.nav.amt.distribusjon.journalforing.dokarkiv.DokarkivClient
 import no.nav.amt.distribusjon.journalforing.dokdistfordeling.DokdistfordelingClient
 import no.nav.amt.distribusjon.journalforing.model.HendelseMedJournalforingstatus
@@ -16,6 +14,8 @@ import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
+import no.nav.amt.lib.models.hendelse.HendelseType
+import no.nav.amt.lib.models.hendelse.UtkastDto
 import org.slf4j.LoggerFactory
 
 class JournalforingService(
@@ -74,7 +74,7 @@ class JournalforingService(
 
     private suspend fun journalforHovedvedtak(
         hendelse: Hendelse,
-        utkast: Utkast,
+        utkast: UtkastDto,
         journalforingstatus: Journalforingstatus?,
     ) {
         val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
@@ -158,7 +158,8 @@ class JournalforingService(
         }
 
         val journalforteHendelser = hendelseMedJournalforingstatuser.filter { it.journalforingstatus.erJournalfort() }
-        val ikkeJournalforteHendelser = hendelseMedJournalforingstatuser.filter { !it.journalforingstatus.erJournalfort() }
+        val ikkeJournalforteHendelser = hendelseMedJournalforingstatuser
+            .filter { !it.journalforingstatus.erJournalfort() }
             .map { it.hendelse }
 
         val navBruker = amtPersonClient.hentNavBruker(sisteHendelse.hendelse.deltaker.personident)
@@ -168,11 +169,11 @@ class JournalforingService(
         }
 
         if (journalforteHendelser.isNotEmpty()) {
-            val unikeJournalpostIder = journalforteHendelser.distinctBy { it.journalforingstatus.journalpostId }
+            val unikeJournalpostIder = journalforteHendelser
+                .distinctBy { it.journalforingstatus.journalpostId }
                 .mapNotNull { it.journalforingstatus.journalpostId }
             val journalpostHendelseMap =
-                unikeJournalpostIder.associateWith {
-                        journalpostid ->
+                unikeJournalpostIder.associateWith { journalpostid ->
                     journalforteHendelser.filter { it.journalforingstatus.journalpostId == journalpostid }
                 }
             journalpostHendelseMap.entries.forEach { entry ->
@@ -295,12 +296,12 @@ class JournalforingService(
         journalforingstatus: Journalforingstatus?,
         distribusjonskanal: Distribusjonskanal,
         manuellOppfolging: Boolean,
-    ): Boolean {
-        return journalforingstatus != null && journalforingstatus.erJournalfort() && journalforingstatus.erDistribuert(
+    ): Boolean = journalforingstatus != null &&
+        journalforingstatus.erJournalfort() &&
+        journalforingstatus.erDistribuert(
             distribusjonskanal,
             manuellOppfolging,
         )
-    }
 
     private fun getAnsvarlig(nyesteHendelse: Hendelse, ikkeJournalforteHendelser: List<Hendelse>): HendelseAnsvarlig {
         if (nyesteHendelse.ansvarlig is HendelseAnsvarlig.NavVeileder) {
