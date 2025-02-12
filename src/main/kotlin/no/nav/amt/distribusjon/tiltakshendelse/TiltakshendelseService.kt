@@ -1,12 +1,12 @@
 package no.nav.amt.distribusjon.tiltakshendelse
 
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
-import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService.Companion.UTKAST_TIL_PAMELDING_TEKST
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
 import no.nav.amt.lib.models.arrangor.melding.Forslag
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -59,7 +59,7 @@ class TiltakshendelseService(
         lagreOgDistribuer(
             forslag.toHendelse(
                 personIdent = deltaker.navBruker.personident,
-                tiltakType = deltaker.deltakerliste.tiltakstype.arenaKode,
+                arenaKode = deltaker.deltakerliste.tiltakstype.arenaKode,
                 aktiv = true,
             ),
         )
@@ -93,7 +93,7 @@ class TiltakshendelseService(
 
 fun Forslag.toHendelse(
     personIdent: String,
-    tiltakType: ArenaTiltakTypeKode,
+    arenaKode: Tiltakstype.ArenaKode,
     aktiv: Boolean,
 ) = Tiltakshendelse(
     id = UUID.randomUUID(),
@@ -104,7 +104,7 @@ fun Forslag.toHendelse(
     personident = personIdent,
     aktiv = aktiv,
     tekst = getForslagHendelseTekst(this),
-    tiltakstype = tiltakType,
+    tiltakstype = arenaKode,
     opprettet = opprettet,
 )
 

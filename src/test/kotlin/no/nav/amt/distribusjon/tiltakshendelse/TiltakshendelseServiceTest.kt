@@ -4,7 +4,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.time.delay
 import no.nav.amt.distribusjon.Environment
-import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
@@ -15,6 +14,7 @@ import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import no.nav.amt.lib.testing.AsyncUtils
 import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.junit.Test
@@ -90,7 +90,7 @@ class TiltakshendelseServiceTest {
 
         tiltakshendelse.hendelser shouldBe emptyList()
         tiltakshendelse.tekst shouldBe "Forslag: Forleng deltakelse"
-        tiltakshendelse.tiltakstype shouldBe ArenaTiltakTypeKode.ARBFORB
+        tiltakshendelse.tiltakstype shouldBe Tiltakstype.ArenaKode.ARBFORB
         tiltakshendelse.aktiv shouldBe true
     }
 

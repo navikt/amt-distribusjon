@@ -2,18 +2,15 @@ package no.nav.amt.distribusjon.utils.data
 
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.Aarsak
-import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
-import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
-import no.nav.amt.distribusjon.hendelse.model.Tiltak
-import no.nav.amt.distribusjon.hendelse.model.Tiltakskode
 import no.nav.amt.distribusjon.hendelse.model.Utkast
-import no.nav.amt.distribusjon.hendelse.model.toTiltakskode
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
@@ -76,7 +73,7 @@ object Hendelsesdata {
         id: UUID = UUID.randomUUID(),
         navn: String = "Deltakerlistenavn",
         arrangor: HendelseDeltaker.Deltakerliste.Arrangor = arrangor(),
-        tiltak: Tiltak = tiltak(),
+        tiltak: HendelseDeltaker.Deltakerliste.Tiltak = tiltak(),
     ) = HendelseDeltaker.Deltakerliste(id, navn, arrangor, tiltak)
 
     fun arrangor(
@@ -88,10 +85,10 @@ object Hendelsesdata {
 
     fun tiltak(
         navn: String = "Tiltaksnavn",
-        type: ArenaTiltakTypeKode = ArenaTiltakTypeKode.ARBFORB,
+        tiltakskode: Tiltakstype.Tiltakskode = Tiltakstype.Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
+        arenaKode: Tiltakstype.ArenaKode = tiltakskode.toArenaKode(),
         ledetekst: String = "Beskrivelse av hva tiltaket går ut på",
-        tiltakskode: Tiltakskode = type.toTiltakskode(),
-    ) = Tiltak(navn, type, ledetekst, tiltakskode)
+    ) = HendelseDeltaker.Deltakerliste.Tiltak(navn, arenaKode, ledetekst, tiltakskode)
 }
 
 object HendelseTypeData {

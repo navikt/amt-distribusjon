@@ -2,13 +2,13 @@ package no.nav.amt.distribusjon.journalforing.pdf
 
 import io.kotest.matchers.shouldBe
 import no.nav.amt.distribusjon.hendelse.model.Aarsak
-import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.Innhold
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.formatDate
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -93,7 +93,9 @@ class PdfUtilsTest {
     fun `lagEndringsvedtakPdfDto - EndreInnhold, VTA - inneholder innholdsbeskrivelse`() {
         val deltaker =
             Hendelsesdata.deltaker(
-                deltakerliste = Hendelsesdata.deltakerliste(tiltak = Hendelsesdata.tiltak(type = ArenaTiltakTypeKode.VASV)),
+                deltakerliste = Hendelsesdata.deltakerliste(
+                    tiltak = Hendelsesdata.tiltak(tiltakskode = Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET),
+                ),
             )
         val navBruker = Persondata.lagNavBruker()
         val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()

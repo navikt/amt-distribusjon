@@ -1,6 +1,7 @@
 package no.nav.amt.distribusjon.hendelse.model
 
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
+import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import java.time.LocalDateTime
 import java.util.UUID
 

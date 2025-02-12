@@ -1,19 +1,19 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
 import no.nav.amt.distribusjon.hendelse.model.Aarsak
-import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.HendelseAnsvarlig
-import no.nav.amt.distribusjon.hendelse.model.HendelseDeltaker
 import no.nav.amt.distribusjon.hendelse.model.HendelseType
 import no.nav.amt.distribusjon.hendelse.model.Innhold
-import no.nav.amt.distribusjon.hendelse.model.Tiltakskode
 import no.nav.amt.distribusjon.hendelse.model.Utkast
+import no.nav.amt.distribusjon.hendelse.model.deltakerAdresseDeles
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.formatDate
 import no.nav.amt.distribusjon.utils.toTitleCase
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import java.time.LocalDate
 
 fun lagHovedvedtakPdfDto(
@@ -32,7 +32,7 @@ fun lagHovedvedtakPdfDto(
         innhold = utkast.innhold?.toVisingstekst() ?: emptyList(),
         innholdBeskrivelse = utkast.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
         bakgrunnsinformasjon = utkast.bakgrunnsinformasjon,
-        deltakelsesmengdeTekst = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak.type)) {
+        deltakelsesmengdeTekst = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak)) {
             utkast.deltakelsesprosent?.let {
                 deltakelsesmengdeTekst(
                     deltakelsesprosent = it.toInt(),
@@ -47,7 +47,7 @@ fun lagHovedvedtakPdfDto(
     deltakerliste = HovedvedtakPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.visningsnavn(),
         tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
-        ledetekst = deltaker.deltakerliste.tiltak.ledetekst,
+        ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "",
         arrangor = HovedvedtakPdfDto.ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
@@ -79,7 +79,7 @@ fun lagEndringsvedtakPdfDto(
         ),
         deltakerliste = EndringsvedtakPdfDto.DeltakerlisteDto(
             navn = deltaker.deltakerliste.visningsnavn(),
-            ledetekst = deltaker.deltakerliste.tiltak.ledetekst,
+            ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "",
             arrangor = EndringsvedtakPdfDto.ArrangorDto(
                 navn = deltaker.deltakerliste.arrangor.visningsnavn(),
             ),
@@ -106,34 +106,35 @@ private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hend
     .sortedByDescending { it.opprettet }
     .distinctBy { it.payload.javaClass }
 
-private fun skalViseDeltakelsesmengde(tiltakstype: ArenaTiltakTypeKode): Boolean = tiltakstype == ArenaTiltakTypeKode.VASV ||
-    tiltakstype == ArenaTiltakTypeKode.ARBFORB
+private fun skalViseDeltakelsesmengde(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): Boolean =
+    tiltakstype.tiltakskode == Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET ||
+        tiltakstype.tiltakskode == Tiltakstype.Tiltakskode.ARBEIDSFORBEREDENDE_TRENING
 
-fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.type) {
-    ArenaTiltakTypeKode.INDOPPFAG -> 4
-    ArenaTiltakTypeKode.ARBFORB -> 13
-    ArenaTiltakTypeKode.AVKLARAG -> 2
-    ArenaTiltakTypeKode.VASV -> 14
-    ArenaTiltakTypeKode.ARBRRHDAG -> 12
-    ArenaTiltakTypeKode.DIGIOPPARB -> 4
-    ArenaTiltakTypeKode.JOBBK -> 4
-    ArenaTiltakTypeKode.GRUPPEAMO -> 7
-    ArenaTiltakTypeKode.GRUFAGYRKE -> 7
+fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.tiltakskode) {
+    Tiltakstype.Tiltakskode.ARBEIDSFORBEREDENDE_TRENING -> 13
+    Tiltakstype.Tiltakskode.ARBEIDSRETTET_REHABILITERING -> 12
+    Tiltakstype.Tiltakskode.AVKLARING -> 2
+    Tiltakstype.Tiltakskode.DIGITALT_OPPFOLGINGSTILTAK -> 4
+    Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> 7
+    Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> 7
+    Tiltakstype.Tiltakskode.JOBBKLUBB -> 4
+    Tiltakstype.Tiltakskode.OPPFOLGING -> 4
+    Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> 14
 }
 
-fun HendelseDeltaker.Deltakerliste.visningsnavn() = when (this.tiltak.type) {
-    ArenaTiltakTypeKode.VASV -> "Varig tilrettelagt arbeid hos ${this.arrangor.visningsnavn()}"
-    ArenaTiltakTypeKode.JOBBK -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
-    ArenaTiltakTypeKode.GRUPPEAMO -> if (this.erKurs) "Kurs: ${this.navn}" else this.navn
-    ArenaTiltakTypeKode.GRUFAGYRKE -> this.navn
+fun HendelseDeltaker.Deltakerliste.visningsnavn() = when (this.tiltak.tiltakskode) {
+    Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> "Varig tilrettelagt arbeid hos ${this.arrangor.visningsnavn()}"
+    Tiltakstype.Tiltakskode.JOBBKLUBB -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
+    Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> if (this.tiltak.tiltakskode.erKurs()) "Kurs: ${this.navn}" else this.navn
+    Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> this.navn
     else -> "${this.tiltak.navn} hos ${arrangor.visningsnavn()}"
 }
 
-fun HendelseDeltaker.Deltakerliste.Arrangor.visningsnavn(): String {
-    val visningsnavn = if (overordnetArrangor == null || overordnetArrangor.navn == "Ukjent Virksomhet") {
+fun HendelseDeltaker.Deltakerliste.Arrangor.visningsnavn(): String = with(overordnetArrangor) {
+    val visningsnavn = if (this == null || this.navn == "Ukjent Virksomhet") {
         navn
     } else {
-        overordnetArrangor.navn
+        this.navn
     }
 
     return toTitleCase(visningsnavn)
@@ -146,7 +147,7 @@ private fun List<Innhold>.toVisingstekst() = this.map { innhold ->
     "${innhold.tekst}${innhold.beskrivelse?.let { ": $it" } ?: ""}"
 }
 
-private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakskode): EndringDto = when (hendelseType) {
+private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakstype.Tiltakskode): EndringDto = when (hendelseType) {
     is HendelseType.InnbyggerGodkjennUtkast,
     is HendelseType.NavGodkjennUtkast,
     is HendelseType.ReaktiverDeltakelse,
@@ -167,10 +168,12 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakskode):
     is HendelseType.EndreDeltakelsesmengde -> EndringDto.EndreDeltakelsesmengde(
         begrunnelseFraNav = hendelseType.begrunnelseFraNav,
         forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
-        tittel = "Deltakelsen er endret til ${deltakelsesmengdeTekst(
-            deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
-            dagerPerUke = hendelseType.dagerPerUke?.toInt(),
-        )}",
+        tittel = "Deltakelsen er endret til ${
+            deltakelsesmengdeTekst(
+                deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
+                dagerPerUke = hendelseType.dagerPerUke?.toInt(),
+            )
+        }",
         gyldigFra = hendelseType.gyldigFra,
     )
 
@@ -226,7 +229,7 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakskode):
 
     is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
         innhold = hendelseType.innhold.map { it.visningsnavn() },
-        innholdBeskrivelse = if (tiltakskode == Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET) {
+        innholdBeskrivelse = if (tiltakskode == Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET) {
             hendelseType.innhold.firstOrNull { it.innholdskode == "annet" }?.beskrivelse
         } else {
             null
@@ -276,12 +279,14 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
         sluttdato = endring.sluttdato,
         begrunnelseFraArrangor = begrunnelseFraArrangor,
     )
+
     is Forslag.AvsluttDeltakelse -> ForslagDto.AvsluttDeltakelse(
         aarsak = endring.aarsak.toAarsak().visningsnavn(),
         sluttdato = endring.sluttdato,
         harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
         begrunnelseFraArrangor = begrunnelseFraArrangor,
     )
+
     is Forslag.Deltakelsesmengde -> ForslagDto.EndreDeltakelsesmengde(
         deltakelsesmengdeTekst = deltakelsesmengdeTekst(
             deltakelsesprosent = endring.deltakelsesprosent,
@@ -289,14 +294,17 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
         ),
         begrunnelseFraArrangor = begrunnelseFraArrangor,
     )
+
     is Forslag.IkkeAktuell -> ForslagDto.IkkeAktuell(
         aarsak = endring.aarsak.toAarsak().visningsnavn(),
         begrunnelseFraArrangor = begrunnelseFraArrangor,
     )
+
     is Forslag.Sluttdato -> ForslagDto.EndreSluttdato(
         sluttdato = endring.sluttdato,
         begrunnelseFraArrangor = begrunnelseFraArrangor,
     )
+
     is Forslag.Startdato -> {
         if (endring.sluttdato != null) {
             ForslagDto.EndreStartdatoOgVarighet(
@@ -311,9 +319,11 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
             )
         }
     }
+
     is Forslag.FjernOppstartsdato -> ForslagDto.FjernOppstartsdato(
         begrunnelseFraArrangor = begrunnelseFraArrangor,
     )
+
     is Forslag.Sluttarsak -> throw IllegalArgumentException("Skal ikke opprette endringsvedtak ved endring av sluttårsak")
 }
 

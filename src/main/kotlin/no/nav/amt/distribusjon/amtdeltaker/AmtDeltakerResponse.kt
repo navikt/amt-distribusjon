@@ -1,7 +1,6 @@
 package no.nav.amt.distribusjon.amtdeltaker
 
-import no.nav.amt.distribusjon.hendelse.model.ArenaTiltakTypeKode
-import no.nav.amt.distribusjon.hendelse.model.Tiltakskode
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -67,12 +66,3 @@ data class Deltakerliste(
         PLANLAGT,
     }
 }
-
-data class Tiltakstype(
-    val id: UUID,
-    val navn: String,
-    val tiltakskode: Tiltakskode,
-    val arenaKode: ArenaTiltakTypeKode,
-    val innsatsgrupper: Set<Any>,
-    val innhold: Any?,
-)
