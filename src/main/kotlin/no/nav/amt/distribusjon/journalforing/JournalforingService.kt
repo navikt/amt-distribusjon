@@ -50,12 +50,16 @@ class JournalforingService(
                 hendelse.payload.utkast,
                 journalforingstatus,
             )
+            is HendelseType.IkkeAktuell -> journalforAvslag(
+                hendelse,
+                hendelse.payload,
+                journalforingstatus,
+            )
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.EndreDeltakelsesmengde,
             is HendelseType.EndreSluttdato,
             is HendelseType.EndreStartdato,
             is HendelseType.ForlengDeltakelse,
-            is HendelseType.IkkeAktuell,
             is HendelseType.EndreInnhold,
             is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.LeggTilOppstartsdato,
@@ -251,6 +255,64 @@ class JournalforingService(
                 "hendelser ${ikkeJournalforteHendelser.map { it.id }.joinToString()}",
         )
         return journalpostId
+    }
+
+    private suspend fun journalforAvslag(
+        hendelse: Hendelse,
+        payload: HendelseType.IkkeAktuell,
+        journalforingstatus: Journalforingstatus?,
+    ) {
+        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
+        if (journalforingstatus == null || !journalforingstatus.erJournalfort()) {
+            val veileder = when (hendelse.ansvarlig) {
+                is HendelseAnsvarlig.NavVeileder -> hendelse.ansvarlig
+                is HendelseAnsvarlig.Deltaker,
+                is HendelseAnsvarlig.Arrangor,
+                is HendelseAnsvarlig.System,
+                -> throw IllegalArgumentException(
+                    "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
+                )
+            }
+            val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
+                ?: throw IllegalArgumentException(
+                    "Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
+                )
+            val sak = veilarboppfolgingClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
+            val pdf = pdfgenClient.genererAvslagVedtak(
+                lagEndringsvedtakPdfDto(
+                    hendelse.deltaker,
+                    navBruker,
+                    veileder,
+                    listOf(hendelse),
+                    hendelse.opprettet.toLocalDate(),
+                ),
+            )
+
+            val journalpostId = dokarkivClient.opprettJournalpost(
+                hendelseId = hendelse.id,
+                fnr = hendelse.deltaker.personident,
+                sak = sak,
+                pdf = pdf,
+                journalforendeEnhet = veileder.enhet.enhetsnummer,
+                tiltakstype = hendelse.deltaker.deltakerliste.tiltak,
+                endring = true, // avslag er endring?
+            )
+
+            val nyJournalforingstatus = Journalforingstatus(
+                hendelseId = hendelse.id,
+                journalpostId = journalpostId,
+                bestillingsId = null,
+                kanIkkeDistribueres = null,
+                kanIkkeJournalfores = false,
+            )
+            journalforingstatusRepository.upsert(nyJournalforingstatus)
+
+            distribuer(listOf(hendelse), journalpostId, navBruker.harAdresse())
+        } else {
+            distribuer(listOf(hendelse), journalforingstatus.journalpostId!!, navBruker.harAdresse())
+        }
+
+        log.info("Journalførte avslag for deltaker ${hendelse.deltaker.id}")
     }
 
     private suspend fun distribuer(

@@ -85,6 +85,9 @@ fun lagEndringsvedtakPdfDto(
                 navn = deltaker.deltakerliste.arrangor.visningsnavn(),
             ),
             forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
+            tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
+            tiltakskodeNavn = deltaker.deltakerliste.tiltak.visningsnavn(),
+            deltakerlisteNavn = deltaker.deltakerliste.navn,
         ),
         endringer = endringer.map { tilEndringDto(it, deltaker.deltakerliste.tiltak.tiltakskode) },
         avsender = EndringsvedtakPdfDto.AvsenderDto(
@@ -95,6 +98,14 @@ fun lagEndringsvedtakPdfDto(
         forsteVedtakFattet = deltaker.forsteVedtakFattet
             ?: throw IllegalStateException("Kan ikke journalføre endringsvedtak hvis opprinnelig vedtak ikke er fattet"),
     )
+}
+
+private fun HendelseDeltaker.Deltakerliste.Tiltak.visningsnavn() = when (this.tiltakskode) {
+    Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> "varig tilrettelagt arbeid"
+    Tiltakstype.Tiltakskode.JOBBKLUBB -> "jobbsøkerkurs"
+    Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> "arbeidsmarkedsopplæring"
+    Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> "fag- og yrkesopplæring"
+    else -> this.navn
 }
 
 private fun HendelseAnsvarlig.getAvsendernavn() = when (this) {
