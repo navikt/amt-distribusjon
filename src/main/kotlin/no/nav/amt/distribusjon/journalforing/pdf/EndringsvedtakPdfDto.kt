@@ -1,6 +1,7 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import java.time.LocalDate
 
 data class EndringsvedtakPdfDto(
@@ -20,6 +21,9 @@ data class EndringsvedtakPdfDto(
 
     data class DeltakerlisteDto(
         val navn: String,
+        val tiltakskode: Tiltakstype.Tiltakskode,
+        val tiltakskodeNavn: String,
+        val deltakerlisteNavn: String,
         val ledetekst: String,
         val arrangor: ArrangorDto,
         val forskriftskapittel: Int,

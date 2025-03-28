@@ -37,4 +37,17 @@ class PdfgenClient(private val httpClient: HttpClient, private val environment: 
         }
         return response.body()
     }
+
+    suspend fun genererAvslagVedtak(endringsvedtakPdfDto: EndringsvedtakPdfDto): ByteArray {
+        val response = httpClient.post("$url/avslag-ikke-aktuell") {
+            contentType(ContentType.Application.Json)
+            setBody(objectMapper.writeValueAsString(endringsvedtakPdfDto))
+        }
+        if (!response.status.isSuccess()) {
+            error(
+                "Kunne ikke opprette avslag-ikke-aktuell i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}",
+            )
+        }
+        return response.body()
+    }
 }
