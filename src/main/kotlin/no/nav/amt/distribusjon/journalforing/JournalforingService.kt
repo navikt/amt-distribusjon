@@ -12,6 +12,8 @@ import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
+import no.nav.amt.distribusjon.journalforing.person.model.Oppfolgingsperiode
+import no.nav.amt.distribusjon.veilarboppfolging.Sak
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseType
@@ -50,12 +52,15 @@ class JournalforingService(
                 hendelse.payload.utkast,
                 journalforingstatus,
             )
+            is HendelseType.IkkeAktuell -> journalforAvslag(
+                hendelse,
+                journalforingstatus,
+            )
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.EndreDeltakelsesmengde,
             is HendelseType.EndreSluttdato,
             is HendelseType.EndreStartdato,
             is HendelseType.ForlengDeltakelse,
-            is HendelseType.IkkeAktuell,
             is HendelseType.EndreInnhold,
             is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.LeggTilOppstartsdato,
@@ -79,19 +84,7 @@ class JournalforingService(
     ) {
         val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
         if (journalforingstatus == null || !journalforingstatus.erJournalfort()) {
-            val veileder = when (hendelse.ansvarlig) {
-                is HendelseAnsvarlig.NavVeileder -> hendelse.ansvarlig
-                is HendelseAnsvarlig.Deltaker,
-                is HendelseAnsvarlig.Arrangor,
-                is HendelseAnsvarlig.System,
-                -> throw IllegalArgumentException(
-                    "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
-                )
-            }
-            val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
-                ?: throw IllegalArgumentException(
-                    "Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
-                )
+            val (veileder, aktivOppfolgingsperiode) = validerAnsvarligOgOppfolgingsperiode(hendelse, navBruker)
             val sak = veilarboppfolgingClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
             val pdf = pdfgenClient.genererHovedvedtak(
                 lagHovedvedtakPdfDto(
@@ -104,26 +97,9 @@ class JournalforingService(
                 ),
             )
 
-            val journalpostId = dokarkivClient.opprettJournalpost(
-                hendelseId = hendelse.id,
-                fnr = hendelse.deltaker.personident,
-                sak = sak,
-                pdf = pdf,
-                journalforendeEnhet = veileder.enhet.enhetsnummer,
-                tiltakstype = hendelse.deltaker.deltakerliste.tiltak,
-                endring = false,
-            )
+          val journalpostId = journalfor(hendelse, sak, pdf, veileder, false)
 
-            val nyJournalforingstatus = Journalforingstatus(
-                hendelseId = hendelse.id,
-                journalpostId = journalpostId,
-                bestillingsId = null,
-                kanIkkeDistribueres = null,
-                kanIkkeJournalfores = false,
-            )
-            journalforingstatusRepository.upsert(nyJournalforingstatus)
-
-            distribuer(listOf(hendelse), journalpostId, navBruker.harAdresse())
+          distribuer(listOf(hendelse), journalpostId, navBruker.harAdresse())
         } else {
             distribuer(listOf(hendelse), journalforingstatus.journalpostId!!, navBruker.harAdresse())
         }
@@ -253,7 +229,83 @@ class JournalforingService(
         return journalpostId
     }
 
-    private suspend fun distribuer(
+    private suspend fun journalforAvslag(
+        hendelse: Hendelse,
+        journalforingstatus: Journalforingstatus?,
+    ) {
+        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
+        if (journalforingstatus == null || !journalforingstatus.erJournalfort()) {
+          val (veileder, aktivOppfolgingsperiode) = validerAnsvarligOgOppfolgingsperiode(hendelse, navBruker)
+          val sak = veilarboppfolgingClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
+            val pdf = pdfgenClient.genererAvslagVedtak(
+                lagEndringsvedtakPdfDto(
+                    hendelse.deltaker,
+                    navBruker,
+                    veileder,
+                    listOf(hendelse),
+                    hendelse.opprettet.toLocalDate(),
+                ),
+            )
+
+          val journalpostId = journalfor(hendelse, sak, pdf, veileder, true)
+
+          distribuer(listOf(hendelse), journalpostId, navBruker.harAdresse())
+        } else {
+            distribuer(listOf(hendelse), journalforingstatus.journalpostId!!, navBruker.harAdresse())
+        }
+
+        log.info("Journalførte avslag for deltaker ${hendelse.deltaker.id}")
+    }
+
+  private suspend fun journalfor(
+    hendelse: Hendelse,
+    sak: Sak,
+    pdf: ByteArray,
+    veileder: HendelseAnsvarlig.NavVeileder,
+    endring: Boolean
+  ): String {
+    val journalpostId = dokarkivClient.opprettJournalpost(
+      hendelseId = hendelse.id,
+      fnr = hendelse.deltaker.personident,
+      sak = sak,
+      pdf = pdf,
+      journalforendeEnhet = veileder.enhet.enhetsnummer,
+      tiltakstype = hendelse.deltaker.deltakerliste.tiltak,
+      endring = endring,
+    )
+
+    val nyJournalforingstatus = Journalforingstatus(
+      hendelseId = hendelse.id,
+      journalpostId = journalpostId,
+      bestillingsId = null,
+      kanIkkeDistribueres = null,
+      kanIkkeJournalfores = false,
+    )
+    journalforingstatusRepository.upsert(nyJournalforingstatus)
+    return journalpostId
+  }
+
+  private fun validerAnsvarligOgOppfolgingsperiode(
+    hendelse: Hendelse,
+    navBruker: NavBruker
+  ): Pair<HendelseAnsvarlig.NavVeileder, Oppfolgingsperiode> {
+    val veileder = when (hendelse.ansvarlig) {
+      is HendelseAnsvarlig.NavVeileder -> hendelse.ansvarlig
+      is HendelseAnsvarlig.Deltaker,
+      is HendelseAnsvarlig.Arrangor,
+      is HendelseAnsvarlig.System,
+        -> throw IllegalArgumentException(
+        "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
+      )
+    }
+    val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
+      ?: throw IllegalArgumentException(
+        "Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
+      )
+    return Pair(veileder, aktivOppfolgingsperiode)
+  }
+
+  private suspend fun distribuer(
         hendelser: List<Hendelse>,
         journalpostId: String,
         harAdresse: Boolean,
