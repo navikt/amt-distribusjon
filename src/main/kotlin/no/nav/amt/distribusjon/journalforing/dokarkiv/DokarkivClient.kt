@@ -12,6 +12,7 @@ import io.ktor.http.isSuccess
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
+import no.nav.amt.distribusjon.journalforing.person.model.DokumentType
 import no.nav.amt.distribusjon.veilarboppfolging.Sak
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import org.slf4j.LoggerFactory
@@ -26,6 +27,10 @@ class DokarkivClient(
     private val scope = environment.dokarkivScope
     private val url = environment.dokarkivUrl
 
+    /*
+    https://confluence.adeo.no/display/BOA/opprettJournalpost
+    Oppretter en journalpost i Joark/dokarkiv
+     */
     suspend fun opprettJournalpost(
         hendelseId: UUID,
         fnr: String,
@@ -33,16 +38,16 @@ class DokarkivClient(
         pdf: ByteArray,
         journalforendeEnhet: String,
         tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
-        endring: Boolean,
+        dokumentType: DokumentType,
     ): String {
-        val request = getJournalpostRequest(
+        val request = lagJournalpostRequest(
             hendelseId = hendelseId,
             fnr = fnr,
             sak = sak,
             pdf = pdf,
             journalforendeEnhet = journalforendeEnhet,
             tiltakstype = tiltakstype,
-            endring = endring,
+            dokumentType = dokumentType,
         )
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
         val response = httpClient.post("$url/rest/journalpostapi/v1/journalpost?forsoekFerdigstill=true") {
@@ -59,16 +64,16 @@ class DokarkivClient(
         return response.body<OpprettJournalpostResponse>().journalpostId
     }
 
-    private fun getJournalpostRequest(
+    private fun lagJournalpostRequest(
         hendelseId: UUID,
         fnr: String,
         sak: Sak,
         pdf: ByteArray,
         journalforendeEnhet: String,
         tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
-        endring: Boolean,
+        dokumentType: DokumentType,
     ): OpprettJournalpostRequest {
-        val tittel = getTittel(tiltakstype, endring)
+        val tittel = getTittel(tiltakstype, dokumentType)
         return OpprettJournalpostRequest(
             avsenderMottaker = AvsenderMottaker(
                 id = fnr,
@@ -98,10 +103,10 @@ class DokarkivClient(
         )
     }
 
-    private fun getTittel(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, endring: Boolean): String = if (endring) {
-        "Endringsvedtak - ${tiltakstype.navn}"
-    } else {
-        "Vedtak - ${tiltakstype.navn}"
+    private fun getTittel(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, dokumentType: DokumentType): String = when (dokumentType) {
+        DokumentType.HOVEDVEDTAK -> "Vedtak - ${tiltakstype.navn}"
+        DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - ${tiltakstype.navn}"
+        DokumentType.INNSOKINGSBREV -> "Innsøking - ${tiltakstype.navn}"
     }
 
     private fun getBrevkode(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): String = "tiltak-vedtak-${tiltakstype.type.name}"

@@ -27,13 +27,28 @@ class DokdistfordelingClient(
     private val navCallId = Environment.appName
     private val log = LoggerFactory.getLogger(javaClass)
 
-    suspend fun distribuerJournalpost(journalpostId: String, tvingSentralPrint: Boolean = false): UUID? {
+    /*
+        https://confluence.adeo.no/pages/viewpage.action?pageId=320038938
+        distribusjon av dokumenter knyttet til en utgående, ferdigstilt journalpost.
+        Denne brukes kun dersom brukeren ikke er digital så resultatet blir i praksis at det sendes brev
+     */
+    suspend fun distribuerJournalpost(
+        journalpostId: String,
+        distribusjonstype: DistribuerJournalpostRequest.Distribusjonstype = DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,
+        tvingSentralPrint: Boolean = false,
+    ): UUID? {
+        val request = DistribuerJournalpostRequest(journalpostId, tvingSentralPrint, distribusjonstype = distribusjonstype)
+        return distribuerJournalpost(request)
+    }
+
+    suspend fun distribuerJournalpost(request: DistribuerJournalpostRequest): UUID? {
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
+        val journalpostId = request.journalpostId
         val response = httpClient.post("$url/rest/v1/distribuerjournalpost") {
             header(HttpHeaders.Authorization, token)
             header("Nav-Callid", navCallId)
             contentType(ContentType.Application.Json)
-            setBody(objectMapper.writeValueAsString(DistribuerJournalpostRequest(journalpostId, tvingSentralPrint)))
+            setBody(objectMapper.writeValueAsString(request))
         }
 
         if (!response.status.isSuccess()) {

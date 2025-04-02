@@ -5,6 +5,7 @@ import no.nav.amt.distribusjon.hendelse.model.deltakerAdresseDeles
 import no.nav.amt.distribusjon.hendelse.model.visningsnavn
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.formatDate
+import no.nav.amt.distribusjon.utils.toStringDate
 import no.nav.amt.distribusjon.utils.toTitleCase
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
@@ -60,6 +61,32 @@ fun lagHovedvedtakPdfDto(
     ),
     vedtaksdato = vedtaksdato,
     begrunnelseFraNav = begrunnelseFraNav,
+)
+
+fun lagInnsokingsbrevPdfDto(
+    deltaker: HendelseDeltaker,
+    navBruker: NavBruker,
+    veileder: HendelseAnsvarlig.NavVeileder,
+) = InnsokingsbrevPdfDto(
+    deltaker = InnsokingsbrevPdfDto.DeltakerDto(
+        fornavn = navBruker.fornavn,
+        mellomnavn = navBruker.mellomnavn,
+        etternavn = navBruker.etternavn,
+        personident = deltaker.personident,
+    ),
+    deltakerliste = InnsokingsbrevPdfDto.DeltakerlisteDto(
+        navn = deltaker.deltakerliste.visningsnavn(),
+        tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
+        arrangor = ArrangorDto(
+            navn = deltaker.deltakerliste.arrangor.visningsnavn(),
+        ),
+        startdato = deltaker.deltakerliste.startdato.toStringDate(),
+        sluttdato = deltaker.deltakerliste.sluttdato?.toStringDate(),
+    ),
+    avsender = AvsenderDto(
+        navn = veileder.navn,
+        enhet = navBruker.navEnhet?.navn ?: "NAV",
+    ),
 )
 
 fun lagEndringsvedtakPdfDto(
