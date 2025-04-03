@@ -12,7 +12,6 @@ import io.ktor.http.isSuccess
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
-import no.nav.amt.distribusjon.journalforing.person.model.DokumentType
 import no.nav.amt.distribusjon.veilarboppfolging.Sak
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import org.slf4j.LoggerFactory
@@ -38,7 +37,7 @@ class DokarkivClient(
         pdf: ByteArray,
         journalforendeEnhet: String,
         tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
-        dokumentType: DokumentType,
+        journalpostNavn: String,
     ): String {
         val request = lagJournalpostRequest(
             hendelseId = hendelseId,
@@ -47,7 +46,7 @@ class DokarkivClient(
             pdf = pdf,
             journalforendeEnhet = journalforendeEnhet,
             tiltakstype = tiltakstype,
-            dokumentType = dokumentType,
+            journalpostNavn = journalpostNavn,
         )
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
         val response = httpClient.post("$url/rest/journalpostapi/v1/journalpost?forsoekFerdigstill=true") {
@@ -71,9 +70,8 @@ class DokarkivClient(
         pdf: ByteArray,
         journalforendeEnhet: String,
         tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
-        dokumentType: DokumentType,
+        journalpostNavn: String,
     ): OpprettJournalpostRequest {
-        val tittel = getTittel(tiltakstype, dokumentType)
         return OpprettJournalpostRequest(
             avsenderMottaker = AvsenderMottaker(
                 id = fnr,
@@ -89,7 +87,7 @@ class DokarkivClient(
                             fysiskDokument = pdf,
                         ),
                     ),
-                    tittel = tittel,
+                    tittel = journalpostNavn,
                 ),
             ),
             journalfoerendeEnhet = journalforendeEnhet,
@@ -98,15 +96,9 @@ class DokarkivClient(
                 fagsaksystem = sak.fagsaksystem,
             ),
             tema = sak.tema,
-            tittel = tittel,
+            tittel = journalpostNavn,
             eksternReferanseId = hendelseId.toString(),
         )
-    }
-
-    private fun getTittel(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, dokumentType: DokumentType): String = when (dokumentType) {
-        DokumentType.HOVEDVEDTAK -> "Vedtak - ${tiltakstype.navn}"
-        DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - ${tiltakstype.navn}"
-        DokumentType.INNSOKINGSBREV -> "Søknad - ${tiltakstype.navn}"
     }
 
     private fun getBrevkode(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): String = "tiltak-vedtak-${tiltakstype.type.name}"

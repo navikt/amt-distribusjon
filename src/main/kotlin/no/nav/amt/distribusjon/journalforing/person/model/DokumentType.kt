@@ -4,4 +4,6 @@ enum class DokumentType {
     ENDRINGSVEDTAK,
     HOVEDVEDTAK,
     INNSOKINGSBREV,
+    VENTELISTEBREV,
+    AVSLAG,
 }

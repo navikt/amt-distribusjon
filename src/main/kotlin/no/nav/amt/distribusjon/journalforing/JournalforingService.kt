@@ -329,7 +329,7 @@ class JournalforingService(
             pdf = pdf,
             journalforendeEnhet = veileder.enhet.enhetsnummer,
             tiltakstype = hendelse.deltaker.deltakerliste.tiltak,
-            dokumentType = dokumentType,
+            journalpostNavn = getJournalpostNavn(hendelse.deltaker.deltakerliste.tiltak, dokumentType),
         )
         return journalpostId
     }
@@ -370,6 +370,15 @@ private fun getAnsvarlig(nyesteHendelse: Hendelse, ikkeJournalforteHendelser: Li
 
     throw IllegalArgumentException("Må ha en ansvarlig som er enten veileder eller arrangør")
 }
+
+private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, dokumentType: DokumentType): String =
+    when (dokumentType) {
+        DokumentType.HOVEDVEDTAK -> "Vedtak - ${tiltakstype.navn}"
+        DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - ${tiltakstype.navn}"
+        DokumentType.INNSOKINGSBREV -> "Søknad - ${tiltakstype.navn}"
+        DokumentType.AVSLAG -> "Avslag - ${tiltakstype.navn}"
+        DokumentType.VENTELISTEBREV -> "Avslag på søknad - ${tiltakstype.navn}"
+    }
 
 private fun HendelseAnsvarlig.hentVeileder(): HendelseAnsvarlig.NavVeileder {
     return when (this) {
