@@ -26,7 +26,7 @@ class PdfgenClient(private val httpClient: HttpClient, private val environment: 
     }
 
     suspend fun genererInnsokingsbrevPDF(innsokingsbrevPdfDto: InnsokingsbrevPdfDto): ByteArray {
-        val response = httpClient.post("$url/kurs-innsoking") {
+        val response = httpClient.post("$url/innsokingsbrev") {
             contentType(ContentType.Application.Json)
             setBody(objectMapper.writeValueAsString(innsokingsbrevPdfDto))
         }
