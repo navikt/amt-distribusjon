@@ -106,7 +106,7 @@ class DokarkivClient(
     private fun getTittel(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, dokumentType: DokumentType): String = when (dokumentType) {
         DokumentType.HOVEDVEDTAK -> "Vedtak - ${tiltakstype.navn}"
         DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - ${tiltakstype.navn}"
-        DokumentType.INNSOKINGSBREV -> "Innsøking - ${tiltakstype.navn}"
+        DokumentType.INNSOKINGSBREV -> "Søknad - ${tiltakstype.navn}"
     }
 
     private fun getBrevkode(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): String = "tiltak-vedtak-${tiltakstype.type.name}"
