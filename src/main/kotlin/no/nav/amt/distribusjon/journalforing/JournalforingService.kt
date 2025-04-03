@@ -87,6 +87,7 @@ class JournalforingService(
         when (oppstartstype) {
             HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE -> journalforHovedvedtak(hendelse, utkast, journalforingstatus)
             HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES -> journalforOgSendInnsokingsbrev(hendelse, journalforingstatus)
+            else -> throw IllegalStateException("Oppstartstype $oppstartstype er ikke implementert")
         }
     }
 

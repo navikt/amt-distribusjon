@@ -80,7 +80,7 @@ fun lagInnsokingsbrevPdfDto(
         arrangor = ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
-        startdato = deltaker.deltakerliste.startdato.toStringDate(),
+        startdato = deltaker.deltakerliste.startdato!!.toStringDate(),
         sluttdato = deltaker.deltakerliste.sluttdato?.toStringDate(),
     ),
     avsender = AvsenderDto(
