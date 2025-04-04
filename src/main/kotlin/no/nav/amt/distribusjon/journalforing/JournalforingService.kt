@@ -114,6 +114,7 @@ class JournalforingService(
         journalforOgSend(
             pdf,
             hendelse,
+            veileder.enhet.enhetsnummer,
             journalforingstatus,
             DokumentType.HOVEDVEDTAK,
             DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,
@@ -124,6 +125,7 @@ class JournalforingService(
 
     private suspend fun journalforOgSendInnsokingsbrev(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
         val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
+        val veileder = hendelse.ansvarlig.hentVeileder()
         val pdf: suspend () -> ByteArray = {
             pdfgenClient.genererInnsokingsbrevPDF(
                 lagInnsokingsbrevPdfDto(
@@ -137,6 +139,7 @@ class JournalforingService(
         journalforOgSend(
             pdf,
             hendelse,
+            veileder.enhet.enhetsnummer,
             journalforingstatus,
             DokumentType.INNSOKINGSBREV,
             DistribuerJournalpostRequest.Distribusjonstype.ANNET,
@@ -148,6 +151,7 @@ class JournalforingService(
     private suspend fun journalforOgSend(
         genererPDF: suspend () -> ByteArray,
         hendelse: Hendelse,
+        journalforendeEnhet: String,
         journalforingstatus: Journalforingstatus?,
         dokumentType: DokumentType,
         distribusjonstype: DistribuerJournalpostRequest.Distribusjonstype,
@@ -157,7 +161,7 @@ class JournalforingService(
 
         if (journalpostId == null) {
             val pdf = genererPDF()
-            journalpostId = journalfor(listOf(hendelse), navBruker, pdf, dokumentType)
+            journalpostId = journalfor(listOf(hendelse), journalforendeEnhet, navBruker, pdf, dokumentType)
         }
 
         sendBrev(hendelse, journalpostId, navBruker.harAdresse(), distribusjonstype)
@@ -234,6 +238,7 @@ class JournalforingService(
     private suspend fun journalforEndringsvedtak(ikkeJournalforteHendelser: List<Hendelse>, navBruker: NavBruker): String? {
         val nyesteHendelse = ikkeJournalforteHendelser.maxBy { it.opprettet }
         val ansvarlig = getAnsvarlig(nyesteHendelse, ikkeJournalforteHendelser)
+        val journalforendeEnhet = getJournalforendeEnhet(ansvarlig)
         val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
 
         if (aktivOppfolgingsperiode == null) {
@@ -258,7 +263,7 @@ class JournalforingService(
                 nyesteHendelse.opprettet.toLocalDate(),
             ),
         )
-        val journalpostId = journalfor(ikkeJournalforteHendelser, navBruker, pdf, DokumentType.ENDRINGSVEDTAK)
+        val journalpostId = journalfor(ikkeJournalforteHendelser, journalforendeEnhet, navBruker, pdf, DokumentType.ENDRINGSVEDTAK)
 
         log.info(
             "Journalførte endringsvedtak for deltaker ${ikkeJournalforteHendelser.first().deltaker.id}, " +
@@ -307,12 +312,12 @@ class JournalforingService(
 
     private suspend fun journalfor(
         hendelse: List<Hendelse>,
+        journalforendeEnhet: String,
         navBruker: NavBruker,
         pdf: ByteArray,
         dokumentType: DokumentType,
     ): String {
         val nyesteHendelse = hendelse.maxBy { it.opprettet }
-        val veileder = nyesteHendelse.ansvarlig.hentVeileder()
         val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
             ?: throw IllegalArgumentException(
                 "Kan ikke endre på deltaker ${nyesteHendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
@@ -324,7 +329,7 @@ class JournalforingService(
             fnr = nyesteHendelse.deltaker.personident,
             sak = sak,
             pdf = pdf,
-            journalforendeEnhet = veileder.enhet.enhetsnummer,
+            journalforendeEnhet = journalforendeEnhet,
             tiltakstype = nyesteHendelse.deltaker.deltakerliste.tiltak,
             journalpostNavn = getJournalpostNavn(nyesteHendelse.deltaker.deltakerliste.tiltak, dokumentType),
         )
@@ -381,6 +386,15 @@ private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tilta
         DokumentType.AVSLAG -> "Avslag - ${tiltakstype.navn}"
         DokumentType.VENTELISTEBREV -> "Avslag på søknad - ${tiltakstype.navn}"
     }
+
+private fun getJournalforendeEnhet(ansvarlig: HendelseAnsvarlig): String = when (ansvarlig) {
+    is HendelseAnsvarlig.NavVeileder -> ansvarlig.enhet.enhetsnummer
+    is HendelseAnsvarlig.Arrangor -> ansvarlig.enhet.enhetsnummer
+    is HendelseAnsvarlig.Deltaker -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker")
+    is HendelseAnsvarlig.System,
+    is HendelseAnsvarlig.Deltaker,
+    -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker eller system")
+}
 
 private fun HendelseAnsvarlig.hentVeileder(): HendelseAnsvarlig.NavVeileder {
     return when (this) {
