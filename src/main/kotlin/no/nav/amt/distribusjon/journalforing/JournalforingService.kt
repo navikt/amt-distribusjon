@@ -157,9 +157,7 @@ class JournalforingService(
 
         if (journalpostId == null) {
             val pdf = genererPDF()
-            journalpostId = journalfor(hendelse, navBruker, pdf, dokumentType)
-
-            upsertJournalforingsstatus(hendelse.id, journalpostId)
+            journalpostId = journalfor(listOf(hendelse), navBruker, pdf, dokumentType)
         }
 
         sendBrev(hendelse, journalpostId, navBruker.harAdresse(), distribusjonstype)
@@ -260,11 +258,8 @@ class JournalforingService(
                 nyesteHendelse.opprettet.toLocalDate(),
             ),
         )
-        val journalpostId = journalfor(nyesteHendelse, navBruker, pdf, DokumentType.ENDRINGSVEDTAK)
+        val journalpostId = journalfor(ikkeJournalforteHendelser, navBruker, pdf, DokumentType.ENDRINGSVEDTAK)
 
-        ikkeJournalforteHendelser.forEach {
-            upsertJournalforingsstatus(hendelseId = it.id, journalpostId = journalpostId)
-        }
         log.info(
             "Journalførte endringsvedtak for deltaker ${ikkeJournalforteHendelser.first().deltaker.id}, " +
                 "hendelser ${ikkeJournalforteHendelser.map { it.id }.joinToString()}",
@@ -311,27 +306,33 @@ class JournalforingService(
     }
 
     private suspend fun journalfor(
-        hendelse: Hendelse,
+        hendelse: List<Hendelse>,
         navBruker: NavBruker,
         pdf: ByteArray,
         dokumentType: DokumentType,
     ): String {
-        val veileder = hendelse.ansvarlig.hentVeileder()
+        val nyesteHendelse = hendelse.maxBy { it.opprettet }
+        val veileder = nyesteHendelse.ansvarlig.hentVeileder()
         val aktivOppfolgingsperiode = navBruker.getAktivOppfolgingsperiode()
             ?: throw IllegalArgumentException(
-                "Kan ikke endre på deltaker ${hendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
+                "Kan ikke endre på deltaker ${nyesteHendelse.deltaker.id} som ikke har aktiv oppfølgingsperiode",
             )
         val sak = veilarboppfolgingClient.opprettEllerHentSak(aktivOppfolgingsperiode.id)
 
         val journalpostId = dokarkivClient.opprettJournalpost(
-            hendelseId = hendelse.id,
-            fnr = hendelse.deltaker.personident,
+            hendelseId = nyesteHendelse.id,
+            fnr = nyesteHendelse.deltaker.personident,
             sak = sak,
             pdf = pdf,
             journalforendeEnhet = veileder.enhet.enhetsnummer,
-            tiltakstype = hendelse.deltaker.deltakerliste.tiltak,
-            journalpostNavn = getJournalpostNavn(hendelse.deltaker.deltakerliste.tiltak, dokumentType),
+            tiltakstype = nyesteHendelse.deltaker.deltakerliste.tiltak,
+            journalpostNavn = getJournalpostNavn(nyesteHendelse.deltaker.deltakerliste.tiltak, dokumentType),
         )
+
+        hendelse.forEach {
+            upsertJournalforingsstatus(hendelseId = it.id, journalpostId = journalpostId)
+        }
+
         return journalpostId
     }
 
