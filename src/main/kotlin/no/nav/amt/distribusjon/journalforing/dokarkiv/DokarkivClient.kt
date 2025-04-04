@@ -26,6 +26,10 @@ class DokarkivClient(
     private val scope = environment.dokarkivScope
     private val url = environment.dokarkivUrl
 
+    /*
+    https://confluence.adeo.no/display/BOA/opprettJournalpost
+    Oppretter en journalpost i Joark/dokarkiv
+     */
     suspend fun opprettJournalpost(
         hendelseId: UUID,
         fnr: String,
@@ -33,16 +37,16 @@ class DokarkivClient(
         pdf: ByteArray,
         journalforendeEnhet: String,
         tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
-        endring: Boolean,
+        journalpostNavn: String,
     ): String {
-        val request = getJournalpostRequest(
+        val request = lagJournalpostRequest(
             hendelseId = hendelseId,
             fnr = fnr,
             sak = sak,
             pdf = pdf,
             journalforendeEnhet = journalforendeEnhet,
             tiltakstype = tiltakstype,
-            endring = endring,
+            journalpostNavn = journalpostNavn,
         )
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
         val response = httpClient.post("$url/rest/journalpostapi/v1/journalpost?forsoekFerdigstill=true") {
@@ -59,16 +63,15 @@ class DokarkivClient(
         return response.body<OpprettJournalpostResponse>().journalpostId
     }
 
-    private fun getJournalpostRequest(
+    private fun lagJournalpostRequest(
         hendelseId: UUID,
         fnr: String,
         sak: Sak,
         pdf: ByteArray,
         journalforendeEnhet: String,
         tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
-        endring: Boolean,
+        journalpostNavn: String,
     ): OpprettJournalpostRequest {
-        val tittel = getTittel(tiltakstype, endring)
         return OpprettJournalpostRequest(
             avsenderMottaker = AvsenderMottaker(
                 id = fnr,
@@ -84,7 +87,7 @@ class DokarkivClient(
                             fysiskDokument = pdf,
                         ),
                     ),
-                    tittel = tittel,
+                    tittel = journalpostNavn,
                 ),
             ),
             journalfoerendeEnhet = journalforendeEnhet,
@@ -93,15 +96,9 @@ class DokarkivClient(
                 fagsaksystem = sak.fagsaksystem,
             ),
             tema = sak.tema,
-            tittel = tittel,
+            tittel = journalpostNavn,
             eksternReferanseId = hendelseId.toString(),
         )
-    }
-
-    private fun getTittel(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, endring: Boolean): String = if (endring) {
-        "Endringsvedtak - ${tiltakstype.navn}"
-    } else {
-        "Vedtak - ${tiltakstype.navn}"
     }
 
     private fun getBrevkode(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): String = "tiltak-vedtak-${tiltakstype.type.name}"

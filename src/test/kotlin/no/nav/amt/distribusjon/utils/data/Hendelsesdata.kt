@@ -75,7 +75,10 @@ object Hendelsesdata {
         navn: String = "Deltakerlistenavn",
         arrangor: HendelseDeltaker.Deltakerliste.Arrangor = arrangor(),
         tiltak: HendelseDeltaker.Deltakerliste.Tiltak = tiltak(),
-    ) = HendelseDeltaker.Deltakerliste(id, navn, arrangor, tiltak)
+        startdato: LocalDate = LocalDate.now(),
+        sluttdato: LocalDate? = LocalDate.now().plusDays(1),
+        oppstartstype: HendelseDeltaker.Deltakerliste.Oppstartstype = HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE,
+    ) = HendelseDeltaker.Deltakerliste(id, navn, arrangor, tiltak, startdato, sluttdato, oppstartstype)
 
     fun arrangor(
         id: UUID = UUID.randomUUID(),

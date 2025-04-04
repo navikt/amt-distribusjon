@@ -25,6 +25,19 @@ class PdfgenClient(private val httpClient: HttpClient, private val environment: 
         return response.body()
     }
 
+    suspend fun genererInnsokingsbrevPDF(innsokingsbrevPdfDto: InnsokingsbrevPdfDto): ByteArray {
+        val response = httpClient.post("$url/innsokingsbrev") {
+            contentType(ContentType.Application.Json)
+            setBody(objectMapper.writeValueAsString(innsokingsbrevPdfDto))
+        }
+        if (!response.status.isSuccess()) {
+            error(
+                "Kunne ikke hente opprette kurs-innsoking-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}",
+            )
+        }
+        return response.body()
+    }
+
     suspend fun endringsvedtak(endringsvedtakPdfDto: EndringsvedtakPdfDto): ByteArray {
         val response = httpClient.post("$url/endringsvedtak") {
             contentType(ContentType.Application.Json)
