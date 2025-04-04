@@ -75,7 +75,7 @@ fun lagInnsokingsbrevPdfDto(
         personident = deltaker.personident,
     ),
     deltakerliste = InnsokingsbrevPdfDto.DeltakerlisteDto(
-        navn = deltaker.deltakerliste.visningsnavn(),
+        navn = deltaker.deltakerliste.navn,
         tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
         arrangor = ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
@@ -155,7 +155,7 @@ fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.tilt
 fun HendelseDeltaker.Deltakerliste.visningsnavn() = when (this.tiltak.tiltakskode) {
     Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> "Varig tilrettelagt arbeid hos ${this.arrangor.visningsnavn()}"
     Tiltakstype.Tiltakskode.JOBBKLUBB -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
-    Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> if (this.tiltak.tiltakskode.erKurs()) "Kurs: ${this.navn}" else this.navn
+    Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> if (this.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES) "Kurs: ${this.navn}" else this.navn
     Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> this.navn
     else -> "${this.tiltak.navn} hos ${arrangor.visningsnavn()}"
 }
