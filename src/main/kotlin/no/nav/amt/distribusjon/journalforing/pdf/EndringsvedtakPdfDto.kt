@@ -10,6 +10,9 @@ data class EndringsvedtakPdfDto(
     val avsender: AvsenderDto,
     val vedtaksdato: LocalDate,
     val forsteVedtakFattet: LocalDate,
+    val sidetittel: String,
+    val ingressnavn: String,
+    val opprettetDato: LocalDate,
 ) {
     data class DeltakerDto(
         val fornavn: String,

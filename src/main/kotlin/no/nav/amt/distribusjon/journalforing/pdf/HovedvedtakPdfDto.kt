@@ -9,6 +9,9 @@ data class HovedvedtakPdfDto(
     val avsender: AvsenderDto,
     val vedtaksdato: LocalDate,
     val begrunnelseFraNav: String? = null,
+    val sidetittel: String,
+    val ingressnavn: String,
+    val opprettetDato: LocalDate,
 ) {
     data class DeltakerDto(
         val fornavn: String,
