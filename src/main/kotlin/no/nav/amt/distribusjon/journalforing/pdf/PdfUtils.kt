@@ -47,7 +47,7 @@ fun lagHovedvedtakPdfDto(
         adresseDelesMedArrangor = adresseDelesMedArrangor(deltaker, navBruker),
     ),
     deltakerliste = HovedvedtakPdfDto.DeltakerlisteDto(
-        navn = deltaker.deltakerliste.visningsnavn(),
+        navn = deltaker.deltakerliste.tittelVisningsnavn(),
         tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
         ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "",
         arrangor = HovedvedtakPdfDto.ArrangorDto(
@@ -61,6 +61,9 @@ fun lagHovedvedtakPdfDto(
     ),
     vedtaksdato = vedtaksdato,
     begrunnelseFraNav = begrunnelseFraNav,
+    sidetittel = deltaker.deltakerliste.tittelVisningsnavn(),
+    ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(),
+    opprettetDato = LocalDate.now(),
 )
 
 fun lagInnsokingsbrevPdfDto(
@@ -75,7 +78,7 @@ fun lagInnsokingsbrevPdfDto(
         personident = deltaker.personident,
     ),
     deltakerliste = InnsokingsbrevPdfDto.DeltakerlisteDto(
-        navn = deltaker.deltakerliste.visningsnavn(),
+        navn = deltaker.deltakerliste.tittelVisningsnavn(),
         tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
         arrangor = ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
@@ -87,6 +90,9 @@ fun lagInnsokingsbrevPdfDto(
         navn = veileder.navn,
         enhet = navBruker.navEnhet?.navn ?: "NAV",
     ),
+    sidetittel = deltaker.deltakerliste.tittelVisningsnavn(),
+    ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(),
+    opprettetDato = LocalDate.now(),
 )
 
 fun lagEndringsvedtakPdfDto(
@@ -106,7 +112,7 @@ fun lagEndringsvedtakPdfDto(
             personident = deltaker.personident,
         ),
         deltakerliste = EndringsvedtakPdfDto.DeltakerlisteDto(
-            navn = deltaker.deltakerliste.visningsnavn(),
+            navn = deltaker.deltakerliste.tittelVisningsnavn(),
             ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "",
             arrangor = EndringsvedtakPdfDto.ArrangorDto(
                 navn = deltaker.deltakerliste.arrangor.visningsnavn(),
@@ -121,6 +127,9 @@ fun lagEndringsvedtakPdfDto(
         vedtaksdato = vedtaksdato,
         forsteVedtakFattet = deltaker.forsteVedtakFattet
             ?: throw IllegalStateException("Kan ikke journalføre endringsvedtak hvis opprinnelig vedtak ikke er fattet"),
+        sidetittel = deltaker.deltakerliste.tittelVisningsnavn(),
+        ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(),
+        opprettetDato = LocalDate.now(),
     )
 }
 
@@ -152,11 +161,20 @@ fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.tilt
     Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> 14
 }
 
-fun HendelseDeltaker.Deltakerliste.visningsnavn() = when (this.tiltak.tiltakskode) {
+fun HendelseDeltaker.Deltakerliste.tittelVisningsnavn() = when (this.tiltak.tiltakskode) {
     Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> "Varig tilrettelagt arbeid hos ${this.arrangor.visningsnavn()}"
     Tiltakstype.Tiltakskode.JOBBKLUBB -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
-    Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> this.navn
+    Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> "Arbeidsmarkedsopplæring hos ${this.arrangor.visningsnavn()}"
+    Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> "Fag- og yrkesopplæring hos ${this.arrangor.visningsnavn()}"
     else -> "${this.tiltak.navn} hos ${arrangor.visningsnavn()}"
+}
+
+fun HendelseDeltaker.Deltakerliste.ingressVisningsnavn() = when (this.tiltak.tiltakskode) {
+    Tiltakstype.Tiltakskode.JOBBKLUBB -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
+    Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
+    Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
+    -> "${this.navn} hos ${arrangor.visningsnavn()}"
+    else -> tittelVisningsnavn()
 }
 
 fun HendelseDeltaker.Deltakerliste.Arrangor.visningsnavn(): String = with(overordnetArrangor) {
