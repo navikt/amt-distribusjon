@@ -87,6 +87,10 @@ fun lagInnsokingsbrevPdfDto(
         startdato = deltaker.deltakerliste.startdato!!.toStringDate(),
         sluttdato = deltaker.deltakerliste.sluttdato?.toStringDate(),
     ),
+    tiltak = InnsokingsbrevPdfDto.TiltakDto(
+        tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
+        ledetekst = deltaker.deltakerliste.tiltak.ledetekst
+    ),
     avsender = AvsenderDto(
         navn = veileder.navn,
         enhet = navBruker.navEnhet?.navn ?: "NAV",

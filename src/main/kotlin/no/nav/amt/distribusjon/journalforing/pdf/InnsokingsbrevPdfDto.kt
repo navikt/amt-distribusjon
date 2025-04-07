@@ -6,6 +6,7 @@ import java.time.LocalDate
 data class InnsokingsbrevPdfDto(
     val deltaker: DeltakerDto,
     val deltakerliste: DeltakerlisteDto,
+    val tiltak: TiltakDto,
     val avsender: AvsenderDto,
     val sidetittel: String,
     val ingressnavn: String,
@@ -24,5 +25,10 @@ data class InnsokingsbrevPdfDto(
         val arrangor: ArrangorDto,
         val startdato: String,
         val sluttdato: String?,
+    )
+
+    data class TiltakDto(
+        val tiltakskode: Tiltakstype.Tiltakskode,
+        val ledetekst: String?,
     )
 }
