@@ -385,8 +385,11 @@ private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tilta
         DokumentType.HOVEDVEDTAK -> "Vedtak - ${tiltakstype.navn}"
         DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - ${tiltakstype.navn}"
         DokumentType.INNSOKINGSBREV -> {
-            if(tiltakstype.type == Tiltakstype.ArenaKode.JOBBK) "Søknad - Jobbsøkerkurs"
-            else "Søknad - ${tiltakstype.navn}"
+            if (tiltakstype.type == Tiltakstype.ArenaKode.JOBBK) {
+                "Søknad - Jobbsøkerkurs"
+            } else {
+                "Søknad - ${tiltakstype.navn}"
+            }
         }
         DokumentType.AVSLAG -> "Avslag - ${tiltakstype.navn}"
         DokumentType.VENTELISTEBREV -> "Avslag på søknad - ${tiltakstype.navn}"
