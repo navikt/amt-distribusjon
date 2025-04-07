@@ -81,15 +81,12 @@ fun lagInnsokingsbrevPdfDto(
     deltakerliste = InnsokingsbrevPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.tittelVisningsnavn(),
         tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
+        ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "",
         arrangor = ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
         startdato = deltaker.deltakerliste.startdato!!.toStringDate(),
         sluttdato = deltaker.deltakerliste.sluttdato?.toStringDate(),
-    ),
-    tiltak = InnsokingsbrevPdfDto.TiltakDto(
-        tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
-        ledetekst = deltaker.deltakerliste.tiltak.ledetekst
     ),
     avsender = AvsenderDto(
         navn = veileder.navn,
