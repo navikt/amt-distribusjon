@@ -132,6 +132,7 @@ class JournalforingService(
                     deltaker = hendelse.deltaker,
                     navBruker = navBruker,
                     veileder = hendelse.ansvarlig.hentVeileder(),
+                    opprettetDato = hendelse.opprettet.toLocalDate(),
                 ),
             )
         }

@@ -63,13 +63,14 @@ fun lagHovedvedtakPdfDto(
     begrunnelseFraNav = begrunnelseFraNav,
     sidetittel = deltaker.deltakerliste.tittelVisningsnavn(),
     ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(),
-    opprettetDato = LocalDate.now(),
+    opprettetDato = vedtaksdato,
 )
 
 fun lagInnsokingsbrevPdfDto(
     deltaker: HendelseDeltaker,
     navBruker: NavBruker,
     veileder: HendelseAnsvarlig.NavVeileder,
+    opprettetDato: LocalDate,
 ) = InnsokingsbrevPdfDto(
     deltaker = InnsokingsbrevPdfDto.DeltakerDto(
         fornavn = navBruker.fornavn,
@@ -92,7 +93,7 @@ fun lagInnsokingsbrevPdfDto(
     ),
     sidetittel = deltaker.deltakerliste.tittelVisningsnavn(),
     ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(),
-    opprettetDato = LocalDate.now(),
+    opprettetDato = opprettetDato,
 )
 
 fun lagEndringsvedtakPdfDto(
@@ -100,7 +101,7 @@ fun lagEndringsvedtakPdfDto(
     navBruker: NavBruker,
     ansvarlig: HendelseAnsvarlig,
     hendelser: List<Hendelse>,
-    vedtaksdato: LocalDate,
+    opprettetDato: LocalDate,
 ): EndringsvedtakPdfDto {
     val endringer = fjernEldreHendelserAvSammeType(hendelser).map { it.payload }
 
@@ -124,12 +125,12 @@ fun lagEndringsvedtakPdfDto(
             navn = ansvarlig.getAvsendernavn(),
             enhet = navBruker.navEnhet?.navn ?: "NAV",
         ),
-        vedtaksdato = vedtaksdato,
+        vedtaksdato = opprettetDato,
         forsteVedtakFattet = deltaker.forsteVedtakFattet
             ?: throw IllegalStateException("Kan ikke journalføre endringsvedtak hvis opprinnelig vedtak ikke er fattet"),
         sidetittel = deltaker.deltakerliste.tittelVisningsnavn(),
         ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(),
-        opprettetDato = LocalDate.now(),
+        opprettetDato = opprettetDato,
     )
 }
 
