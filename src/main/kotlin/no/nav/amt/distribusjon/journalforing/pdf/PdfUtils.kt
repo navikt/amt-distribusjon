@@ -81,6 +81,7 @@ fun lagInnsokingsbrevPdfDto(
     deltakerliste = InnsokingsbrevPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.tittelVisningsnavn(),
         tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
+        ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "",
         arrangor = ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),

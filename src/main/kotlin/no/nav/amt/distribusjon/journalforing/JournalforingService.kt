@@ -16,6 +16,7 @@ import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.model.DokumentType
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
@@ -383,7 +384,13 @@ private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tilta
     when (dokumentType) {
         DokumentType.HOVEDVEDTAK -> "Vedtak - ${tiltakstype.navn}"
         DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - ${tiltakstype.navn}"
-        DokumentType.INNSOKINGSBREV -> "Søknad - ${tiltakstype.navn}"
+        DokumentType.INNSOKINGSBREV -> {
+            if (tiltakstype.type == Tiltakstype.ArenaKode.JOBBK) {
+                "Søknad - Jobbsøkerkurs"
+            } else {
+                "Søknad - ${tiltakstype.navn}"
+            }
+        }
         DokumentType.AVSLAG -> "Avslag - ${tiltakstype.navn}"
         DokumentType.VENTELISTEBREV -> "Avslag på søknad - ${tiltakstype.navn}"
     }

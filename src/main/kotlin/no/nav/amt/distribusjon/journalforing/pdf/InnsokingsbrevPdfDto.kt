@@ -21,6 +21,7 @@ data class InnsokingsbrevPdfDto(
     data class DeltakerlisteDto(
         val navn: String,
         val tiltakskode: Tiltakstype.Tiltakskode,
+        val ledetekst: String?,
         val arrangor: ArrangorDto,
         val startdato: String,
         val sluttdato: String?,
