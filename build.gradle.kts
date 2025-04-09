@@ -26,7 +26,6 @@ val ktlintVersion = "1.2.1"
 val jacksonVersion = "2.18.3"
 val logstashEncoderVersion = "8.1"
 val commonVersion = "3.2024.10.25_13.44-9db48a0dbe67"
-val kafkaClientsVersion = "3.9.0"
 val kotestVersion = "5.9.1"
 val flywayVersion = "11.6.0"
 val hikariVersion = "6.3.0"
@@ -65,7 +64,6 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
     implementation("no.nav.common:log:$commonVersion")
 
-    implementation("org.apache.kafka:kafka-clients:$kafkaClientsVersion")
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.flywaydb:flyway-core:$flywayVersion")
     implementation("org.flywaydb:flyway-database-postgresql:$flywayVersion")
