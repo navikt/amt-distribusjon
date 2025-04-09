@@ -64,6 +64,12 @@ class VarselTeksterTest {
             hendelse.deltaker.deltakerliste.tiltak.navn,
             hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
         )
+
+        beskjedTekst(hendelse) shouldBe String.format(
+            SOKT_INN_FELLES_OPPSTART_TEKST,
+            hendelse.deltaker.deltakerliste.tiltak.navn,
+            hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+        )
     }
 
     @Test

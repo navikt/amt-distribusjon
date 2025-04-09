@@ -30,6 +30,7 @@ class VarselService(
 
             is HendelseType.AvbrytUtkast -> inaktiverOppgave(hendelse.deltaker)
             is HendelseType.InnbyggerGodkjennUtkast -> utforOppgave(hendelse.deltaker)
+
             is HendelseType.ReaktiverDeltakelse,
             is HendelseType.NavGodkjennUtkast,
             -> {
