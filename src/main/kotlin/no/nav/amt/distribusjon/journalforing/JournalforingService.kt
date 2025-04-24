@@ -171,10 +171,6 @@ class JournalforingService(
     }
 
     private fun handleEndringsvedtak(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
-        if (hendelse.deltaker.forsteVedtakFattet == null) {
-            log.error("Deltaker med id ${hendelse.deltaker.id} mangler fattet-dato for første vedtak")
-            throw IllegalStateException("Kan ikke journalføre endringsvedtak hvis opprinnelig vedtak ikke er fattet")
-        }
         journalforingstatusRepository.upsert(
             Journalforingstatus(
                 hendelseId = hendelse.id,
