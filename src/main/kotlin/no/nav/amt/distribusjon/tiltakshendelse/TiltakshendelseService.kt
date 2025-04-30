@@ -89,6 +89,12 @@ class TiltakshendelseService(
         producer.produce(tiltakshendelse)
         log.info("Upsertet tiltakshendelse ${tiltakshendelse.id}")
     }
+
+    fun reproduser(id: UUID) {
+        val tiltakshendelse = repository.get(id).getOrThrow()
+        producer.produce(tiltakshendelse)
+        log.info("Reproduserte tiltakshendelse $id")
+    }
 }
 
 fun Forslag.toHendelse(
