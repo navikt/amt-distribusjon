@@ -23,8 +23,15 @@ fun Routing.registerInternalApi(tiltakshendelseService: TiltakshendelseService) 
             throw AuthorizationException("Ikke tilgang til api")
         }
     }
+
+    post("/internal/tiltakshendelse/reproduser/{id}") {
+        if (!isInternal(call.request.local.remoteAddress)) {
+            throw AuthorizationException("Ikke tilgang til api")
+        }
+        val id = UUID.fromString(call.parameters["id"])
+        tiltakshendelseService.reproduser(id)
+        call.respond(HttpStatusCode.OK)
+    }
 }
 
-fun isInternal(remoteAdress: String): Boolean {
-    return remoteAdress == "127.0.0.1"
-}
+fun isInternal(remoteAdress: String): Boolean = remoteAdress == "127.0.0.1"
