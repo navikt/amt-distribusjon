@@ -404,20 +404,16 @@ private fun getAnsvarlig(nyesteHendelse: Hendelse, ikkeJournalforteHendelser: Li
     throw IllegalArgumentException("Må ha en ansvarlig som er enten veileder eller arrangør")
 }
 
-private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, dokumentType: DokumentType): String =
-    when (dokumentType) {
-        DokumentType.HOVEDVEDTAK -> "Vedtak - ${tiltakstype.navn}"
-        DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - ${tiltakstype.navn}"
-        DokumentType.INNSOKINGSBREV -> {
-            if (tiltakstype.type == Tiltakstype.ArenaKode.JOBBK) {
-                "Søknad - Jobbsøkerkurs"
-            } else {
-                "Søknad - ${tiltakstype.navn}"
-            }
-        }
-        DokumentType.AVSLAG -> "Avslag - ${tiltakstype.navn}"
-        DokumentType.VENTELISTEBREV -> "Venteliste - ${tiltakstype.navn}"
+private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, dokumentType: DokumentType): String {
+    val tiltaknavn = if(tiltakstype.tiltakskode == Tiltakstype.Tiltakskode.JOBBKLUBB) "Jobbsøkerkurs" else tiltakstype.navn
+    return when (dokumentType) {
+        DokumentType.HOVEDVEDTAK -> "Vedtak - $tiltaknavn"
+        DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - $tiltaknavn"
+        DokumentType.INNSOKINGSBREV -> "Søknad - $tiltaknavn"
+        DokumentType.AVSLAG -> "Avslag - $tiltaknavn"
+        DokumentType.VENTELISTEBREV -> "Venteliste - $tiltaknavn"
     }
+}
 
 private fun getJournalforendeEnhet(ansvarlig: HendelseAnsvarlig): String = when (ansvarlig) {
     is HendelseAnsvarlig.NavVeileder -> ansvarlig.enhet.enhetsnummer
