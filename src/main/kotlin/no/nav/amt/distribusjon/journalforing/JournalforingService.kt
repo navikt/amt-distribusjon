@@ -195,7 +195,7 @@ class JournalforingService(
         }
 
         sendBrev(hendelse, journalpostId, navBruker.harAdresse(), distribusjonstype)
-        log.info("Journalførte innsøkingsbrev for deltaker ${hendelse.deltaker.id}")
+        log.info("Journalførte brev for deltaker ${hendelse.deltaker.id}")
     }
 
     private fun handleEndringsvedtak(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
@@ -416,7 +416,7 @@ private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tilta
             }
         }
         DokumentType.AVSLAG -> "Avslag - ${tiltakstype.navn}"
-        DokumentType.VENTELISTEBREV -> "Avslag på søknad - ${tiltakstype.navn}"
+        DokumentType.VENTELISTEBREV -> "Venteliste - ${tiltakstype.navn}"
     }
 
 private fun getJournalforendeEnhet(ansvarlig: HendelseAnsvarlig): String = when (ansvarlig) {
