@@ -97,6 +97,34 @@ fun lagInnsokingsbrevPdfDto(
     opprettetDato = opprettetDato,
 )
 
+fun lagVentelistebrevPdfDto(
+    deltaker: HendelseDeltaker,
+    navBruker: NavBruker,
+    endretAv: HendelseAnsvarlig.NavTiltakskoordinator,
+    hendelseOpprettetDato: LocalDate,
+) = VentelistebrevPdfDto(
+    deltaker = VentelistebrevPdfDto.DeltakerDto(
+        fornavn = navBruker.fornavn,
+        mellomnavn = navBruker.mellomnavn,
+        etternavn = navBruker.etternavn,
+        personident = deltaker.personident,
+        opprettetDato = deltaker.opprettetDato!!,
+    ),
+    deltakerliste = VentelistebrevPdfDto.DeltakerlisteDto(
+        tittelNavn = deltaker.deltakerliste.tittelVisningsnavn(),
+        ingressNavn = deltaker.deltakerliste.ingressVisningsnavn(),
+        arrangor = ArrangorDto(
+            navn = deltaker.deltakerliste.arrangor.visningsnavn(),
+        ),
+        startdato = deltaker.deltakerliste.startdato!!.toStringDate(),
+    ),
+    avsender = AvsenderDto(
+        navn = endretAv.navn,
+        enhet = navBruker.navEnhet?.navn ?: "NAV",
+    ),
+    opprettetDato = hendelseOpprettetDato,
+)
+
 fun lagEndringsvedtakPdfDto(
     deltaker: HendelseDeltaker,
     navBruker: NavBruker,
@@ -137,6 +165,7 @@ fun lagEndringsvedtakPdfDto(
 
 private fun HendelseAnsvarlig.getAvsendernavn() = when (this) {
     is HendelseAnsvarlig.NavVeileder -> navn
+    is HendelseAnsvarlig.NavTiltakskoordinator -> navn
     is HendelseAnsvarlig.Arrangor -> null
     is HendelseAnsvarlig.System,
     is HendelseAnsvarlig.Deltaker,
@@ -172,10 +201,9 @@ fun HendelseDeltaker.Deltakerliste.tittelVisningsnavn() = when (this.tiltak.tilt
 }
 
 fun HendelseDeltaker.Deltakerliste.ingressVisningsnavn() = when (this.tiltak.tiltakskode) {
-    Tiltakstype.Tiltakskode.JOBBKLUBB -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
     Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
     Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
-    -> "${this.navn} hos ${arrangor.visningsnavn()}"
+    -> this.navn
     else -> tittelVisningsnavn()
 }
 
@@ -205,6 +233,7 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakstype.T
     is HendelseType.OpprettUtkast,
     is HendelseType.AvbrytUtkast,
     is HendelseType.DeltakerSistBesokt,
+    is HendelseType.SettPaaVenteliste,
     -> throw IllegalArgumentException("Skal ikke journalføre $hendelseType som endringsvedtak")
 
     is HendelseType.AvsluttDeltakelse -> EndringDto.AvsluttDeltakelse(
