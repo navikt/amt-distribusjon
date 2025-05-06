@@ -12,6 +12,7 @@ import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagInnsokingsbrevPdfDto
+import no.nav.amt.distribusjon.journalforing.pdf.lagVentelistebrevPdfDto
 import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.model.DokumentType
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
@@ -75,7 +76,34 @@ class JournalforingService(
             is HendelseType.DeltakerSistBesokt,
             -> {
             }
+            is HendelseType.SettPaaVenteliste -> journalforOgSendVentelisteBrev(hendelse, journalforingstatus)
         }
+    }
+
+    private suspend fun journalforOgSendVentelisteBrev(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
+        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
+        val tiltakskoordinator = hendelse.ansvarlig.hentTiltakskoordinator()
+        val pdf: suspend () -> ByteArray = {
+            pdfgenClient.genererVentelistebrevPDF(
+                lagVentelistebrevPdfDto(
+                    deltaker = hendelse.deltaker,
+                    navBruker = navBruker,
+                    endretAv = tiltakskoordinator,
+                    hendelseOpprettetDato = hendelse.opprettet.toLocalDate(),
+                ),
+            )
+        }
+
+        journalforOgSend(
+            pdf,
+            hendelse,
+            tiltakskoordinator.enhet.enhetsnummer,
+            journalforingstatus,
+            DokumentType.VENTELISTEBREV,
+            DistribuerJournalpostRequest.Distribusjonstype.ANNET,
+        )
+
+        log.info("Journalførte ventelistebrev for deltaker ${hendelse.deltaker.id}")
     }
 
     suspend fun handleUtkastGodkjent(
@@ -394,19 +422,22 @@ private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tilta
 private fun getJournalforendeEnhet(ansvarlig: HendelseAnsvarlig): String = when (ansvarlig) {
     is HendelseAnsvarlig.NavVeileder -> ansvarlig.enhet.enhetsnummer
     is HendelseAnsvarlig.Arrangor -> ansvarlig.enhet.enhetsnummer
-    is HendelseAnsvarlig.Deltaker -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker")
-    is HendelseAnsvarlig.System,
-    is HendelseAnsvarlig.Deltaker,
-    -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker eller system")
+    else -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra ${ansvarlig.javaClass}")
 }
 
 private fun HendelseAnsvarlig.hentVeileder(): HendelseAnsvarlig.NavVeileder {
     return when (this) {
         is HendelseAnsvarlig.NavVeileder -> this
-        is HendelseAnsvarlig.Deltaker,
-        is HendelseAnsvarlig.Arrangor,
-        is HendelseAnsvarlig.System,
-        -> throw IllegalArgumentException(
+        else -> throw IllegalArgumentException(
+            "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
+        )
+    }
+}
+
+private fun HendelseAnsvarlig.hentTiltakskoordinator(): HendelseAnsvarlig.NavTiltakskoordinator {
+    return when (this) {
+        is HendelseAnsvarlig.NavTiltakskoordinator -> this
+        else -> throw IllegalArgumentException(
             "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
         )
     }

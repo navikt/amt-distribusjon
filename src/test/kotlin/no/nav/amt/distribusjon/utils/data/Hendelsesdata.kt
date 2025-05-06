@@ -63,11 +63,13 @@ object Hendelsesdata {
         personident: String = randomIdent(),
         deltakerliste: HendelseDeltaker.Deltakerliste = deltakerliste(),
         forsteVedtakFattet: LocalDate? = LocalDate.now().minusDays(3),
+        opprettet: LocalDate = LocalDate.now(),
     ) = HendelseDeltaker(
         id,
         personident,
         deltakerliste,
         forsteVedtakFattet,
+        opprettet,
     )
 
     fun deltakerliste(

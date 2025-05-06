@@ -58,6 +58,7 @@ class VarselService(
             }
 
             is HendelseType.DeltakerSistBesokt -> utforBeskjed(hendelse.deltaker, hendelse.payload.sistBesokt)
+            is HendelseType.SettPaaVenteliste -> handleNyttVarsel(Varsel.nyBeskjed(hendelse), true)
         }
     }
 
@@ -246,5 +247,6 @@ fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.OpprettUtkast,
     is HendelseType.AvsluttDeltakelse,
     is HendelseType.ReaktiverDeltakelse,
+    is HendelseType.SettPaaVenteliste,
     -> true
 }

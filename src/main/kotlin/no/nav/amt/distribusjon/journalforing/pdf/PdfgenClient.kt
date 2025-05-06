@@ -38,6 +38,19 @@ class PdfgenClient(private val httpClient: HttpClient, private val environment: 
         return response.body()
     }
 
+    suspend fun genererVentelistebrevPDF(ventelistebrevPdfDto: VentelistebrevPdfDto): ByteArray {
+        val response = httpClient.post("$url/ventelistebrev") {
+            contentType(ContentType.Application.Json)
+            setBody(objectMapper.writeValueAsString(ventelistebrevPdfDto))
+        }
+        if (!response.status.isSuccess()) {
+            error(
+                "Kunne ikke hente opprette venteliste-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}",
+            )
+        }
+        return response.body()
+    }
+
     suspend fun endringsvedtak(endringsvedtakPdfDto: EndringsvedtakPdfDto): ByteArray {
         val response = httpClient.post("$url/endringsvedtak") {
             contentType(ContentType.Application.Json)
