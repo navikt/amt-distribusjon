@@ -405,7 +405,7 @@ private fun getAnsvarlig(nyesteHendelse: Hendelse, ikkeJournalforteHendelser: Li
 }
 
 private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, dokumentType: DokumentType): String {
-    val tiltaknavn = if(tiltakstype.tiltakskode == Tiltakstype.Tiltakskode.JOBBKLUBB) "Jobbsøkerkurs" else tiltakstype.navn
+    val tiltaknavn = if (tiltakstype.tiltakskode == Tiltakstype.Tiltakskode.JOBBKLUBB) "Jobbsøkerkurs" else tiltakstype.navn
     return when (dokumentType) {
         DokumentType.HOVEDVEDTAK -> "Vedtak - $tiltaknavn"
         DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - $tiltaknavn"
