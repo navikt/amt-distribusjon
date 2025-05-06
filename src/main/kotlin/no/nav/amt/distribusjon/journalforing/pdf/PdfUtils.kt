@@ -155,8 +155,7 @@ fun lagEndringsvedtakPdfDto(
             enhet = navBruker.navEnhet?.navn ?: "NAV",
         ),
         vedtaksdato = opprettetDato,
-        forsteVedtakFattet = deltaker.forsteVedtakFattet
-            ?: throw IllegalStateException("Kan ikke journalføre endringsvedtak hvis opprinnelig vedtak ikke er fattet"),
+        forsteVedtakFattet = deltaker.forsteVedtakFattet,
         sidetittel = deltaker.deltakerliste.tittelVisningsnavn(),
         ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(),
         opprettetDato = opprettetDato,
