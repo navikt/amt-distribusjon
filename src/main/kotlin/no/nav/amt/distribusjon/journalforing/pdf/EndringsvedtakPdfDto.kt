@@ -9,7 +9,7 @@ data class EndringsvedtakPdfDto(
     val endringer: List<EndringDto>,
     val avsender: AvsenderDto,
     val vedtaksdato: LocalDate,
-    val forsteVedtakFattet: LocalDate,
+    val forsteVedtakFattet: LocalDate?,
     val sidetittel: String,
     val ingressnavn: String,
     val opprettetDato: LocalDate,
