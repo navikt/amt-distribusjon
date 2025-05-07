@@ -58,7 +58,8 @@ class VarselService(
             }
 
             is HendelseType.DeltakerSistBesokt -> utforBeskjed(hendelse.deltaker, hendelse.payload.sistBesokt)
-            is HendelseType.SettPaaVenteliste -> handleNyttVarsel(Varsel.nyBeskjed(hendelse), true)
+            is HendelseType.SettPaaVenteliste -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
+            is HendelseType.TildelPlass -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
         }
     }
 
@@ -101,7 +102,7 @@ class VarselService(
         repository.upsert(oppdatertVarsel)
 
         when (varsel.type) {
-            Varsel.Type.BESKJED -> producer.opprettBeskjed(oppdatertVarsel, skalViseEndringsmodal(oppdatertVarsel.hendelser))
+            Varsel.Type.BESKJED -> producer.opprettBeskjed(oppdatertVarsel, skalViseHistorikkModal(oppdatertVarsel.hendelser))
             Varsel.Type.OPPGAVE -> producer.opprettOppgave(oppdatertVarsel)
         }
 
@@ -218,9 +219,9 @@ class VarselService(
         revarsler.forEach { handleNyttVarsel(it, true) }
     }
 
-    private fun skalViseEndringsmodal(hendelseIder: List<UUID>): Boolean {
+    private fun skalViseHistorikkModal(hendelseIder: List<UUID>): Boolean {
         val hendelser = hendelseRepository.getHendelser(hendelseIder)
-        return hendelser.firstOrNull { it.payload !is HendelseType.NavGodkjennUtkast } != null
+        return hendelser.firstOrNull { it.payload !is HendelseType.NavGodkjennUtkast && it.payload !is HendelseType.TildelPlass } != null
     }
 }
 
@@ -248,5 +249,6 @@ fun Hendelse.skalVarslesEksternt() = when (payload) {
     is HendelseType.AvsluttDeltakelse,
     is HendelseType.ReaktiverDeltakelse,
     is HendelseType.SettPaaVenteliste,
+    is HendelseType.TildelPlass,
     -> true
 }
