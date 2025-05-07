@@ -437,7 +437,6 @@ private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tilta
     val tiltaknavn = if (tiltakstype.tiltakskode == Tiltakstype.Tiltakskode.JOBBKLUBB) "Jobbsøkerkurs" else tiltakstype.navn
     return when (dokumentType) {
         DokumentType.HOVEDVEDTAK -> "Vedtak - $tiltaknavn"
-
         DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - $tiltaknavn"
         DokumentType.INNSOKINGSBREV -> "Søknad - $tiltaknavn"
         DokumentType.AVSLAG -> "Avslag - $tiltaknavn"
