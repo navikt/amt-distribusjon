@@ -23,6 +23,7 @@ data class HovedvedtakFellesOppstartPdfDto(
         val ledetekst: String?,
         val startdato: String,
         val sluttdato: String?,
+        val forskriftskapittel: Int,
     )
 
     data class AvsenderDto(
