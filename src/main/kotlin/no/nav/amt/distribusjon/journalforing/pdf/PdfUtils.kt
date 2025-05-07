@@ -69,7 +69,7 @@ fun lagHovedvedtakPdfDto(
 fun lagHovedopptakFellesOppstart(
     deltaker: HendelseDeltaker,
     navBruker: NavBruker,
-    veileder: HendelseAnsvarlig.NavVeileder,
+    ansvarlig: HendelseAnsvarlig.NavTiltakskoordinator,
     opprettetDato: LocalDate,
 ) = HovedvedtakFellesOppstartPdfDto(
     deltaker = HovedvedtakFellesOppstartPdfDto.DeltakerDto(
@@ -87,7 +87,7 @@ fun lagHovedopptakFellesOppstart(
         sluttdato = deltaker.deltakerliste.sluttdato?.toStringDate(),
     ),
     avsender = HovedvedtakFellesOppstartPdfDto.AvsenderDto(
-        navn = veileder.navn,
+        navn = ansvarlig.navn,
         enhet = navBruker.navEnhet?.navn ?: "NAV",
     ),
     opprettetDato = opprettetDato,

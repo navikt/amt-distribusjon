@@ -124,13 +124,14 @@ class JournalforingService(
 
     private suspend fun journalforHovedvedtakForFellesOppstart(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
         val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
-        val veileder = hendelse.ansvarlig.hentVeileder()
+        val hendelseAnsvarlig = hendelse.ansvarlig.hentTiltakskoordinator()
+
         val pdf: suspend () -> ByteArray = {
             pdfgenClient.genererHovedvedtakFellesOppstart(
                 lagHovedopptakFellesOppstart(
                     deltaker = hendelse.deltaker,
                     navBruker = navBruker,
-                    veileder = veileder,
+                    ansvarlig = hendelseAnsvarlig,
                     opprettetDato = hendelse.opprettet.toLocalDate(),
                 ),
             )
@@ -139,7 +140,7 @@ class JournalforingService(
         journalforOgSend(
             pdf,
             hendelse,
-            veileder.enhet.enhetsnummer,
+            hendelseAnsvarlig.enhet.enhetsnummer,
             journalforingstatus,
             DokumentType.HOVEDVEDTAK,
             DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,
@@ -436,6 +437,7 @@ private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tilta
     val tiltaknavn = if (tiltakstype.tiltakskode == Tiltakstype.Tiltakskode.JOBBKLUBB) "Jobbsøkerkurs" else tiltakstype.navn
     return when (dokumentType) {
         DokumentType.HOVEDVEDTAK -> "Vedtak - $tiltaknavn"
+
         DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - $tiltaknavn"
         DokumentType.INNSOKINGSBREV -> "Søknad - $tiltaknavn"
         DokumentType.AVSLAG -> "Avslag - $tiltaknavn"
