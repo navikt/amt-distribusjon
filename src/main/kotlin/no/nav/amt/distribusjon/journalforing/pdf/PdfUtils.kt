@@ -144,7 +144,7 @@ fun lagVentelistebrevPdfDto(
         arrangor = ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
-        startdato = deltaker.deltakerliste.startdato!!.toStringDate(),
+        startdato = deltaker.deltakerliste.startdato,
     ),
     avsender = AvsenderDto(
         navn = endretAv.navn,
