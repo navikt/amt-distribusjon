@@ -85,7 +85,8 @@ fun lagHovedopptakFellesOppstart(
         ingressNavn = deltaker.deltakerliste.ingressVisningsnavn(),
         startdato = deltaker.deltakerliste.startdato!!.toStringDate(),
         sluttdato = deltaker.deltakerliste.sluttdato?.toStringDate(),
-    ),
+        forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
+        ),
     avsender = HovedvedtakFellesOppstartPdfDto.AvsenderDto(
         navn = ansvarlig.navn,
         enhet = navBruker.navEnhet?.navn ?: "NAV",
