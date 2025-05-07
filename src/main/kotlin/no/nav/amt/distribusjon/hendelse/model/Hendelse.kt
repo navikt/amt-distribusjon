@@ -38,6 +38,7 @@ data class Hendelse(
         is HendelseType.DeltakerSistBesokt,
         is HendelseType.ReaktiverDeltakelse,
         is HendelseType.SettPaaVenteliste,
+        is HendelseType.TildelPlass,
         -> false
     }
 
@@ -60,6 +61,7 @@ data class Hendelse(
         is HendelseType.LeggTilOppstartsdato,
         is HendelseType.FjernOppstartsdato,
         is HendelseType.SettPaaVenteliste,
+        is HendelseType.TildelPlass,
         -> null
         is HendelseType.ReaktiverDeltakelse,
         -> payload.begrunnelseFraNav
@@ -87,6 +89,7 @@ data class Hendelse(
         is HendelseType.LeggTilOppstartsdato,
         is HendelseType.FjernOppstartsdato,
         is HendelseType.SettPaaVenteliste,
+        is HendelseType.TildelPlass,
         -> false
     }
 }

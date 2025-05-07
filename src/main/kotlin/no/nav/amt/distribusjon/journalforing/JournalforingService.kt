@@ -10,6 +10,7 @@ import no.nav.amt.distribusjon.journalforing.model.HendelseMedJournalforingstatu
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
+import no.nav.amt.distribusjon.journalforing.pdf.lagHovedopptakFellesOppstart
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagInnsokingsbrevPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagVentelistebrevPdfDto
@@ -77,6 +78,7 @@ class JournalforingService(
             -> {
             }
             is HendelseType.SettPaaVenteliste -> journalforOgSendVentelisteBrev(hendelse, journalforingstatus)
+            is HendelseType.TildelPlass -> journalforHovedvedtakForFellesOppstart(hendelse, journalforingstatus)
         }
     }
 
@@ -118,6 +120,32 @@ class JournalforingService(
             HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES -> journalforOgSendInnsokingsbrev(hendelse, journalforingstatus)
             else -> throw IllegalStateException("Oppstartstype $oppstartstype er ikke implementert")
         }
+    }
+
+    private suspend fun journalforHovedvedtakForFellesOppstart(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
+        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
+        val veileder = hendelse.ansvarlig.hentVeileder()
+        val pdf: suspend () -> ByteArray = {
+            pdfgenClient.genererHovedvedtakFellesOppstart(
+                lagHovedopptakFellesOppstart(
+                    deltaker = hendelse.deltaker,
+                    navBruker = navBruker,
+                    veileder = veileder,
+                    opprettetDato = hendelse.opprettet.toLocalDate(),
+                ),
+            )
+        }
+
+        journalforOgSend(
+            pdf,
+            hendelse,
+            veileder.enhet.enhetsnummer,
+            journalforingstatus,
+            DokumentType.HOVEDVEDTAK,
+            DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,
+        )
+
+        log.info("Journalførte hovedvedtak for deltaker ${hendelse.deltaker.id}")
     }
 
     private suspend fun journalforHovedvedtak(

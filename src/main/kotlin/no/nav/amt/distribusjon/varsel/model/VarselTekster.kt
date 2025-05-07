@@ -30,12 +30,11 @@ fun beskjedTekst(hendelse: Hendelse): String {
         (
             hendelse.deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES &&
                 (hendelse.payload is HendelseType.NavGodkjennUtkast || hendelse.payload is HendelseType.ReaktiverDeltakelse)
-        ) ->
-            SOKT_INN_FELLES_OPPSTART_TEKST
-        hendelse.payload is HendelseType.NavGodkjennUtkast ->
-            MELDT_PA_DIREKTE_TEKST
-        else ->
-            BESKJED_TEKST
+        )
+        -> SOKT_INN_FELLES_OPPSTART_TEKST
+        hendelse.payload is HendelseType.NavGodkjennUtkast -> MELDT_PA_DIREKTE_TEKST
+        hendelse.payload is HendelseType.TildelPlass -> MELDT_PA_DIREKTE_TEKST
+        else -> BESKJED_TEKST
     }
 
     return String.format(

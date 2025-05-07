@@ -25,6 +25,17 @@ class PdfgenClient(private val httpClient: HttpClient, private val environment: 
         return response.body()
     }
 
+    suspend fun genererHovedvedtakFellesOppstart(hovedvedtakPdfDto: HovedvedtakFellesOppstartPdfDto): ByteArray {
+        val response = httpClient.post("$url/hovedvedtak-felles-oppstart") {
+            contentType(ContentType.Application.Json)
+            setBody(objectMapper.writeValueAsString(hovedvedtakPdfDto))
+        }
+        if (!response.status.isSuccess()) {
+            error("Kunne ikke hente opprette hovedvedtak-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}")
+        }
+        return response.body()
+    }
+
     suspend fun genererInnsokingsbrevPDF(innsokingsbrevPdfDto: InnsokingsbrevPdfDto): ByteArray {
         val response = httpClient.post("$url/innsokingsbrev") {
             contentType(ContentType.Application.Json)

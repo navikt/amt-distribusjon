@@ -66,6 +66,33 @@ fun lagHovedvedtakPdfDto(
     opprettetDato = vedtaksdato,
 )
 
+fun lagHovedopptakFellesOppstart(
+    deltaker: HendelseDeltaker,
+    navBruker: NavBruker,
+    veileder: HendelseAnsvarlig.NavVeileder,
+    opprettetDato: LocalDate,
+) = HovedvedtakFellesOppstartPdfDto(
+    deltaker = HovedvedtakFellesOppstartPdfDto.DeltakerDto(
+        fornavn = navBruker.fornavn,
+        mellomnavn = navBruker.mellomnavn,
+        etternavn = navBruker.etternavn,
+        personident = deltaker.personident,
+    ),
+    deltakerliste = HovedvedtakFellesOppstartPdfDto.DeltakerlisteDto(
+        tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
+        ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "",
+        tittelNavn = deltaker.deltakerliste.tittelVisningsnavn(),
+        ingressNavn = deltaker.deltakerliste.ingressVisningsnavn(),
+        startdato = deltaker.deltakerliste.startdato!!.toStringDate(),
+        sluttdato = deltaker.deltakerliste.sluttdato?.toStringDate(),
+    ),
+    avsender = HovedvedtakFellesOppstartPdfDto.AvsenderDto(
+        navn = veileder.navn,
+        enhet = navBruker.navEnhet?.navn ?: "NAV",
+    ),
+    opprettetDato = opprettetDato,
+)
+
 fun lagInnsokingsbrevPdfDto(
     deltaker: HendelseDeltaker,
     navBruker: NavBruker,
@@ -203,6 +230,7 @@ fun HendelseDeltaker.Deltakerliste.ingressVisningsnavn() = when (this.tiltak.til
     Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
     Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
     -> this.navn
+
     else -> tittelVisningsnavn()
 }
 
@@ -233,6 +261,7 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakstype.T
     is HendelseType.AvbrytUtkast,
     is HendelseType.DeltakerSistBesokt,
     is HendelseType.SettPaaVenteliste,
+    is HendelseType.TildelPlass,
     -> throw IllegalArgumentException("Skal ikke journalføre $hendelseType som endringsvedtak")
 
     is HendelseType.AvsluttDeltakelse -> EndringDto.AvsluttDeltakelse(
