@@ -230,7 +230,7 @@ fun HendelseDeltaker.Deltakerliste.tittelVisningsnavn() = when (this.tiltak.tilt
 fun HendelseDeltaker.Deltakerliste.ingressVisningsnavn() = when (this.tiltak.tiltakskode) {
     Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
     Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
-    -> this.navn
+    -> "${this.navn} hos ${arrangor.visningsnavn()}"
 
     else -> tittelVisningsnavn()
 }

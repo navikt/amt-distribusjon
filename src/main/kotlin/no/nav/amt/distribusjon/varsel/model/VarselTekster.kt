@@ -10,6 +10,7 @@ const val OPPGAVE_FELLES_OPPSTART_TEKST = "Du har mottatt et utkast til søknad 
 const val BESKJED_TEKST = "Ny endring på arbeidsmarkedstiltaket: %s hos %s."
 const val MELDT_PA_DIREKTE_TEKST = "Du er meldt på arbeidsmarkedstiltaket: %s hos %s."
 const val SOKT_INN_FELLES_OPPSTART_TEKST = "Du er søkt inn på arbeidsmarkedstiltaket %s hos %s."
+const val FATT_PLASS = "Du har fått plass på arbeidsmarkedstiltaket: %s hos %s"
 
 fun oppgaveTekst(hendelse: Hendelse): String {
     val tekst = if (hendelse.deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES) {
@@ -33,7 +34,7 @@ fun beskjedTekst(hendelse: Hendelse): String {
         )
         -> SOKT_INN_FELLES_OPPSTART_TEKST
         hendelse.payload is HendelseType.NavGodkjennUtkast -> MELDT_PA_DIREKTE_TEKST
-        hendelse.payload is HendelseType.TildelPlass -> MELDT_PA_DIREKTE_TEKST
+        hendelse.payload is HendelseType.TildelPlass -> FATT_PLASS
         else -> BESKJED_TEKST
     }
 
