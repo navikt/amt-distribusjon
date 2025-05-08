@@ -58,14 +58,8 @@ class VarselService(
             }
 
             is HendelseType.DeltakerSistBesokt -> utforBeskjed(hendelse.deltaker, hendelse.payload.sistBesokt)
-            is HendelseType.SettPaaVenteliste -> {
-                inaktiverOppgave(hendelse.deltaker)
-                handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
-            }
-            is HendelseType.TildelPlass -> {
-                inaktiverOppgave(hendelse.deltaker)
-                handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
-            }
+            is HendelseType.SettPaaVenteliste -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
+            is HendelseType.TildelPlass -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
         }
     }
 
