@@ -92,7 +92,7 @@ fun lagHovedopptakFellesOppstart(
     ),
     avsender = HovedvedtakFellesOppstartPdfDto.AvsenderDto(
         navn = ansvarlig.navn,
-        enhet = navBruker.navEnhet?.navn ?: "NAV",
+        enhet = ansvarlig.enhet.navn,
     ),
     opprettetDato = opprettetDato,
 )
@@ -151,7 +151,7 @@ fun lagVentelistebrevPdfDto(
     ),
     avsender = AvsenderDto(
         navn = endretAv.navn,
-        enhet = navBruker.navEnhet?.navn ?: "NAV",
+        enhet = endretAv.enhet.navn,
     ),
     opprettetDato = hendelseOpprettetDato,
 )
