@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
@@ -58,7 +59,10 @@ class DokarkivClient(
             log.warn("Journalpost for hendelseId $hendelseId er allerede opprettet")
         }
         if (!response.status.isSuccess() && response.status.value != 409) {
-            error("Kunne ikke opprette journalpost for hendelseId $hendelseId")
+            error(
+                "Kunne ikke opprette journalpost for hendelseId $hendelseId, " +
+                    "Status=${response.status.value} error=${response.bodyAsText()}",
+            )
         }
         return response.body<OpprettJournalpostResponse>().journalpostId
     }
