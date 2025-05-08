@@ -86,6 +86,9 @@ fun lagHovedopptakFellesOppstart(
         startdato = deltaker.deltakerliste.startdato!!.toStringDate(),
         sluttdato = deltaker.deltakerliste.sluttdato?.toStringDate(),
         forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
+        arrangor = ArrangorDto(
+            navn = deltaker.deltakerliste.arrangor.visningsnavn(),
+        ),
     ),
     avsender = HovedvedtakFellesOppstartPdfDto.AvsenderDto(
         navn = ansvarlig.navn,
