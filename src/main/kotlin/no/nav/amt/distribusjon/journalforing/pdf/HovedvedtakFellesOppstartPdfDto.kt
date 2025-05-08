@@ -24,6 +24,7 @@ data class HovedvedtakFellesOppstartPdfDto(
         val startdato: String,
         val sluttdato: String?,
         val forskriftskapittel: Int,
+        val arrangor: ArrangorDto,
     )
 
     data class AvsenderDto(
