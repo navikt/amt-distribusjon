@@ -185,7 +185,7 @@ fun lagEndringsvedtakPdfDto(
             oppstart = deltaker.deltakerliste.oppstartstype,
             klagerett = !(
                 deltaker.deltakerliste.tiltak.tiltakskode == Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING &&
-                    deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE
+                    deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES
             ),
         ),
         endringer = endringer.map { tilEndringDto(it, deltaker.deltakerliste.tiltak.tiltakskode) },
