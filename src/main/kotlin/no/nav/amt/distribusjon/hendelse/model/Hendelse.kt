@@ -27,6 +27,7 @@ data class Hendelse(
         is HendelseType.EndreBakgrunnsinformasjon,
         is HendelseType.LeggTilOppstartsdato,
         is HendelseType.FjernOppstartsdato,
+        is HendelseType.Avslag,
         -> true
 
         is HendelseType.InnbyggerGodkjennUtkast,
@@ -62,6 +63,7 @@ data class Hendelse(
         is HendelseType.FjernOppstartsdato,
         is HendelseType.SettPaaVenteliste,
         is HendelseType.TildelPlass,
+        is HendelseType.Avslag,
         -> null
         is HendelseType.ReaktiverDeltakelse,
         -> payload.begrunnelseFraNav
@@ -90,6 +92,7 @@ data class Hendelse(
         is HendelseType.FjernOppstartsdato,
         is HendelseType.SettPaaVenteliste,
         is HendelseType.TildelPlass,
+        is HendelseType.Avslag,
         -> false
     }
 }

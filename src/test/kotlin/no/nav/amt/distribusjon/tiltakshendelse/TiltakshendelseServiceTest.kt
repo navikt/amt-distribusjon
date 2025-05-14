@@ -141,7 +141,7 @@ class TiltakshendelseServiceTest {
             UUID.randomUUID(),
             LocalDateTime.now(),
             "begrunnelse",
-            Forslag.AvsluttDeltakelse(LocalDate.now(), EndringAarsak.FattJobb, null),
+            Forslag.AvsluttDeltakelse(LocalDate.now(), EndringAarsak.FattJobb, null, null),
             Forslag.Status.VenterPaSvar,
         )
 

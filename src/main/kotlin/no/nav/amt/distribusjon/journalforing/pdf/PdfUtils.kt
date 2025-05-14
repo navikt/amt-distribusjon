@@ -9,6 +9,7 @@ import no.nav.amt.distribusjon.utils.toStringDate
 import no.nav.amt.distribusjon.utils.toTitleCase
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
+import no.nav.amt.lib.models.arrangor.melding.Vurderingstype
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
@@ -16,6 +17,7 @@ import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.models.hendelse.InnholdDto
 import no.nav.amt.lib.models.hendelse.UtkastDto
+import no.nav.amt.lib.models.tiltakskoordinator.EndringFraTiltakskoordinator
 import java.time.LocalDate
 
 fun lagHovedvedtakPdfDto(
@@ -171,6 +173,7 @@ fun lagEndringsvedtakPdfDto(
             mellomnavn = navBruker.mellomnavn,
             etternavn = navBruker.etternavn,
             personident = deltaker.personident,
+            opprettetDato = deltaker.opprettetDato,
         ),
         deltakerliste = EndringsvedtakPdfDto.DeltakerlisteDto(
             navn = deltaker.deltakerliste.tittelVisningsnavn(),
@@ -179,6 +182,11 @@ fun lagEndringsvedtakPdfDto(
                 navn = deltaker.deltakerliste.arrangor.visningsnavn(),
             ),
             forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
+            oppstart = deltaker.deltakerliste.oppstartstype,
+            klagerett = !(
+                deltaker.deltakerliste.tiltak.tiltakskode == Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING &&
+                    deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE
+            ),
         ),
         endringer = endringer.map { tilEndringDto(it, deltaker.deltakerliste.tiltak.tiltakskode) },
         avsender = EndringsvedtakPdfDto.AvsenderDto(
@@ -362,6 +370,14 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakstype.T
         begrunnelseFraNav = hendelseType.begrunnelseFraNav,
         forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
     )
+
+    is HendelseType.Avslag -> EndringDto.Avslag(
+        hendelseType.aarsak.visningsnavn(),
+        hendelseType.begrunnelseFraNav,
+        hendelseType.vurderingFraArrangor?.let {
+            EndringDto.Avslag.Vurdering(it.vurderingstype.visningsnavn(), it.begrunnelse)
+        },
+    )
 }
 
 private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?): String {
@@ -390,7 +406,7 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
     )
 
     is Forslag.AvsluttDeltakelse -> ForslagDto.AvsluttDeltakelse(
-        aarsak = endring.aarsak.visningsnavn(),
+        aarsak = endring.aarsak!!.visningsnavn(), // TODO: Må fikses når avslutt deltakelsesmodal for kurs er ferdig.
         sluttdato = endring.sluttdato,
         harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
         begrunnelseFraArrangor = begrunnelseFraArrangor,
@@ -447,4 +463,15 @@ private fun EndringAarsak.visningsnavn(): String {
     }
 
     return deltakerEndringAarsak.visningsnavn()
+}
+
+private fun EndringFraTiltakskoordinator.Avslag.Aarsak.visningsnavn() = beskrivelse ?: when (this.type) {
+    EndringFraTiltakskoordinator.Avslag.Aarsak.Type.KURS_FULLT -> "Kurset er fullt"
+    EndringFraTiltakskoordinator.Avslag.Aarsak.Type.KRAV_IKKE_OPPFYLT -> "Krav for deltakelse er ikke oppfylt"
+    EndringFraTiltakskoordinator.Avslag.Aarsak.Type.ANNET -> "Annet"
+}
+
+private fun Vurderingstype.visningsnavn() = when (this) {
+    Vurderingstype.OPPFYLLER_KRAVENE -> "Krav for deltakelse er oppfylt"
+    Vurderingstype.OPPFYLLER_IKKE_KRAVENE -> "Krav for deltakelse er ikke oppfylt"
 }

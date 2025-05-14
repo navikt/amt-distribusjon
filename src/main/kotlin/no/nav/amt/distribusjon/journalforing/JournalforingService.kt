@@ -79,33 +79,8 @@ class JournalforingService(
             }
             is HendelseType.SettPaaVenteliste -> journalforOgSendVentelisteBrev(hendelse, journalforingstatus)
             is HendelseType.TildelPlass -> journalforHovedvedtakForFellesOppstart(hendelse, journalforingstatus)
+            is HendelseType.Avslag -> journalforAvslag(hendelse, journalforingstatus)
         }
-    }
-
-    private suspend fun journalforOgSendVentelisteBrev(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
-        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
-        val tiltakskoordinator = hendelse.ansvarlig.hentTiltakskoordinator()
-        val pdf: suspend () -> ByteArray = {
-            pdfgenClient.genererVentelistebrevPDF(
-                lagVentelistebrevPdfDto(
-                    deltaker = hendelse.deltaker,
-                    navBruker = navBruker,
-                    endretAv = tiltakskoordinator,
-                    hendelseOpprettetDato = hendelse.opprettet.toLocalDate(),
-                ),
-            )
-        }
-
-        journalforOgSend(
-            pdf,
-            hendelse,
-            tiltakskoordinator.enhet.enhetsnummer,
-            journalforingstatus,
-            DokumentType.VENTELISTEBREV,
-            DistribuerJournalpostRequest.Distribusjonstype.ANNET,
-        )
-
-        log.info("Journalførte ventelistebrev for deltaker ${hendelse.deltaker.id}")
     }
 
     suspend fun handleUtkastGodkjent(
@@ -120,6 +95,34 @@ class JournalforingService(
             HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES -> journalforOgSendInnsokingsbrev(hendelse, journalforingstatus)
             else -> throw IllegalStateException("Oppstartstype $oppstartstype er ikke implementert")
         }
+    }
+
+    private suspend fun journalforAvslag(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
+        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
+        val hendelseAnsvarlig = hendelse.ansvarlig.hentTiltakskoordinator()
+
+        val pdf: suspend () -> ByteArray = {
+            pdfgenClient.endringsvedtak(
+                lagEndringsvedtakPdfDto(
+                    hendelse.deltaker,
+                    navBruker,
+                    hendelseAnsvarlig,
+                    listOf(hendelse),
+                    hendelse.opprettet.toLocalDate(),
+                ),
+            )
+        }
+
+        journalforOgSend(
+            pdf,
+            hendelse,
+            hendelseAnsvarlig.enhet.enhetsnummer,
+            journalforingstatus,
+            DokumentType.ENDRINGSVEDTAK,
+            DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,
+        )
+
+        log.info("Journalførte avslag for deltaker ${hendelse.deltaker.id}")
     }
 
     private suspend fun journalforHovedvedtakForFellesOppstart(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
@@ -141,38 +144,6 @@ class JournalforingService(
             pdf,
             hendelse,
             hendelseAnsvarlig.enhet.enhetsnummer,
-            journalforingstatus,
-            DokumentType.HOVEDVEDTAK,
-            DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,
-        )
-
-        log.info("Journalførte hovedvedtak for deltaker ${hendelse.deltaker.id}")
-    }
-
-    private suspend fun journalforHovedvedtak(
-        hendelse: Hendelse,
-        utkast: UtkastDto,
-        journalforingstatus: Journalforingstatus?,
-    ) {
-        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
-        val veileder = hendelse.ansvarlig.hentVeileder()
-        val pdf: suspend () -> ByteArray = {
-            pdfgenClient.genererHovedvedtak(
-                lagHovedvedtakPdfDto(
-                    deltaker = hendelse.deltaker,
-                    navBruker = navBruker,
-                    utkast = utkast,
-                    veileder = veileder,
-                    vedtaksdato = hendelse.opprettet.toLocalDate(),
-                    begrunnelseFraNav = hendelse.getBegrunnelseForHovedvedtak(),
-                ),
-            )
-        }
-
-        journalforOgSend(
-            pdf,
-            hendelse,
-            veileder.enhet.enhetsnummer,
             journalforingstatus,
             DokumentType.HOVEDVEDTAK,
             DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,
@@ -205,6 +176,64 @@ class JournalforingService(
         )
 
         log.info("Journalførte innsøkingsbrev for deltaker ${hendelse.deltaker.id}")
+    }
+
+    private suspend fun journalforOgSendVentelisteBrev(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
+        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
+        val tiltakskoordinator = hendelse.ansvarlig.hentTiltakskoordinator()
+        val pdf: suspend () -> ByteArray = {
+            pdfgenClient.genererVentelistebrevPDF(
+                lagVentelistebrevPdfDto(
+                    deltaker = hendelse.deltaker,
+                    navBruker = navBruker,
+                    endretAv = tiltakskoordinator,
+                    hendelseOpprettetDato = hendelse.opprettet.toLocalDate(),
+                ),
+            )
+        }
+
+        journalforOgSend(
+            pdf,
+            hendelse,
+            tiltakskoordinator.enhet.enhetsnummer,
+            journalforingstatus,
+            DokumentType.VENTELISTEBREV,
+            DistribuerJournalpostRequest.Distribusjonstype.ANNET,
+        )
+
+        log.info("Journalførte ventelistebrev for deltaker ${hendelse.deltaker.id}")
+    }
+
+    private suspend fun journalforHovedvedtak(
+        hendelse: Hendelse,
+        utkast: UtkastDto,
+        journalforingstatus: Journalforingstatus?,
+    ) {
+        val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
+        val veileder = hendelse.ansvarlig.hentVeileder()
+        val pdf: suspend () -> ByteArray = {
+            pdfgenClient.genererHovedvedtak(
+                lagHovedvedtakPdfDto(
+                    deltaker = hendelse.deltaker,
+                    navBruker = navBruker,
+                    utkast = utkast,
+                    veileder = veileder,
+                    vedtaksdato = hendelse.opprettet.toLocalDate(),
+                    begrunnelseFraNav = hendelse.getBegrunnelseForHovedvedtak(),
+                ),
+            )
+        }
+
+        journalforOgSend(
+            pdf,
+            hendelse,
+            veileder.enhet.enhetsnummer,
+            journalforingstatus,
+            DokumentType.HOVEDVEDTAK,
+            DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,
+        )
+
+        log.info("Journalførte hovedvedtak for deltaker ${hendelse.deltaker.id}")
     }
 
     private suspend fun journalforOgSend(
@@ -450,20 +479,16 @@ private fun getJournalforendeEnhet(ansvarlig: HendelseAnsvarlig): String = when 
     else -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra ${ansvarlig.javaClass}")
 }
 
-private fun HendelseAnsvarlig.hentVeileder(): HendelseAnsvarlig.NavVeileder {
-    return when (this) {
-        is HendelseAnsvarlig.NavVeileder -> this
-        else -> throw IllegalArgumentException(
-            "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
-        )
-    }
+private fun HendelseAnsvarlig.hentVeileder(): HendelseAnsvarlig.NavVeileder = when (this) {
+    is HendelseAnsvarlig.NavVeileder -> this
+    else -> throw IllegalArgumentException(
+        "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
+    )
 }
 
-private fun HendelseAnsvarlig.hentTiltakskoordinator(): HendelseAnsvarlig.NavTiltakskoordinator {
-    return when (this) {
-        is HendelseAnsvarlig.NavTiltakskoordinator -> this
-        else -> throw IllegalArgumentException(
-            "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
-        )
-    }
+private fun HendelseAnsvarlig.hentTiltakskoordinator(): HendelseAnsvarlig.NavTiltakskoordinator = when (this) {
+    is HendelseAnsvarlig.NavTiltakskoordinator -> this
+    else -> throw IllegalArgumentException(
+        "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
+    )
 }

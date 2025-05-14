@@ -158,7 +158,7 @@ object HendelseTypeData {
         sluttdato: LocalDate = LocalDate.now().plusDays(7),
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
-        endringFraForslag: Forslag.Endring? = Forslag.AvsluttDeltakelse(sluttdato, EndringAarsak.FattJobb, true),
+        endringFraForslag: Forslag.Endring? = Forslag.AvsluttDeltakelse(sluttdato, EndringAarsak.FattJobb, true, null),
     ) = HendelseType.AvsluttDeltakelse(aarsak, sluttdato, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
 
     fun endreSluttarsak(
