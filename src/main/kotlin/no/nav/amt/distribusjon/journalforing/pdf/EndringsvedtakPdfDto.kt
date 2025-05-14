@@ -1,6 +1,7 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import java.time.LocalDate
 
 data class EndringsvedtakPdfDto(
@@ -19,6 +20,7 @@ data class EndringsvedtakPdfDto(
         val mellomnavn: String?,
         val etternavn: String,
         val personident: String,
+        val opprettetDato: LocalDate?,
     )
 
     data class DeltakerlisteDto(
@@ -26,6 +28,8 @@ data class EndringsvedtakPdfDto(
         val ledetekst: String,
         val arrangor: ArrangorDto,
         val forskriftskapittel: Int,
+        val oppstart: HendelseDeltaker.Deltakerliste.Oppstartstype?,
+        val klagerett: Boolean,
     )
 
     data class ArrangorDto(
@@ -110,4 +114,16 @@ sealed interface EndringDto {
         val forslagFraArrangor: ForslagDto?,
         override val tittel: String = "Oppstartsdato er fjernet",
     ) : EndringDto
+
+    data class Avslag(
+        val aarsak: String,
+        val begrunnelseFraNav: String?,
+        val vurdering: Vurdering?,
+        override val tittel: String = "Søknaden er avslått",
+    ) : EndringDto {
+        data class Vurdering(
+            val type: String,
+            val begrunnelse: String?,
+        )
+    }
 }
