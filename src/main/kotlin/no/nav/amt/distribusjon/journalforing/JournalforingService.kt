@@ -118,7 +118,7 @@ class JournalforingService(
             hendelse,
             hendelseAnsvarlig.enhet.enhetsnummer,
             journalforingstatus,
-            DokumentType.ENDRINGSVEDTAK,
+            DokumentType.AVSLAG,
             DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,
         )
 
