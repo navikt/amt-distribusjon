@@ -75,35 +75,33 @@ class DokarkivClient(
         journalforendeEnhet: String,
         tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
         journalpostNavn: String,
-    ): OpprettJournalpostRequest {
-        return OpprettJournalpostRequest(
-            avsenderMottaker = AvsenderMottaker(
-                id = fnr,
-            ),
-            bruker = Bruker(
-                id = fnr,
-            ),
-            dokumenter = listOf(
-                Dokument(
-                    brevkode = getBrevkode(tiltakstype),
-                    dokumentvarianter = listOf(
-                        DokumentVariant(
-                            fysiskDokument = pdf,
-                        ),
+    ): OpprettJournalpostRequest = OpprettJournalpostRequest(
+        avsenderMottaker = AvsenderMottaker(
+            id = fnr,
+        ),
+        bruker = Bruker(
+            id = fnr,
+        ),
+        dokumenter = listOf(
+            Dokument(
+                brevkode = getBrevkode(tiltakstype),
+                dokumentvarianter = listOf(
+                    DokumentVariant(
+                        fysiskDokument = pdf,
                     ),
-                    tittel = journalpostNavn,
                 ),
+                tittel = journalpostNavn,
             ),
-            journalfoerendeEnhet = journalforendeEnhet,
-            sak = Sak(
-                fagsakId = sak.sakId.toString(),
-                fagsaksystem = sak.fagsaksystem,
-            ),
-            tema = sak.tema,
-            tittel = journalpostNavn,
-            eksternReferanseId = hendelseId.toString(),
-        )
-    }
+        ),
+        journalfoerendeEnhet = journalforendeEnhet,
+        sak = Sak(
+            fagsakId = sak.sakId.toString(),
+            fagsaksystem = sak.fagsaksystem,
+        ),
+        tema = Environment.SAF_TEMA,
+        tittel = journalpostNavn,
+        eksternReferanseId = hendelseId.toString(),
+    )
 
     private fun getBrevkode(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): String = "tiltak-vedtak-${tiltakstype.type.name}"
 }

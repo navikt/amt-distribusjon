@@ -8,6 +8,5 @@ object Journalforingdata {
         oppfolgingsperiodeId: UUID = UUID.randomUUID(),
         sakId: Long = (1000L..99999L).random(),
         fagsaksystem: String = "ARBEIDSOPPFOLGING",
-        tema: String = "OPP",
-    ) = Sak(oppfolgingsperiodeId, sakId, fagsaksystem, tema)
+    ) = Sak(oppfolgingsperiodeId, sakId, fagsaksystem)
 }
