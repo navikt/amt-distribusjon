@@ -46,6 +46,7 @@ data class Environment(
         const val DOKDISTKANAL_SCOPE_KEY = "DOKDISTKANAL_SCOPE"
         const val DOKDISTFORDELING_URL_KEY = "DOKDISTFORDELING_URL"
         const val SAF_SCOPE_KEY = "SAF_SCOPE"
+        const val SAF_TEMA = "OPP"
 
         const val ELECTOR_PATH = "ELECTOR_PATH"
 

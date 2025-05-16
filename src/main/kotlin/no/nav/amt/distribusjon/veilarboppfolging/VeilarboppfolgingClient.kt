@@ -25,7 +25,8 @@ class VeilarboppfolgingClient(
     private val url = environment.veilarboppfolgingUrl
     private val consumerId: String = "amt-distribusjon"
 
-    private val manuellOppfolgingCache = Caffeine.newBuilder()
+    private val manuellOppfolgingCache = Caffeine
+        .newBuilder()
         .expireAfterWrite(Duration.ofMinutes(60))
         .build<String, Boolean>()
 
@@ -66,7 +67,6 @@ data class Sak(
     val oppfolgingsperiodeId: UUID,
     val sakId: Long,
     val fagsaksystem: String,
-    val tema: String,
 )
 
 data class ManuellStatusRequest(
