@@ -4,7 +4,7 @@ group = "no.nav.amt-distribusjon"
 version = "1.0-SNAPSHOT"
 
 plugins {
-    val kotlinVersion = "2.1.20"
+    val kotlinVersion = "2.1.21"
 
     kotlin("jvm") version kotlinVersion
     id("io.ktor.plugin") version "3.1.3"
@@ -18,22 +18,22 @@ repositories {
     maven { setUrl("https://github-package-registry-mirror.gc.nav.no/cached/maven-release") }
 }
 
-val kotlinVersion = "2.1.0"
+val kotlinVersion = "2.1.21"
 val ktorVersion = "3.1.3"
 val logbackVersion = "1.5.18"
-val prometeusVersion = "1.14.6"
+val prometeusVersion = "1.15.0"
 val ktlintVersion = "1.2.1"
 val jacksonVersion = "2.19.0"
 val logstashEncoderVersion = "8.1"
 val commonVersion = "3.2024.10.25_13.44-9db48a0dbe67"
 val kotestVersion = "5.9.1"
-val flywayVersion = "11.8.1"
+val flywayVersion = "11.8.2"
 val hikariVersion = "6.3.0"
 val kotliqueryVersion = "1.9.1"
 val postgresVersion = "42.7.5"
 val caffeineVersion = "3.2.0"
 val unleashVersion = "10.2.2"
-val nimbusVersion = "10.2"
+val nimbusVersion = "10.3"
 val amtLibVersion = "1.2025.05.15_09.16-f1f642edbddb"
 
 dependencies {
