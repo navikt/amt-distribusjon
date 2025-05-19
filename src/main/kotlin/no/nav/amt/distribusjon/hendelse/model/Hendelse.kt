@@ -18,6 +18,7 @@ data class Hendelse(
 ) {
     fun erEndringsVedtakSomSkalJournalfores(): Boolean = when (payload) {
         is HendelseType.AvsluttDeltakelse,
+        is HendelseType.AvbrytDeltakelse,
         is HendelseType.EndreDeltakelsesmengde,
         is HendelseType.EndreSluttdato,
         is HendelseType.EndreStartdato,
@@ -45,6 +46,7 @@ data class Hendelse(
 
     fun getBegrunnelseForHovedvedtak(): String? = when (payload) {
         is HendelseType.AvsluttDeltakelse,
+        is HendelseType.AvbrytDeltakelse,
         is HendelseType.EndreDeltakelsesmengde,
         is HendelseType.EndreSluttdato,
         is HendelseType.EndreStartdato,
@@ -71,6 +73,7 @@ data class Hendelse(
 
     fun tillattEndringUtenAktivOppfolgingsperiode() = when (payload) {
         is HendelseType.AvsluttDeltakelse,
+        is HendelseType.AvbrytDeltakelse,
         is HendelseType.EndreSluttarsak,
         is HendelseType.EndreSluttdato,
         is HendelseType.IkkeAktuell,

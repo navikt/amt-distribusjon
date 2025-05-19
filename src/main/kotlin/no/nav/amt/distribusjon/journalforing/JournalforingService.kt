@@ -59,6 +59,7 @@ class JournalforingService(
                 journalforingstatus,
             )
             is HendelseType.AvsluttDeltakelse,
+            is HendelseType.AvbrytDeltakelse,
             is HendelseType.EndreDeltakelsesmengde,
             is HendelseType.EndreSluttdato,
             is HendelseType.EndreStartdato,
