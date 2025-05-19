@@ -277,7 +277,13 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakstype.T
     -> throw IllegalArgumentException("Skal ikke journalføre $hendelseType som endringsvedtak")
 
     is HendelseType.AvsluttDeltakelse -> EndringDto.AvsluttDeltakelse(
-        aarsak = hendelseType.aarsak.visningsnavn(),
+        aarsak = hendelseType.aarsak?.visningsnavn(),
+        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+        forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
+        tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
+    )
+    is HendelseType.AvbrytDeltakelse -> EndringDto.AvbrytDeltakelse(
+        aarsak = hendelseType.aarsak!!.visningsnavn(),
         begrunnelseFraNav = hendelseType.begrunnelseFraNav,
         forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
         tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",

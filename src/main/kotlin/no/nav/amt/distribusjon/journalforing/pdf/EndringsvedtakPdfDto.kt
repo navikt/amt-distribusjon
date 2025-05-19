@@ -86,6 +86,13 @@ sealed interface EndringDto {
     ) : EndringDto
 
     data class AvsluttDeltakelse(
+        val aarsak: String?,
+        val begrunnelseFraNav: String?,
+        val forslagFraArrangor: ForslagDto?,
+        override val tittel: String,
+    ) : EndringDto
+
+    data class AvbrytDeltakelse(
         val aarsak: String,
         val begrunnelseFraNav: String?,
         val forslagFraArrangor: ForslagDto?,
