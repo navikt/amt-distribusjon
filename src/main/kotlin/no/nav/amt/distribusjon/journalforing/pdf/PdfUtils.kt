@@ -283,7 +283,7 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakstype.T
         tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
     )
     is HendelseType.AvbrytDeltakelse -> EndringDto.AvbrytDeltakelse(
-        aarsak = hendelseType.aarsak!!.visningsnavn(),
+        aarsak = hendelseType.aarsak?.visningsnavn(),
         begrunnelseFraNav = hendelseType.begrunnelseFraNav,
         forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
         tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
@@ -412,7 +412,7 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
     )
 
     is Forslag.AvsluttDeltakelse -> ForslagDto.AvsluttDeltakelse(
-        aarsak = endring.aarsak!!.visningsnavn(), // TODO: Må fikses når avslutt deltakelsesmodal for kurs er ferdig.
+        aarsak = endring.aarsak?.visningsnavn(),
         sluttdato = endring.sluttdato,
         harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
         begrunnelseFraArrangor = begrunnelseFraArrangor,

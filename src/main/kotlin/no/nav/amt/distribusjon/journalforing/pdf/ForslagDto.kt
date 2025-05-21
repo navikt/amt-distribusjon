@@ -48,7 +48,7 @@ sealed interface ForslagDto {
     ) : ForslagDto
 
     data class AvsluttDeltakelse(
-        val aarsak: String,
+        val aarsak: String?,
         val sluttdato: LocalDate?,
         val harDeltatt: String?,
         val begrunnelseFraArrangor: String?,
