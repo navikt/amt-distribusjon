@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
+import no.nav.amt.distribusjon.amtdeltaker.Deltakerliste
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.deltakerAdresseDeles
 import no.nav.amt.distribusjon.hendelse.model.visningsnavn
@@ -188,7 +189,13 @@ fun lagEndringsvedtakPdfDto(
                     deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES
             ),
         ),
-        endringer = endringer.map { tilEndringDto(it, deltaker.deltakerliste.tiltak.tiltakskode) },
+        endringer = endringer.map {
+            tilEndringDto(
+                it,
+                deltaker.deltakerliste.tiltak.tiltakskode,
+                deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES,
+            )
+        },
         avsender = EndringsvedtakPdfDto.AvsenderDto(
             navn = ansvarlig.getAvsendernavn(),
             enhet = navBruker.navEnhet?.navn ?: "NAV",
@@ -263,7 +270,11 @@ private fun List<InnholdDto>.toVisingstekst() = this.map { innhold ->
     "${innhold.tekst}${innhold.beskrivelse?.let { ": $it" } ?: ""}"
 }
 
-private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakstype.Tiltakskode): EndringDto = when (hendelseType) {
+private fun tilEndringDto(
+    hendelseType: HendelseType,
+    tiltakskode: Tiltakstype.Tiltakskode,
+    erFellesOppstart: Boolean,
+): EndringDto = when (hendelseType) {
     is HendelseType.InnbyggerGodkjennUtkast,
     is HendelseType.NavGodkjennUtkast,
     is HendelseType.ReaktiverDeltakelse,
@@ -279,14 +290,29 @@ private fun tilEndringDto(hendelseType: HendelseType, tiltakskode: Tiltakstype.T
     is HendelseType.AvsluttDeltakelse -> EndringDto.AvsluttDeltakelse(
         aarsak = hendelseType.aarsak?.visningsnavn(),
         begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-        forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
+        forslagFraArrangor = hendelseType.endringFraForslag?.let {
+            endringFraForslagToForslagDto(
+                it,
+                hendelseType.begrunnelseFraArrangor,
+            )
+        },
         tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
+        harDeltatt = "Ja",
+        harFullfort = if (erFellesOppstart) "Ja" else null,
     )
+
     is HendelseType.AvbrytDeltakelse -> EndringDto.AvbrytDeltakelse(
         aarsak = hendelseType.aarsak?.visningsnavn(),
         begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-        forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
+        forslagFraArrangor = hendelseType.endringFraForslag?.let {
+            endringFraForslagToForslagDto(
+                it,
+                hendelseType.begrunnelseFraArrangor,
+            )
+        },
         tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
+        harDeltatt = if (erFellesOppstart) "Ja" else null,
+        harFullfort = if (erFellesOppstart) "Nei" else null,
     )
 
     is HendelseType.EndreDeltakelsesmengde -> EndringDto.EndreDeltakelsesmengde(
