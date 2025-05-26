@@ -415,6 +415,7 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
         aarsak = endring.aarsak?.visningsnavn(),
         sluttdato = endring.sluttdato,
         harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
+        harFullfort = endring.harFullfort?.let { if (it) "Ja" else "Nei" },
         begrunnelseFraArrangor = begrunnelseFraArrangor,
     )
 
