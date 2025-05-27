@@ -51,6 +51,7 @@ sealed interface ForslagDto {
         val aarsak: String?,
         val sluttdato: LocalDate?,
         val harDeltatt: String?,
+        val harFullfort: String?,
         val begrunnelseFraArrangor: String?,
     ) : ForslagDto
 
