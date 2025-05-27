@@ -89,7 +89,6 @@ sealed interface EndringDto {
         val aarsak: String?,
         val begrunnelseFraNav: String?,
         val forslagFraArrangor: ForslagDto?,
-        val harDeltatt: String?,
         val harFullfort: String?,
         override val tittel: String,
     ) : EndringDto
@@ -98,7 +97,6 @@ sealed interface EndringDto {
         val aarsak: String?,
         val begrunnelseFraNav: String?,
         val forslagFraArrangor: ForslagDto?,
-        val harDeltatt: String?,
         val harFullfort: String?,
         override val tittel: String,
     ) : EndringDto

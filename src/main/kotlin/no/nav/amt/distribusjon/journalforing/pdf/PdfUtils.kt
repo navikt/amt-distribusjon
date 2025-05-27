@@ -297,7 +297,6 @@ private fun tilEndringDto(
             )
         },
         tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
-        harDeltatt = "Ja",
         harFullfort = if (erFellesOppstart) "Ja" else null,
     )
 
@@ -311,7 +310,6 @@ private fun tilEndringDto(
             )
         },
         tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
-        harDeltatt = if (erFellesOppstart) "Ja" else null,
         harFullfort = if (erFellesOppstart) "Nei" else null,
     )
 
