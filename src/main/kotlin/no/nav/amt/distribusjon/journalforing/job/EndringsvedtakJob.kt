@@ -18,11 +18,11 @@ class EndringsvedtakJob(
 
     fun startJob() = jobManager.startJob(
         navn = this.javaClass.simpleName,
-        initialDelay = Duration.of(1, ChronoUnit.MINUTES),
-        period = Duration.of(1, ChronoUnit.MINUTES),
+        initialDelay = Duration.of(5, ChronoUnit.MINUTES),
+        period = Duration.of(10, ChronoUnit.MINUTES),
     ) {
         val endringsvedtak = hendelseRepository
-            .getIkkeJournalforteHendelser(LocalDateTime.now().minusMinutes(1))
+            .getIkkeJournalforteHendelser(LocalDateTime.now().minusMinutes(30))
             .filter { it.hendelse.erEndringsVedtakSomSkalJournalfores() }
 
         val endringsvedtakPrDeltaker = endringsvedtak.groupBy { it.hendelse.deltaker.id }
