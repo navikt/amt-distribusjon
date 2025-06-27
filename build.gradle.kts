@@ -4,13 +4,13 @@ group = "no.nav.amt-distribusjon"
 version = "1.0-SNAPSHOT"
 
 plugins {
-    val kotlinVersion = "2.1.21"
+    val kotlinVersion = "2.2.0"
 
     kotlin("jvm") version kotlinVersion
     id("io.ktor.plugin") version "3.2.0"
     id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
     id("org.jlleitschuh.gradle.ktlint") version "12.3.0"
-    id("com.gradleup.shadow") version "8.3.6"
+    id("com.gradleup.shadow") version "8.3.7"
 }
 
 repositories {
@@ -27,7 +27,7 @@ val jacksonVersion = "2.19.1"
 val logstashEncoderVersion = "8.1"
 val commonVersion = "3.2024.10.25_13.44-9db48a0dbe67"
 val kotestVersion = "5.9.1"
-val flywayVersion = "11.9.2"
+val flywayVersion = "11.10.0"
 val hikariVersion = "6.3.0"
 val kotliqueryVersion = "1.9.1"
 val postgresVersion = "42.7.7"
