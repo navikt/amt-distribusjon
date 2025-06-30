@@ -3,8 +3,10 @@ package no.nav.amt.distribusjon
 import io.getunleash.DefaultUnleash
 import io.getunleash.util.UnleashConfig
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.get
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
@@ -35,8 +37,6 @@ import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseProducer
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseRepository
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
-import no.nav.amt.distribusjon.utils.job.JobManager
-import no.nav.amt.distribusjon.utils.job.leaderelection.LeaderElection
 import no.nav.amt.distribusjon.varsel.VarselJobService
 import no.nav.amt.distribusjon.varsel.VarselProducer
 import no.nav.amt.distribusjon.varsel.VarselRepository
@@ -47,7 +47,10 @@ import no.nav.amt.lib.kafka.Producer
 import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.utils.database.Database
-import org.slf4j.LoggerFactory
+import no.nav.amt.lib.utils.job.JobManager
+import no.nav.amt.lib.utils.leaderelection.Leader
+import no.nav.amt.lib.utils.leaderelection.LeaderElectionClient
+import no.nav.amt.lib.utils.leaderelection.LeaderProvider
 
 fun main() {
     val log = LoggerFactory.getLogger("shutdownlogger")
@@ -94,7 +97,11 @@ fun Application.module(): suspend () -> Unit {
         }
     }
 
-    val leaderElection = LeaderElection(httpClient, environment.electorPath)
+    val leaderProvider = LeaderProvider { path ->
+        httpClient.get(path).body<Leader>()
+    }
+
+    val leaderElection = LeaderElectionClient(leaderProvider, environment.electorPath)
 
     val azureAdTokenClient = AzureAdTokenClient(httpClient, environment)
     val pdfgenClient = PdfgenClient(httpClient, environment)
@@ -152,7 +159,7 @@ fun Application.module(): suspend () -> Unit {
     configureRouting(digitalBrukerService, tiltakshendelseService)
     configureMonitoring()
 
-    val jobManager = JobManager(leaderElection, ::isReady)
+    val jobManager = JobManager(leaderElection::isLeader, ::isReady)
 
     val endringsvedtakJob = EndringsvedtakJob(jobManager, hendelseRepository, journalforingService)
     endringsvedtakJob.startJob()

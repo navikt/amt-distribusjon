@@ -1,6 +1,6 @@
 package no.nav.amt.distribusjon.varsel
 
-import no.nav.amt.distribusjon.utils.job.JobManager
+import no.nav.amt.lib.utils.job.JobManager
 import java.time.Duration
 
 class VarselJobService(
@@ -13,7 +13,7 @@ class VarselJobService(
     }
 
     private fun sendVentendeVarslerJob() = jobManager.startJob(
-        navn = "SendVentendeVarslerJob",
+        name = "SendVentendeVarslerJob",
         initialDelay = Duration.ofMinutes(2),
         period = Duration.ofMinutes(5),
     ) {
@@ -21,7 +21,7 @@ class VarselJobService(
     }
 
     private fun revarslingJob() = jobManager.startJob(
-        navn = "RevarslingJob",
+        name = "RevarslingJob",
         initialDelay = Duration.ofHours(1),
         period = Duration.ofHours(1),
     ) {
