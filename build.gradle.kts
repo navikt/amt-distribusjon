@@ -32,7 +32,7 @@ val hikariVersion = "6.3.0"
 val kotliqueryVersion = "1.9.1"
 val postgresVersion = "42.7.7"
 val caffeineVersion = "3.2.1"
-val unleashVersion = "11.0.0"
+val unleashVersion = "11.0.1"
 val nimbusVersion = "10.3"
 val amtLibVersion = "1.2025.07.01_10.58-fd60a9fa5d5a"
 
