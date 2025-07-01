@@ -32,7 +32,7 @@ class VarselServiceTest {
 
         app.varselService.sendVentendeVarsler()
 
-        assertProducedBeskjed(varsel.id, forventetUrl)
+        app.assertProducedBeskjed(varsel.id, forventetUrl)
         val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
         oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
     }
@@ -88,8 +88,8 @@ class VarselServiceTest {
             val oppdatertVarsel = app.varselRepository.get(nyttVarsel.id).getOrThrow()
             oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
 
-            assertProducedInaktiver(aktivtVarsel.id)
-            assertProducedBeskjed(nyttVarsel.id, forventetUrl)
+            app.assertProducedInaktiver(aktivtVarsel.id)
+            app.assertProducedBeskjed(nyttVarsel.id, forventetUrl)
         }
 
     @Test
@@ -121,7 +121,7 @@ class VarselServiceTest {
         revarsel.aktivTil!! shouldBeCloseTo nowUTC().plus(Varsel.beskjedAktivLengde)
         revarsel.revarselForVarsel shouldBe skalRevarsles.id
 
-        assertProducedBeskjed(revarsel.id, forventetUrl)
+        app.assertProducedBeskjed(revarsel.id, forventetUrl)
     }
 
     @Test
@@ -147,7 +147,7 @@ class VarselServiceTest {
         oppdatertVarsel.status shouldBe Varsel.Status.INAKTIVERT
         oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
 
-        assertProducedInaktiver(oppdatertVarsel.id)
+        app.assertProducedInaktiver(oppdatertVarsel.id)
 
         val revarsel = app.varselRepository.getAktivt(skalRevarsles.deltakerId).getOrThrow()
         revarsel.erRevarsel shouldBe true
@@ -156,7 +156,7 @@ class VarselServiceTest {
         revarsel.aktivTil!! shouldBeCloseTo nowUTC().plus(Varsel.beskjedAktivLengde)
         revarsel.revarselForVarsel shouldBe skalRevarsles.id
 
-        assertProducedBeskjed(revarsel.id, forventetUrl)
+        app.assertProducedBeskjed(revarsel.id, forventetUrl)
     }
 
     @Test

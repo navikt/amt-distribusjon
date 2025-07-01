@@ -1,9 +1,7 @@
 package no.nav.amt.distribusjon
 
-import io.getunleash.FakeUnleash
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
-import io.kotest.matchers.MatcherResult.Companion.invoke
 import io.ktor.client.HttpClient
 import io.ktor.server.testing.testApplication
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
@@ -34,13 +32,14 @@ import no.nav.amt.distribusjon.utils.mockDokdistfordelingClient
 import no.nav.amt.distribusjon.utils.mockDokdistkanalClient
 import no.nav.amt.distribusjon.utils.mockPdfgenClient
 import no.nav.amt.distribusjon.utils.mockVeilarboppfolgingClient
-import no.nav.amt.distribusjon.varsel.VarselProducer
+import no.nav.amt.distribusjon.varsel.VarselOutboxHandler
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import no.nav.amt.lib.kafka.Producer
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
+import no.nav.amt.lib.outbox.OutboxRecord
 import no.nav.amt.lib.outbox.OutboxService
 import no.nav.amt.lib.testing.SingletonKafkaProvider
 import no.nav.amt.lib.testing.SingletonPostgres16Container
@@ -72,8 +71,6 @@ class TestApp {
 
     val outboxService: OutboxService
 
-    val unleash: FakeUnleash
-
     val environment: Environment = testEnvironment
 
     init {
@@ -81,9 +78,6 @@ class TestApp {
         SingletonKafkaProvider.start()
         val kafakConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
         val kafkaProducer = Producer<String, String>(kafakConfig)
-
-        unleash = FakeUnleash()
-        unleash.enableAll()
 
         outboxService = OutboxService()
 
@@ -102,7 +96,7 @@ class TestApp {
         hendelseRepository = HendelseRepository()
         varselRepository = VarselRepository()
 
-        varselService = VarselService(varselRepository, VarselProducer(kafkaProducer), unleash, hendelseRepository)
+        varselService = VarselService(varselRepository, VarselOutboxHandler(outboxService), hendelseRepository)
 
         journalforingService = JournalforingService(
             journalforingstatusRepository,
@@ -161,13 +155,24 @@ fun integrationTest(testBlock: suspend (app: TestApp, client: HttpClient) -> Uni
     testBlock(testApp, client)
 }
 
-fun haveOutboxRecord(key: Any, topic: String) = object : Matcher<TestApp> {
+fun haveOutboxRecord(
+    key: Any,
+    topic: String,
+    additionalConditions: (record: OutboxRecord) -> Boolean = { true },
+) = object : Matcher<TestApp> {
     override fun test(value: TestApp): MatcherResult {
         val records = value.outboxService.getRecordsByTopicAndKey(topic, key.toString())
+        val passed = records.any(additionalConditions)
         return MatcherResult(
-            records.isNotEmpty(),
-            { "Expected an outbox record with key `$key` for topic `$topic`, but found none." },
-            { "Expected no outbox record with key `$key` for topic `$topic`, but found ${records.size}." },
+            passed,
+            {
+                if (records.isEmpty()) {
+                    "Expected an outbox record with key `$key` for topic `$topic`, but found none."
+                } else {
+                    "Outbox record with key `$key` for topic `$topic` did not meet additional conditions."
+                }
+            },
+            { "Expected no outbox record with key `$key` for topic `$topic` that meets the conditions, but found one." },
         )
     }
 }

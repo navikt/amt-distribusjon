@@ -1,7 +1,5 @@
 package no.nav.amt.distribusjon
 
-import io.getunleash.DefaultUnleash
-import io.getunleash.util.UnleashConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.apache.Apache
@@ -38,7 +36,7 @@ import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseProducer
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseRepository
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
 import no.nav.amt.distribusjon.varsel.VarselJobService
-import no.nav.amt.distribusjon.varsel.VarselProducer
+import no.nav.amt.distribusjon.varsel.VarselOutboxHandler
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
@@ -117,23 +115,13 @@ fun Application.module(): suspend () -> Unit {
 
     val digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
 
-    val unleash = DefaultUnleash(
-        UnleashConfig
-            .builder()
-            .appName(Environment.appName)
-            .instanceId(Environment.appName)
-            .unleashAPI("${Environment.unleashUrl}/api")
-            .apiKey(Environment.unleashToken)
-            .build(),
-    )
-
     val kafkaProducer = Producer<String, String>(if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl())
     val outboxService = OutboxService()
     val outboxProcessor = OutboxProcessor(outboxService, jobManager, kafkaProducer)
 
     val hendelseRepository = HendelseRepository()
 
-    val varselService = VarselService(VarselRepository(), VarselProducer(kafkaProducer), unleash, hendelseRepository)
+    val varselService = VarselService(VarselRepository(), VarselOutboxHandler(outboxService), hendelseRepository)
     val journalforingService = JournalforingService(
         JournalforingstatusRepository(),
         amtPersonClient,
