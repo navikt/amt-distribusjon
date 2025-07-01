@@ -1,6 +1,9 @@
 package no.nav.amt.distribusjon
 
 import io.getunleash.FakeUnleash
+import io.kotest.matchers.Matcher
+import io.kotest.matchers.MatcherResult
+import io.kotest.matchers.MatcherResult.Companion.invoke
 import io.ktor.client.HttpClient
 import io.ktor.server.testing.testApplication
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
@@ -38,6 +41,7 @@ import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import no.nav.amt.lib.kafka.Producer
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
+import no.nav.amt.lib.outbox.OutboxService
 import no.nav.amt.lib.testing.SingletonKafkaProvider
 import no.nav.amt.lib.testing.SingletonPostgres16Container
 import java.util.UUID
@@ -66,6 +70,8 @@ class TestApp {
     val tiltakshendelseProducer: TiltakshendelseProducer
     val amtDeltakerClient: AmtDeltakerClient
 
+    val outboxService: OutboxService
+
     val unleash: FakeUnleash
 
     val environment: Environment = testEnvironment
@@ -78,6 +84,8 @@ class TestApp {
 
         unleash = FakeUnleash()
         unleash.enableAll()
+
+        outboxService = OutboxService()
 
         azureAdTokenClient = mockAzureAdClient(environment)
         pdfgenClient = mockPdfgenClient(environment)
@@ -113,6 +121,7 @@ class TestApp {
             tiltakshendelseRepository,
             tiltakshendelseProducer,
             amtDeltakerClient,
+            outboxService,
         )
 
         val consumerId = UUID.randomUUID().toString()
@@ -150,4 +159,15 @@ fun integrationTest(testBlock: suspend (app: TestApp, client: HttpClient) -> Uni
     }
 
     testBlock(testApp, client)
+}
+
+fun haveOutboxRecord(key: Any, topic: String) = object : Matcher<TestApp> {
+    override fun test(value: TestApp): MatcherResult {
+        val records = value.outboxService.getRecordsByTopicAndKey(topic, key.toString())
+        return MatcherResult(
+            records.isNotEmpty(),
+            { "Expected an outbox record with key `$key` for topic `$topic`, but found none." },
+            { "Expected no outbox record with key `$key` for topic `$topic`, but found ${records.size}." },
+        )
+    }
 }

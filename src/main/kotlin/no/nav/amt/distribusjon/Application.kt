@@ -46,6 +46,8 @@ import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import no.nav.amt.lib.kafka.Producer
 import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
+import no.nav.amt.lib.outbox.OutboxProcessor
+import no.nav.amt.lib.outbox.OutboxService
 import no.nav.amt.lib.utils.database.Database
 import no.nav.amt.lib.utils.job.JobManager
 import no.nav.amt.lib.utils.leaderelection.Leader
@@ -102,6 +104,7 @@ fun Application.module(): suspend () -> Unit {
     }
 
     val leaderElection = LeaderElectionClient(leaderProvider, environment.electorPath)
+    val jobManager = JobManager(leaderElection::isLeader, ::isReady)
 
     val azureAdTokenClient = AzureAdTokenClient(httpClient, environment)
     val pdfgenClient = PdfgenClient(httpClient, environment)
@@ -125,6 +128,8 @@ fun Application.module(): suspend () -> Unit {
     )
 
     val kafkaProducer = Producer<String, String>(if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl())
+    val outboxService = OutboxService()
+    val outboxProcessor = OutboxProcessor(outboxService, jobManager, kafkaProducer)
 
     val hendelseRepository = HendelseRepository()
 
@@ -139,7 +144,7 @@ fun Application.module(): suspend () -> Unit {
     )
 
     val tiltakshendelseService =
-        TiltakshendelseService(TiltakshendelseRepository(), TiltakshendelseProducer(kafkaProducer), amtDeltakerClient)
+        TiltakshendelseService(TiltakshendelseRepository(), TiltakshendelseProducer(kafkaProducer), amtDeltakerClient, outboxService)
 
     val consumers = listOf(
         HendelseConsumer(
@@ -159,13 +164,13 @@ fun Application.module(): suspend () -> Unit {
     configureRouting(digitalBrukerService, tiltakshendelseService)
     configureMonitoring()
 
-    val jobManager = JobManager(leaderElection::isLeader, ::isReady)
-
     val endringsvedtakJob = EndringsvedtakJob(jobManager, hendelseRepository, journalforingService)
     endringsvedtakJob.startJob()
 
     val varselJobService = VarselJobService(jobManager, varselService)
     varselJobService.startJobs()
+
+    outboxProcessor.start()
 
     attributes.put(isReadyKey, true)
 
