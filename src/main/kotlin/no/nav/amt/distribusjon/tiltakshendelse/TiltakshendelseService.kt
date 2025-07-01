@@ -1,6 +1,5 @@
 package no.nav.amt.distribusjon.tiltakshendelse
 
-import kotlinx.coroutines.runBlocking
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
@@ -37,7 +36,7 @@ class TiltakshendelseService(
             is HendelseType.AvbrytUtkast,
             is HendelseType.InnbyggerGodkjennUtkast,
             is HendelseType.NavGodkjennUtkast,
-                -> stoppUtkastHendelse(hendelse)
+            -> stoppUtkastHendelse(hendelse)
 
             else -> {}
         }
@@ -50,7 +49,7 @@ class TiltakshendelseService(
             is Forslag.Status.Avvist,
             is Forslag.Status.Tilbakekalt,
             is Forslag.Status.Erstattet,
-                -> stoppForslagHendelse(forslag.id)
+            -> stoppForslagHendelse(forslag.id)
         }
     }
 
@@ -90,15 +89,15 @@ class TiltakshendelseService(
     }
 
     private suspend fun lagreOgDistribuer(tiltakshendelse: Tiltakshendelse) {
-            Database.transaction {
-                repository.upsert(tiltakshendelse)
-                outboxService.insertRecord(
-                    key = tiltakshendelse.id,
-                    value = tiltakshendelse,
-                    topic = Environment.TILTAKSHENDELSE_TOPIC,
-                )
-            }
-            log.info("Upsertet tiltakshendelse ${tiltakshendelse.id}")
+        Database.transaction {
+            repository.upsert(tiltakshendelse)
+            outboxService.insertRecord(
+                key = tiltakshendelse.id,
+                value = tiltakshendelse,
+                topic = Environment.TILTAKSHENDELSE_TOPIC,
+            )
+        }
+        log.info("Upsertet tiltakshendelse ${tiltakshendelse.id}")
     }
 
     fun reproduser(id: UUID) {
