@@ -176,6 +176,7 @@ class VarselRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke varsel som ikke var sendt for deltaker $deltakerId"))
     }
 
+// id='cbc932ac-813f-4f3d-9d64-587d970a5f6f'
     fun getVarslerSomSkalSendes() = Database.query {
         val sql =
             """
