@@ -132,7 +132,7 @@ class TestApp {
             ArrangorMeldingConsumer(tiltakshendelseService),
         )
 
-        consumers.forEach { it.run() }
+        consumers.forEach { it.start() }
     }
 }
 

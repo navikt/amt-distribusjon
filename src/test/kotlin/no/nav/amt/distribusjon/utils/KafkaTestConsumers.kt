@@ -25,7 +25,7 @@ fun assertProduced(topic: String, block: suspend (cache: Map<UUID, String>) -> U
     }
 
     runBlocking {
-        consumer.run()
+        consumer.start()
         block(cache)
         consumer.stop()
     }

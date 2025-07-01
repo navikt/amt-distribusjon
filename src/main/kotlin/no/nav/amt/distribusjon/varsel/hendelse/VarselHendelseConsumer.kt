@@ -68,5 +68,7 @@ class VarselHendelseConsumer(
         }
     }
 
-    override fun run() = consumer.run()
+    override fun start() = consumer.start()
+
+    override suspend fun close() = consumer.close()
 }

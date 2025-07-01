@@ -7,8 +7,10 @@ import io.ktor.client.engine.apache.Apache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
+import io.ktor.server.application.log
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import kotlinx.coroutines.runBlocking
 import no.nav.amt.distribusjon.Environment.Companion.HTTP_CLIENT_TIMEOUT_MS
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.application.isReadyKey
@@ -45,20 +47,36 @@ import no.nav.amt.lib.kafka.Producer
 import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.utils.database.Database
+import org.slf4j.LoggerFactory
 
 fun main() {
-    val server = embeddedServer(Netty, port = 8080, module = Application::module)
-
+    val log = LoggerFactory.getLogger("shutdownlogger")
+    var shutdownConsumers: suspend () -> Unit = {}
+    val server = embeddedServer(Netty, port = 8080) {
+        shutdownConsumers = module()
+    }
     Runtime.getRuntime().addShutdownHook(
         Thread {
+            log.info("Received shutdown signal")
             server.application.attributes.put(isReadyKey, false)
-            server.stop(gracePeriodMillis = 5_000, timeoutMillis = 30_000)
+
+            runBlocking {
+                log.info("Shutting down consumers")
+                shutdownConsumers()
+
+                log.info("Shutting down database")
+                Database.close()
+
+                log.info("Shutting down server")
+                server.stop(gracePeriodMillis = 5_000, timeoutMillis = 20_000)
+                log.info("Shut down server completed")
+            }
         },
     )
     server.start(wait = true)
 }
 
-fun Application.module() {
+fun Application.module(): suspend () -> Unit {
     configureSerialization()
 
     val environment = Environment()
@@ -128,7 +146,7 @@ fun Application.module() {
         VarselHendelseConsumer(varselService),
         ArrangorMeldingConsumer(tiltakshendelseService),
     )
-    consumers.forEach { it.run() }
+    consumers.forEach { it.start() }
 
     configureAuthentication(environment)
     configureRouting(digitalBrukerService, tiltakshendelseService)
@@ -143,6 +161,18 @@ fun Application.module() {
     varselJobService.startJobs()
 
     attributes.put(isReadyKey, true)
+
+    suspend fun shutdownConsumers() {
+        consumers.forEach {
+            try {
+                it.close()
+            } catch (e: Exception) {
+                log.error("Error shutting down consumer", e)
+            }
+        }
+    }
+
+    return { shutdownConsumers() }
 }
 
 fun Application.isReady() = attributes.getOrNull(isReadyKey) == true
