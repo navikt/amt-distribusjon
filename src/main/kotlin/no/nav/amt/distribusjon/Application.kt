@@ -51,6 +51,7 @@ import no.nav.amt.lib.utils.job.JobManager
 import no.nav.amt.lib.utils.leaderelection.Leader
 import no.nav.amt.lib.utils.leaderelection.LeaderElectionClient
 import no.nav.amt.lib.utils.leaderelection.LeaderProvider
+import org.slf4j.LoggerFactory
 
 fun main() {
     val log = LoggerFactory.getLogger("shutdownlogger")

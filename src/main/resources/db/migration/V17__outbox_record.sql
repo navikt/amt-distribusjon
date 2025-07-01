@@ -10,6 +10,7 @@ CREATE TABLE outbox_record
     processed_at  TIMESTAMPTZ,
     status        VARCHAR(50)  NOT NULL DEFAULT 'PENDING',
     retry_count   INT          NOT NULL DEFAULT 0,
+    retried_at    TIMESTAMPTZ,
     error_message TEXT
 );
 
