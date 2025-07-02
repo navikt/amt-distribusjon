@@ -22,7 +22,7 @@ data class Environment(
     val dokdistkanalScope: String = getEnvVar(DOKDISTKANAL_SCOPE_KEY),
     val dokdistfordelingUrl: String = getEnvVar(DOKDISTFORDELING_URL_KEY),
     val safScope: String = getEnvVar(SAF_SCOPE_KEY),
-    val electorPath: String = getEnvVar(ELECTOR_PATH),
+    val leaderElectorUrl: String = getEnvVar(LEADER_ELECTOR_URL),
 ) {
     companion object {
         const val KAFKA_CONSUMER_GROUP_ID = "amt-distribusjon-consumer"
@@ -48,7 +48,7 @@ data class Environment(
         const val SAF_SCOPE_KEY = "SAF_SCOPE"
         const val SAF_TEMA = "OPP"
 
-        const val ELECTOR_PATH = "ELECTOR_PATH"
+        const val LEADER_ELECTOR_URL = "ELECTOR_GET_URL"
 
         const val HTTP_CLIENT_TIMEOUT_MS = 10_000
 

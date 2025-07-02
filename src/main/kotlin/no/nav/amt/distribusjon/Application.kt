@@ -102,7 +102,7 @@ fun Application.module(): suspend () -> Unit {
         httpClient.get(path).body<Leader>()
     }
 
-    val leaderElection = LeaderElectionClient(leaderProvider, environment.electorPath)
+    val leaderElection = LeaderElectionClient(leaderProvider, environment.leaderElectorUrl)
     val jobManager = JobManager(leaderElection::isLeader, ::isReady)
 
     val azureAdTokenClient = AzureAdTokenClient(httpClient, environment)
