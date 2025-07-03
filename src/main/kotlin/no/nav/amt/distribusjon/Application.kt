@@ -46,7 +46,6 @@ import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.outbox.OutboxProcessor
 import no.nav.amt.lib.outbox.OutboxService
-import no.nav.amt.lib.outbox.metrics.PrometheusOutboxMeter
 import no.nav.amt.lib.utils.database.Database
 import no.nav.amt.lib.utils.job.JobManager
 import no.nav.amt.lib.utils.leaderelection.Leader
@@ -118,7 +117,7 @@ fun Application.module(): suspend () -> Unit {
     val digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
 
     val kafkaProducer = Producer<String, String>(if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl())
-    val outboxService = OutboxService(PrometheusOutboxMeter())
+    val outboxService = OutboxService()
     val outboxProcessor = OutboxProcessor(outboxService, jobManager, kafkaProducer)
 
     val hendelseRepository = HendelseRepository()
