@@ -1,13 +1,12 @@
 package no.nav.amt.distribusjon.varsel
 
-import io.getunleash.Unleash
-import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
+import no.nav.amt.lib.utils.database.Database
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -16,14 +15,13 @@ import java.util.UUID
 
 class VarselService(
     private val repository: VarselRepository,
-    private val producer: VarselProducer,
-    private val unleash: Unleash,
+    private val outboxHandler: VarselOutboxHandler,
     private val hendelseRepository: HendelseRepository,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun handleHendelse(hendelse: Hendelse) {
-        if (skalIkkeVarsles(hendelse)) return
+    suspend fun handleHendelse(hendelse: Hendelse) = Database.transaction {
+        if (skalIkkeVarsles(hendelse)) return@transaction
 
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> handleNyttVarsel(Varsel.nyOppgave(hendelse), true)
@@ -67,10 +65,7 @@ class VarselService(
         }
     }
 
-    private fun skalIkkeVarsles(hendelse: Hendelse): Boolean = if (!unleash.isEnabled(Environment.VARSEL_TOGGLE)) {
-        log.info("Varsler er togglet av, håndterer ikke hendelse for deltaker ${hendelse.deltaker.id}.")
-        true
-    } else if (repository.getByHendelseId(hendelse.id).isSuccess) {
+    private fun skalIkkeVarsles(hendelse: Hendelse): Boolean = if (repository.getByHendelseId(hendelse.id).isSuccess) {
         log.info("Varsel for hendelse ${hendelse.id} er allerede opprettet. Oppretter ikke nytt varsel.")
         true
     } else {
@@ -106,8 +101,8 @@ class VarselService(
         repository.upsert(oppdatertVarsel)
 
         when (varsel.type) {
-            Varsel.Type.BESKJED -> producer.opprettBeskjed(oppdatertVarsel, skalViseHistorikkModal(oppdatertVarsel.hendelser))
-            Varsel.Type.OPPGAVE -> producer.opprettOppgave(oppdatertVarsel)
+            Varsel.Type.BESKJED -> outboxHandler.opprettBeskjed(oppdatertVarsel, skalViseHistorikkModal(oppdatertVarsel.hendelser))
+            Varsel.Type.OPPGAVE -> outboxHandler.opprettOppgave(oppdatertVarsel)
         }
 
         log.info("Sendte varsel ${varsel.id} for deltaker ${varsel.deltakerId}")
@@ -118,7 +113,7 @@ class VarselService(
             val revarsles = if (nyStatus == Varsel.Status.UTFORT) null else varsel.revarsles
 
             repository.upsert(varsel.copy(aktivTil = nowUTC(), status = nyStatus, revarsles = revarsles))
-            producer.inaktiver(varsel)
+            outboxHandler.inaktiver(varsel)
             log.info("Endret status på varsel ${varsel.id} til $nyStatus for deltaker ${varsel.deltakerId}")
         }
     }

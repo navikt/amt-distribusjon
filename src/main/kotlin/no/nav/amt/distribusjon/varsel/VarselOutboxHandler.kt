@@ -2,16 +2,16 @@ package no.nav.amt.distribusjon.varsel
 
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.varsel.model.Varsel
-import no.nav.amt.lib.kafka.Producer
+import no.nav.amt.lib.outbox.OutboxService
 
-class VarselProducer(
-    private val producer: Producer<String, String>,
+class VarselOutboxHandler(
+    private val outboxService: OutboxService,
 ) {
     fun inaktiver(varsel: Varsel) {
-        producer.produce(
-            topic = Environment.MINSIDE_VARSEL_TOPIC,
-            key = varsel.id.toString(),
+        outboxService.insertRecord(
+            key = varsel.id,
             value = varsel.toInaktiverDto(),
+            topic = Environment.MINSIDE_VARSEL_TOPIC,
         )
     }
 
@@ -20,10 +20,10 @@ class VarselProducer(
             "Kan ikke opprette oppgave, feil varseltype ${varsel.type}"
         }
 
-        producer.produce(
-            topic = Environment.MINSIDE_VARSEL_TOPIC,
-            key = varsel.id.toString(),
+        outboxService.insertRecord(
+            key = varsel.id,
             value = varsel.toOppgaveDto(),
+            topic = Environment.MINSIDE_VARSEL_TOPIC,
         )
     }
 
@@ -32,10 +32,10 @@ class VarselProducer(
             "Kan ikke opprette beskjed, feil varseltype ${varsel.type}"
         }
 
-        producer.produce(
-            topic = Environment.MINSIDE_VARSEL_TOPIC,
-            key = varsel.id.toString(),
+        outboxService.insertRecord(
+            key = varsel.id,
             value = varsel.toBeskjedDto(visEndringsmodal),
+            topic = Environment.MINSIDE_VARSEL_TOPIC,
         )
     }
 }

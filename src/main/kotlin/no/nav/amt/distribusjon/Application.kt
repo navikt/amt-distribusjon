@@ -1,10 +1,10 @@
 package no.nav.amt.distribusjon
 
-import io.getunleash.DefaultUnleash
-import io.getunleash.util.UnleashConfig
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.get
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.log
@@ -35,10 +35,8 @@ import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseProducer
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseRepository
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
-import no.nav.amt.distribusjon.utils.job.JobManager
-import no.nav.amt.distribusjon.utils.job.leaderelection.LeaderElection
 import no.nav.amt.distribusjon.varsel.VarselJobService
-import no.nav.amt.distribusjon.varsel.VarselProducer
+import no.nav.amt.distribusjon.varsel.VarselOutboxHandler
 import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
@@ -46,7 +44,13 @@ import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import no.nav.amt.lib.kafka.Producer
 import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
+import no.nav.amt.lib.outbox.OutboxProcessor
+import no.nav.amt.lib.outbox.OutboxService
 import no.nav.amt.lib.utils.database.Database
+import no.nav.amt.lib.utils.job.JobManager
+import no.nav.amt.lib.utils.leaderelection.Leader
+import no.nav.amt.lib.utils.leaderelection.LeaderElectionClient
+import no.nav.amt.lib.utils.leaderelection.LeaderProvider
 import org.slf4j.LoggerFactory
 
 fun main() {
@@ -94,7 +98,12 @@ fun Application.module(): suspend () -> Unit {
         }
     }
 
-    val leaderElection = LeaderElection(httpClient, environment.electorPath)
+    val leaderProvider = LeaderProvider { path ->
+        httpClient.get(path).body<Leader>()
+    }
+
+    val leaderElection = LeaderElectionClient(leaderProvider, environment.leaderElectorUrl)
+    val jobManager = JobManager(leaderElection::isLeader, ::isReady)
 
     val azureAdTokenClient = AzureAdTokenClient(httpClient, environment)
     val pdfgenClient = PdfgenClient(httpClient, environment)
@@ -107,21 +116,13 @@ fun Application.module(): suspend () -> Unit {
 
     val digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
 
-    val unleash = DefaultUnleash(
-        UnleashConfig
-            .builder()
-            .appName(Environment.appName)
-            .instanceId(Environment.appName)
-            .unleashAPI("${Environment.unleashUrl}/api")
-            .apiKey(Environment.unleashToken)
-            .build(),
-    )
-
     val kafkaProducer = Producer<String, String>(if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl())
+    val outboxService = OutboxService()
+    val outboxProcessor = OutboxProcessor(outboxService, jobManager, kafkaProducer)
 
     val hendelseRepository = HendelseRepository()
 
-    val varselService = VarselService(VarselRepository(), VarselProducer(kafkaProducer), unleash, hendelseRepository)
+    val varselService = VarselService(VarselRepository(), VarselOutboxHandler(outboxService), hendelseRepository)
     val journalforingService = JournalforingService(
         JournalforingstatusRepository(),
         amtPersonClient,
@@ -132,7 +133,7 @@ fun Application.module(): suspend () -> Unit {
     )
 
     val tiltakshendelseService =
-        TiltakshendelseService(TiltakshendelseRepository(), TiltakshendelseProducer(kafkaProducer), amtDeltakerClient)
+        TiltakshendelseService(TiltakshendelseRepository(), TiltakshendelseProducer(kafkaProducer), amtDeltakerClient, outboxService)
 
     val consumers = listOf(
         HendelseConsumer(
@@ -152,13 +153,13 @@ fun Application.module(): suspend () -> Unit {
     configureRouting(digitalBrukerService, tiltakshendelseService)
     configureMonitoring()
 
-    val jobManager = JobManager(leaderElection, ::isReady)
-
     val endringsvedtakJob = EndringsvedtakJob(jobManager, hendelseRepository, journalforingService)
     endringsvedtakJob.startJob()
 
     val varselJobService = VarselJobService(jobManager, varselService)
     varselJobService.startJobs()
+
+    outboxProcessor.start()
 
     attributes.put(isReadyKey, true)
 

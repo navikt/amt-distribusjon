@@ -1,13 +1,13 @@
 package no.nav.amt.distribusjon.tiltakshendelse
 
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import kotlinx.coroutines.time.delay
+import io.kotest.matchers.shouldNot
 import no.nav.amt.distribusjon.Environment
+import no.nav.amt.distribusjon.haveOutboxRecord
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
 import no.nav.amt.distribusjon.utils.MockResponseHandler
-import no.nav.amt.distribusjon.utils.assertProduced
 import no.nav.amt.distribusjon.utils.data.DeltakerData
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
@@ -15,10 +15,8 @@ import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import no.nav.amt.lib.models.hendelse.HendelseType
-import no.nav.amt.lib.testing.AsyncUtils
 import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.junit.Test
-import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -42,7 +40,7 @@ class TiltakshendelseServiceTest {
         tiltakshendelse.opprettet shouldBeCloseTo hendelse.opprettet
         tiltakshendelse.tiltakstype shouldBe hendelse.deltaker.deltakerliste.tiltak.type
 
-        assertProducedTiltakshendelse(tiltakshendelse.id)
+        app should haveOutboxRecord(tiltakshendelse.id, Environment.TILTAKSHENDELSE_TOPIC)
     }
 
     @Test
@@ -70,7 +68,7 @@ class TiltakshendelseServiceTest {
         val tiltakshendelse = app.tiltakshendelseRepository.getByHendelseId(opprettHendelse.id).getOrThrow()
 
         tiltakshendelse.aktiv shouldBe false
-        assertNotProduced(tiltakshendelse.id)
+        app shouldNot haveOutboxRecord(tiltakshendelse.id, Environment.TILTAKSHENDELSE_TOPIC)
     }
 
     @Test
@@ -178,17 +176,6 @@ class TiltakshendelseServiceTest {
         val tiltakshendelse = app.tiltakshendelseRepository.getByHendelseId(godkjennHendelse.id).getOrThrow()
 
         tiltakshendelse.aktiv shouldBe false
-        assertProducedTiltakshendelse(tiltakshendelse.id)
-    }
-
-    private fun assertProducedTiltakshendelse(id: UUID) = assertProduced(Environment.TILTAKSHENDELSE_TOPIC) {
-        AsyncUtils.eventually {
-            it[id] shouldNotBe null
-        }
-    }
-
-    private fun assertNotProduced(id: UUID) = assertProduced(Environment.TILTAKSHENDELSE_TOPIC) { cache ->
-        delay(Duration.ofMillis(1000))
-        cache[id] shouldBe null
+        app should haveOutboxRecord(tiltakshendelse.id, Environment.TILTAKSHENDELSE_TOPIC)
     }
 }

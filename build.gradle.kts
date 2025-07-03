@@ -34,7 +34,7 @@ val postgresVersion = "42.7.7"
 val caffeineVersion = "3.2.1"
 val unleashVersion = "11.0.0"
 val nimbusVersion = "10.3"
-val amtLibVersion = "1.2025.07.01_10.58-fd60a9fa5d5a"
+val amtLibVersion = "1.2025.07.03_09.15-e63d3f075ead"
 
 dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
@@ -75,6 +75,7 @@ dependencies {
     implementation("no.nav.amt.lib:kafka:$amtLibVersion")
     implementation("no.nav.amt.lib:utils:$amtLibVersion")
     implementation("no.nav.amt.lib:models:$amtLibVersion")
+    implementation("no.nav.amt.lib:outbox:$amtLibVersion")
 
     testImplementation("no.nav.amt.lib:testing:$amtLibVersion")
     testImplementation("io.ktor:ktor-server-test-host")

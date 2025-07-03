@@ -1,15 +1,16 @@
 package no.nav.amt.distribusjon.hendelse.consumer
 
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.time.delay
+import io.kotest.matchers.shouldNot
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.TestApp
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
+import no.nav.amt.distribusjon.haveOutboxRecord
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.hendelse.model.toModel
 import no.nav.amt.distribusjon.integrationTest
-import no.nav.amt.distribusjon.utils.assertProduced
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Varselsdata
@@ -46,7 +47,7 @@ class VarselTest {
             varsel.personident shouldBe hendelse.deltaker.personident
             varsel.erEksterntVarsel shouldBe hendelse.skalVarslesEksternt()
 
-            assertProducedOppgave(varsel.id)
+            app.assertProducedOppgave(varsel.id)
         }
     }
 
@@ -67,7 +68,7 @@ class VarselTest {
         AsyncUtils.eventually {
             val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
             varsel.erAktiv shouldBe false
-            assertNotProduced(varsel.id)
+            app.assertNotProduced(varsel.id)
         }
     }
 
@@ -113,7 +114,7 @@ class VarselTest {
             varsel.id shouldBe forrigeVarsel.id
             varsel.aktivTil!! shouldBeCloseTo nowUTC()
 
-            assertProducedInaktiver(varsel.id)
+            app.assertProducedInaktiver(varsel.id)
         }
     }
 
@@ -135,7 +136,7 @@ class VarselTest {
             varsel.id shouldBe forrigeVarsel.id
             varsel.aktivTil!! shouldBeCloseTo nowUTC()
 
-            assertProducedInaktiver(varsel.id)
+            app.assertProducedInaktiver(varsel.id)
         }
     }
 
@@ -167,7 +168,7 @@ class VarselTest {
             val inaktivertVarsel = app.varselRepository.get(forrigeVarsel.id).getOrThrow()
             inaktivertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
 
-            assertProducedInaktiver(forrigeVarsel.id)
+            app.assertProducedInaktiver(forrigeVarsel.id)
         }
     }
 
@@ -225,7 +226,7 @@ class VarselTest {
             val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
             oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
         }
-        assertProducedInaktiver(varsel.id)
+        app.assertProducedInaktiver(varsel.id)
     }
 
     @Test
@@ -280,7 +281,7 @@ class VarselTest {
             oppdatertVentendeVarsel.aktivFra shouldBeCloseTo nowUTC()
             oppdatertVentendeVarsel.aktivTil!! shouldBeCloseTo nowUTC()
         }
-        assertProducedInaktiver(aktivtVarsel.id)
+        app.assertProducedInaktiver(aktivtVarsel.id)
     }
 
     @Test
@@ -339,7 +340,7 @@ class VarselTest {
 
         if (varsel.erAktiv) {
             val forventetUrl = innbyggerDeltakerUrl(varsel.deltakerId, hendelse.payload !is HendelseType.NavGodkjennUtkast)
-            assertProducedBeskjed(varsel.id, forventetUrl)
+            app.assertProducedBeskjed(varsel.id, forventetUrl)
         }
     }
 }
@@ -348,35 +349,35 @@ private fun produce(hendelse: HendelseDto) = produceStringString(
     ProducerRecord(Environment.DELTAKER_HENDELSE_TOPIC, hendelse.deltaker.id.toString(), objectMapper.writeValueAsString(hendelse)),
 )
 
-private fun assertNotProduced(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) { cache ->
-    delay(Duration.ofMillis(1000))
-    cache[id] shouldBe null
+private fun TestApp.assertNotProduced(id: UUID) {
+    this shouldNot haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC)
 }
 
-fun assertProducedInaktiver(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
-    AsyncUtils.eventually {
-        val json = objectMapper.readTree(it[id])
-        json["varselId"].asText() shouldBe id.toString()
-        json["@event_name"].asText() shouldBe "inaktiver"
+fun TestApp.assertProducedInaktiver(id: UUID) {
+    this should haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC) {
+        val json = it.value
+        json["varselId"].asText() == id.toString() &&
+            json["@event_name"].asText() == "inaktiver"
     }
 }
 
-fun assertProducedOppgave(id: UUID) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
-    AsyncUtils.eventually {
-        val json = objectMapper.readTree(it[id])
-        json["varselId"].asText() shouldBe id.toString()
-        json["@event_name"].asText() shouldBe "opprett"
-        json["type"].asText() shouldBe "oppgave"
+fun TestApp.assertProducedOppgave(id: UUID) {
+    this should haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC) { record ->
+        val json = record.value
+
+        json["varselId"].asText() == id.toString() &&
+            json["@event_name"].asText() == "opprett" &&
+            json["type"].asText() == "oppgave"
     }
 }
 
-fun assertProducedBeskjed(id: UUID, forventetUrl: String) = assertProduced(Environment.MINSIDE_VARSEL_TOPIC) {
-    AsyncUtils.eventually {
-        val json = objectMapper.readTree(it[id])
-        json["varselId"].asText() shouldBe id.toString()
-        json["@event_name"].asText() shouldBe "opprett"
-        json["type"].asText() shouldBe "beskjed"
-        json["link"].asText() shouldBe forventetUrl
+fun TestApp.assertProducedBeskjed(id: UUID, forventetUrl: String) {
+    this should haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC) { record ->
+        val json = record.value
+        json["varselId"].asText() == id.toString() &&
+            json["@event_name"].asText() == "opprett" &&
+            json["type"].asText() == "beskjed" &&
+            json["link"].asText() == forventetUrl
     }
 }
 

@@ -2,7 +2,7 @@ package no.nav.amt.distribusjon.journalforing.job
 
 import no.nav.amt.distribusjon.hendelse.HendelseRepository
 import no.nav.amt.distribusjon.journalforing.JournalforingService
-import no.nav.amt.distribusjon.utils.job.JobManager
+import no.nav.amt.lib.utils.job.JobManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Duration
@@ -17,7 +17,7 @@ class EndringsvedtakJob(
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     fun startJob() = jobManager.startJob(
-        navn = this.javaClass.simpleName,
+        name = this.javaClass.simpleName,
         initialDelay = Duration.of(5, ChronoUnit.MINUTES),
         period = Duration.of(10, ChronoUnit.MINUTES),
     ) {

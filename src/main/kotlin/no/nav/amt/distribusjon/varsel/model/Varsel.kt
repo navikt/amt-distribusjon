@@ -1,9 +1,11 @@
 package no.nav.amt.distribusjon.varsel.model
 
+import com.fasterxml.jackson.databind.JsonNode
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
+import no.nav.amt.lib.utils.objectMapper
 import no.nav.tms.varsel.action.EksternKanal
 import no.nav.tms.varsel.action.EksternVarslingBestilling
 import no.nav.tms.varsel.action.Produsent
@@ -121,18 +123,24 @@ data class Varsel(
         UTLOPT,
     }
 
-    fun toOppgaveDto() = VarselActionBuilder.opprett {
-        varselConfig(Varseltype.Oppgave, visEndringsmodal = false)
-    }
+    fun toOppgaveDto(): JsonNode = objectMapper.readTree(
+        VarselActionBuilder.opprett {
+            varselConfig(Varseltype.Oppgave, visEndringsmodal = false)
+        },
+    )
 
-    fun toBeskjedDto(visEndringsmodal: Boolean) = VarselActionBuilder.opprett {
-        varselConfig(Varseltype.Beskjed, visEndringsmodal)
-    }
+    fun toBeskjedDto(visEndringsmodal: Boolean): JsonNode = objectMapper.readTree(
+        VarselActionBuilder.opprett {
+            varselConfig(Varseltype.Beskjed, visEndringsmodal)
+        },
+    )
 
-    fun toInaktiverDto() = VarselActionBuilder.inaktiver {
-        varselId = this@Varsel.id.toString()
-        produsent = produsent()
-    }
+    fun toInaktiverDto(): JsonNode = objectMapper.readTree(
+        VarselActionBuilder.inaktiver {
+            varselId = this@Varsel.id.toString()
+            produsent = produsent()
+        },
+    )
 
     private fun VarselActionBuilder.OpprettVarselInstance.varselConfig(varseltype: Varseltype, visEndringsmodal: Boolean) {
         varselId = this@Varsel.id.toString()
@@ -153,12 +161,10 @@ data class Varsel(
         }
     }
 
-    private fun getPrefererteKanaler(varseltype: Varseltype): List<EksternKanal> {
-        return if (varseltype == Varseltype.Oppgave) {
-            listOf(EksternKanal.SMS)
-        } else {
-            listOf(EksternKanal.EPOST)
-        }
+    private fun getPrefererteKanaler(varseltype: Varseltype): List<EksternKanal> = if (varseltype == Varseltype.Oppgave) {
+        listOf(EksternKanal.SMS)
+    } else {
+        listOf(EksternKanal.EPOST)
     }
 
     private fun produsent() = Produsent(
