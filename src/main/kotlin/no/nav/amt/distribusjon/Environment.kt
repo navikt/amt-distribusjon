@@ -53,7 +53,7 @@ data class Environment(
         const val HTTP_CLIENT_TIMEOUT_MS = 10_000
 
         const val DELTAKER_HENDELSE_TOPIC = "amt.deltaker-hendelse-v1"
-        const val MINSIDE_VARSEL_TOPIC = "min-side.aapen-brukervarsel-v1"
+        const val MINSIDE_VARSEL_TOPIC = "amt-foobar-topic-skal-fremprovosere-feil-for-retry" // "min-side.aapen-brukervarsel-v1"
         const val MINSIDE_VARSEL_HENDELSE_TOPIC = "min-side.aapen-varsel-hendelse-v1"
         const val TILTAKSHENDELSE_TOPIC = "obo.tiltakshendelse-v1"
         const val ARRANGOR_MELDING_TOPIC = "amt.arrangor-melding-v1"

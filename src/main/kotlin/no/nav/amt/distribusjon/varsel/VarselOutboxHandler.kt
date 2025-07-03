@@ -11,7 +11,7 @@ class VarselOutboxHandler(
         outboxService.insertRecord(
             key = varsel.id,
             value = varsel.toInaktiverDto(),
-            topic = "amt-foobar-skal-forårsake-en-feil-state-midlertidig", // Environment.MINSIDE_VARSEL_TOPIC,
+            topic = Environment.MINSIDE_VARSEL_TOPIC,
         )
     }
 
