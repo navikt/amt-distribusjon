@@ -99,6 +99,13 @@ application {
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
+tasks.test {
+    jvmArgs(
+        "-Xshare:off",
+        "-XX:+EnableDynamicAgentLoading",
+    )
+}
+
 tasks.jar {
     manifest {
         attributes(

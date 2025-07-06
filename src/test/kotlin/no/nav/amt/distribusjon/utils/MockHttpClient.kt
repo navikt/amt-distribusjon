@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.utils
 
+import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -41,6 +42,28 @@ import no.nav.amt.distribusjon.veilarboppfolging.ManuellStatusRequest
 import no.nav.amt.distribusjon.veilarboppfolging.ManuellV2Response
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import java.util.UUID
+
+fun <T> createMockHttpClient(
+    expectedUrl: String,
+    responseBody: T?,
+    statusCode: HttpStatusCode = HttpStatusCode.OK,
+) = HttpClient(MockEngine) {
+    install(ContentNegotiation) {
+        jackson { applicationConfig() }
+    }
+    engine {
+        addHandler { request ->
+            request.url.toString() shouldBe expectedUrl
+            request.headers[HttpHeaders.Authorization] shouldBe "~token~"
+
+            respond(
+                content = responseBody?.let { objectMapper.writeValueAsString(it) } ?: "",
+                status = statusCode,
+                headers = headersOf(HttpHeaders.ContentType, "application/json"),
+            )
+        }
+    }
+}
 
 fun mockHttpClient(defaultResponse: Any? = null): HttpClient {
     val mockEngine = MockEngine {

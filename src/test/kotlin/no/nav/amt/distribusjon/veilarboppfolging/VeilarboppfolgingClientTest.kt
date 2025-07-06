@@ -4,21 +4,14 @@ import com.github.benmanes.caffeine.cache.Cache
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
-import io.ktor.serialization.jackson.jackson
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.testEnvironment
-import no.nav.amt.lib.utils.objectMapper
+import no.nav.amt.distribusjon.utils.createMockHttpClient
 import org.junit.Before
 import org.junit.Test
 import java.util.UUID
@@ -58,7 +51,7 @@ class VeilarboppfolgingClientTest {
 
         sut = createVeilarboppfolgingClient(
             expectedUrl = "http://veilarboppfolging/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId",
-            responseBody = "",
+            responseBody = null,
             statusCode = HttpStatusCode.BadRequest,
         )
 
@@ -122,7 +115,7 @@ class VeilarboppfolgingClientTest {
     fun `skal kaste feil nar erUnderManuellOppfolging returnerer feilkode`() {
         sut = createVeilarboppfolgingClient(
             expectedUrl = "http://veilarboppfolging/veilarboppfolging/api/v3/hent-manuell",
-            responseBody = "",
+            responseBody = null,
             statusCode = HttpStatusCode.BadRequest,
         )
 
@@ -135,33 +128,14 @@ class VeilarboppfolgingClientTest {
         thrown.message shouldStartWith "Kunne ikke hente manuell oppfølging fra veilarboppfolging"
     }
 
-    fun <T : Any> createVeilarboppfolgingClient(
+    fun <T> createVeilarboppfolgingClient(
         expectedUrl: String,
         responseBody: T,
         statusCode: HttpStatusCode = HttpStatusCode.OK,
-    ): VeilarboppfolgingClient {
-        val mockHttpClient = HttpClient(MockEngine) {
-            install(ContentNegotiation) {
-                jackson()
-            }
-            engine {
-                addHandler { request ->
-                    request.url.toString() shouldBe expectedUrl
-                    request.headers[HttpHeaders.Authorization] shouldBe "~token~"
-
-                    respond(
-                        content = objectMapper.writeValueAsString(responseBody),
-                        status = statusCode,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
-                    )
-                }
-            }
-        }
-        return VeilarboppfolgingClient(
-            httpClient = mockHttpClient,
-            azureAdTokenClient = mockAzureAdTokenClient,
-            environment = testEnvironment,
-            manuellOppfolgingCache = mockManuellOppfolgingCache,
-        )
-    }
+    ) = VeilarboppfolgingClient(
+        httpClient = createMockHttpClient(expectedUrl, responseBody, statusCode),
+        azureAdTokenClient = mockAzureAdTokenClient,
+        environment = testEnvironment,
+        manuellOppfolgingCache = mockManuellOppfolgingCache,
+    )
 }
