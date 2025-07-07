@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.distribusjonskanal
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -21,14 +22,13 @@ class DokdistkanalClient(
     private val httpClient: HttpClient,
     private val azureAdTokenClient: AzureAdTokenClient,
     environment: Environment,
+    private val distribusjonskanalCache: Cache<String, Distribusjonskanal> = Caffeine.newBuilder()
+        .expireAfterWrite(Duration.ofMinutes(60))
+        .build(),
 ) {
     private val scope = environment.dokdistkanalScope
     private val url = environment.dokdistkanalUrl
     private val navCallId = "amt-distribusjon"
-
-    private val distribusjonskanalCache = Caffeine.newBuilder()
-        .expireAfterWrite(Duration.ofMinutes(60))
-        .build<String, Distribusjonskanal>()
 
     suspend fun bestemDistribusjonskanal(personident: String, deltakerId: UUID? = null): Distribusjonskanal {
         distribusjonskanalCache.getIfPresent(personident)?.let {

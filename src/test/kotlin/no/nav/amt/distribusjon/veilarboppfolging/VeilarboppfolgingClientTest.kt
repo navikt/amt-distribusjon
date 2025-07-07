@@ -9,32 +9,27 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import no.nav.amt.distribusjon.auth.AzureAdTokenClient
+import no.nav.amt.distribusjon.ClientTestBase
 import no.nav.amt.distribusjon.testEnvironment
 import no.nav.amt.distribusjon.utils.createMockHttpClient
 import org.junit.Before
 import org.junit.Test
 import java.util.UUID
 
-class VeilarboppfolgingClientTest {
-    val mockAzureAdTokenClient: AzureAdTokenClient = mockk(relaxed = true)
+class VeilarboppfolgingClientTest : ClientTestBase() {
     val mockManuellOppfolgingCache: Cache<String, Boolean> = mockk(relaxed = true)
 
-    lateinit var sut: VeilarboppfolgingClient
-
     @Before
-    fun setup() {
-        coEvery { mockAzureAdTokenClient.getMachineToMachineToken(any()) } returns "~token~"
+    fun localSetup() {
         coEvery { mockManuellOppfolgingCache.getIfPresent(any()) } returns null
     }
 
     @Test
     fun `skal returnere sak nar opprettEllerHentSak kalles med gyldig respons`() {
-        val oppfolgingsperiodeId = UUID.randomUUID()
         val expectedSak = Sak(oppfolgingsperiodeId, sakId = 42, fagsaksystem = "~fagsaksystem~")
 
-        sut = createVeilarboppfolgingClient(
-            expectedUrl = "http://veilarboppfolging/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId",
+        val sut = createVeilarboppfolgingClient(
+            expectedUrl = opprettEllerHentSakUrl,
             responseBody = expectedSak,
         )
 
@@ -47,12 +42,10 @@ class VeilarboppfolgingClientTest {
 
     @Test
     fun `skal kaste feil nar opprettEllerHentSak returnerer feilkode`() {
-        val oppfolgingsperiodeId = UUID.randomUUID()
-
-        sut = createVeilarboppfolgingClient(
-            expectedUrl = "http://veilarboppfolging/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId",
-            responseBody = null,
+        val sut = createVeilarboppfolgingClient(
+            expectedUrl = opprettEllerHentSakUrl,
             statusCode = HttpStatusCode.BadRequest,
+            responseBody = null,
         )
 
         val thrown = runBlocking {
@@ -66,8 +59,8 @@ class VeilarboppfolgingClientTest {
 
     @Test
     fun `skal returnere true nar bruker er under manuell oppfolging`() {
-        sut = createVeilarboppfolgingClient(
-            expectedUrl = "http://veilarboppfolging/veilarboppfolging/api/v3/hent-manuell",
+        val sut = createVeilarboppfolgingClient(
+            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
             responseBody = ManuellV2Response(true),
         )
 
@@ -80,8 +73,8 @@ class VeilarboppfolgingClientTest {
 
     @Test
     fun `skal returnere false nar bruker ikke er under manuell oppfolging`() {
-        sut = createVeilarboppfolgingClient(
-            expectedUrl = "http://veilarboppfolging/veilarboppfolging/api/v3/hent-manuell",
+        val sut = createVeilarboppfolgingClient(
+            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
             responseBody = ManuellV2Response(false),
         )
 
@@ -98,8 +91,8 @@ class VeilarboppfolgingClientTest {
             mockManuellOppfolgingCache.getIfPresent(any())
         } returns null andThen true
 
-        sut = createVeilarboppfolgingClient(
-            expectedUrl = "http://veilarboppfolging/veilarboppfolging/api/v3/hent-manuell",
+        val sut = createVeilarboppfolgingClient(
+            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
             responseBody = ManuellV2Response(false),
         )
 
@@ -113,8 +106,8 @@ class VeilarboppfolgingClientTest {
 
     @Test
     fun `skal kaste feil nar erUnderManuellOppfolging returnerer feilkode`() {
-        sut = createVeilarboppfolgingClient(
-            expectedUrl = "http://veilarboppfolging/veilarboppfolging/api/v3/hent-manuell",
+        val sut = createVeilarboppfolgingClient(
+            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
             responseBody = null,
             statusCode = HttpStatusCode.BadRequest,
         )
@@ -128,14 +121,20 @@ class VeilarboppfolgingClientTest {
         thrown.message shouldStartWith "Kunne ikke hente manuell oppfølging fra veilarboppfolging"
     }
 
-    fun <T> createVeilarboppfolgingClient(
+    private fun <T> createVeilarboppfolgingClient(
         expectedUrl: String,
-        responseBody: T,
         statusCode: HttpStatusCode = HttpStatusCode.OK,
+        responseBody: T? = null,
     ) = VeilarboppfolgingClient(
         httpClient = createMockHttpClient(expectedUrl, responseBody, statusCode),
         azureAdTokenClient = mockAzureAdTokenClient,
         environment = testEnvironment,
         manuellOppfolgingCache = mockManuellOppfolgingCache,
     )
+
+    companion object {
+        val oppfolgingsperiodeId: UUID = UUID.randomUUID()
+        val opprettEllerHentSakUrl = "http://veilarboppfolging/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId"
+        const val ER_UNDER_MANUELL_OPPFOLGING_URL = "http://veilarboppfolging/veilarboppfolging/api/v3/hent-manuell"
+    }
 }

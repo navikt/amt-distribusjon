@@ -47,6 +47,7 @@ fun <T> createMockHttpClient(
     expectedUrl: String,
     responseBody: T?,
     statusCode: HttpStatusCode = HttpStatusCode.OK,
+    requiresAuthHeader: Boolean = true,
 ) = HttpClient(MockEngine) {
     install(ContentNegotiation) {
         jackson { applicationConfig() }
@@ -54,13 +55,32 @@ fun <T> createMockHttpClient(
     engine {
         addHandler { request ->
             request.url.toString() shouldBe expectedUrl
-            request.headers[HttpHeaders.Authorization] shouldBe "~token~"
+            if (requiresAuthHeader) request.headers[HttpHeaders.Authorization] shouldBe "~token~"
 
-            respond(
-                content = responseBody?.let { objectMapper.writeValueAsString(it) } ?: "",
-                status = statusCode,
-                headers = headersOf(HttpHeaders.ContentType, "application/json"),
-            )
+            when (responseBody) {
+                null -> {
+                    respond(
+                        content = "",
+                        status = statusCode,
+                    )
+                }
+
+                is ByteArray -> {
+                    respond(
+                        content = responseBody,
+                        status = statusCode,
+                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.OctetStream.toString()),
+                    )
+                }
+
+                else -> {
+                    respond(
+                        content = responseBody.let { objectMapper.writeValueAsString(it) },
+                        status = statusCode,
+                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+                    )
+                }
+            }
         }
     }
 }
