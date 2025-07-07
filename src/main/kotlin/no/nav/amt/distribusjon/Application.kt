@@ -150,7 +150,7 @@ fun Application.module(): suspend () -> Unit {
     consumers.forEach { it.start() }
 
     configureAuthentication(environment)
-    configureRouting(digitalBrukerService, tiltakshendelseService)
+    configureRouting(digitalBrukerService, tiltakshendelseService, outboxService)
     configureMonitoring()
 
     val endringsvedtakJob = EndringsvedtakJob(jobManager, hendelseRepository, journalforingService)

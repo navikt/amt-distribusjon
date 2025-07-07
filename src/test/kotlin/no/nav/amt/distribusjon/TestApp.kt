@@ -146,7 +146,7 @@ fun integrationTest(testBlock: suspend (app: TestApp, client: HttpClient) -> Uni
         configureSerialization()
 
         configureAuthentication(testApp.environment)
-        configureRouting(testApp.digitalBrukerService, testApp.tiltakshendelseService)
+        configureRouting(testApp.digitalBrukerService, testApp.tiltakshendelseService, testApp.outboxService)
         // configureMonitoring()
 
         attributes.put(isReadyKey, true)
