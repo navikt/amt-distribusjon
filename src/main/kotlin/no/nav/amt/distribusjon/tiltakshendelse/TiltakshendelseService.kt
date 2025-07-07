@@ -101,25 +101,6 @@ class TiltakshendelseService(
         log.info("Upsertet tiltakshendelse ${tiltakshendelse.id}")
     }
 
-    fun reproduserFeilproduserteHendelser() {
-        log.info("Starter reprodusering av feilproduserte tiltakshendelser")
-        val feilproduserteHendelser = repository.getFeilProduserteHendelser()
-        if (feilproduserteHendelser.isEmpty()) {
-            log.info("Ingen feilproduserte tiltakshendelser funnet")
-            return
-        }
-
-        feilproduserteHendelser.forEach { hendelse ->
-            outboxService.insertRecord(
-                key = hendelse.id,
-                value = hendelse.toDto(),
-                topic = Environment.TILTAKSHENDELSE_TOPIC,
-            )
-            log.info("Insertet tiltakshendelse ${hendelse.id} i outbox for reprodusering")
-        }
-        log.info("Fullførte reprodusering av feilproduserte tiltakshendelser")
-    }
-
     fun reproduser(id: UUID) {
         val tiltakshendelse = repository.get(id).getOrThrow()
         producer.produce(tiltakshendelse)
