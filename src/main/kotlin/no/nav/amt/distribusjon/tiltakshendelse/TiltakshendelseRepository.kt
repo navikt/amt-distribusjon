@@ -131,12 +131,4 @@ class TiltakshendelseRepository {
             Result.success(varsel)
         } ?: Result.failure(java.util.NoSuchElementException("Fant ikke tiltakshendelse for hendelse $hendelseId"))
     }
-
-    fun getFeilProduserteHendelser() = Database.query {
-        val sql =
-            """
-            select distinct t.* from tiltakshendelse t join outbox_record o on t.id = o.key::uuid where o.value_type = 'Tiltakshendelse';
-            """.trimIndent()
-        it.list(queryOf(sql), ::rowmapper)
-    }
 }
