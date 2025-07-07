@@ -16,9 +16,14 @@ import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.digitalbruker.api.registerDigitalBrukerApi
 import no.nav.amt.distribusjon.internal.registerInternalApi
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
+import no.nav.amt.lib.outbox.OutboxService
 import org.slf4j.LoggerFactory
 
-fun Application.configureRouting(digitalBrukerService: DigitalBrukerService, tiltakshendelseService: TiltakshendelseService) {
+fun Application.configureRouting(
+    digitalBrukerService: DigitalBrukerService,
+    tiltakshendelseService: TiltakshendelseService,
+    outboxService: OutboxService,
+) {
     install(StatusPages) {
         exception<IllegalArgumentException> { call, cause ->
             StatusPageLogger.log(HttpStatusCode.BadRequest, call, cause)
@@ -45,7 +50,7 @@ fun Application.configureRouting(digitalBrukerService: DigitalBrukerService, til
         registerHealthApi()
 
         registerDigitalBrukerApi(digitalBrukerService)
-        registerInternalApi(tiltakshendelseService)
+        registerInternalApi(tiltakshendelseService, outboxService)
 
         val catchAllRoute = "{...}"
         route(catchAllRoute) {
@@ -81,6 +86,10 @@ object StatusPageLogger {
     }
 }
 
-class AuthorizationException(message: String) : Exception(message)
+class AuthorizationException(
+    message: String,
+) : Exception(message)
 
-class AuthenticationException(message: String) : Exception(message)
+class AuthenticationException(
+    message: String,
+) : Exception(message)
