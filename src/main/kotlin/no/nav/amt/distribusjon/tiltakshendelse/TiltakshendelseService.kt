@@ -5,6 +5,7 @@ import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService.Companion.UTKAST_TIL_PAMELDING_TEKST
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
+import no.nav.amt.distribusjon.tiltakshendelse.model.toDto
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import no.nav.amt.lib.models.hendelse.HendelseType
@@ -93,7 +94,7 @@ class TiltakshendelseService(
             repository.upsert(tiltakshendelse)
             outboxService.insertRecord(
                 key = tiltakshendelse.id,
-                value = tiltakshendelse,
+                value = tiltakshendelse.toDto(),
                 topic = Environment.TILTAKSHENDELSE_TOPIC,
             )
         }
