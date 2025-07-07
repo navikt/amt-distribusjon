@@ -135,7 +135,7 @@ class TiltakshendelseRepository {
     fun getFeilProduserteHendelser() = Database.query {
         val sql =
             """
-            select t.* from tiltakshendelse t join outbox_record o on t.id = o.key::uuid where o.value_type = 'Tiltakshendelse';
+            select distinct t.* from tiltakshendelse t join outbox_record o on t.id = o.key::uuid where o.value_type = 'Tiltakshendelse';
             """.trimIndent()
         it.list(queryOf(sql), ::rowmapper)
     }
