@@ -6,7 +6,7 @@ data class OpprettJournalpostRequest(
     val dokumenter: List<Dokument>,
     val journalfoerendeEnhet: String,
     val journalposttype: String = "UTGAAENDE",
-    val kanal: String = "NAV_NO",
+    val kanal: String = "NAV_NO_UTEN_VARSLING",
     val sak: Sak,
     val tema: String,
     val tittel: String,
