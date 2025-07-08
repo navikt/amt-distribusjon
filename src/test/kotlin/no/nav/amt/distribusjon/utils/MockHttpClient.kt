@@ -55,7 +55,7 @@ fun <T> createMockHttpClient(
     engine {
         addHandler { request ->
             request.url.toString() shouldBe expectedUrl
-            if (requiresAuthHeader) request.headers[HttpHeaders.Authorization] shouldBe "~token~"
+            if (requiresAuthHeader) request.headers[HttpHeaders.Authorization] shouldBe "Bearer XYZ"
 
             when (responseBody) {
                 null -> {

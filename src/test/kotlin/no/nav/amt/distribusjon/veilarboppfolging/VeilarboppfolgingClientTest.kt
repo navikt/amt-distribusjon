@@ -5,25 +5,15 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.HttpStatusCode
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.amt.distribusjon.ClientTestBase
 import no.nav.amt.distribusjon.testEnvironment
+import no.nav.amt.distribusjon.utils.CountingCache
 import no.nav.amt.distribusjon.utils.createMockHttpClient
-import org.junit.Before
 import org.junit.Test
 import java.util.UUID
 
 class VeilarboppfolgingClientTest : ClientTestBase() {
-    val mockManuellOppfolgingCache: Cache<String, Boolean> = mockk(relaxed = true)
-
-    @Before
-    fun localSetup() {
-        coEvery { mockManuellOppfolgingCache.getIfPresent(any()) } returns null
-    }
-
     @Test
     fun `skal returnere sak nar opprettEllerHentSak kalles med gyldig respons`() {
         val expectedSak = Sak(oppfolgingsperiodeId, sakId = 42, fagsaksystem = "~fagsaksystem~")
@@ -87,13 +77,12 @@ class VeilarboppfolgingClientTest : ClientTestBase() {
 
     @Test
     fun `skal bruke cache ved andre kall til erUnderManuellOppfolging`() {
-        coEvery {
-            mockManuellOppfolgingCache.getIfPresent(any())
-        } returns null andThen true
+        val countingCache = CountingCache<String, Boolean>()
 
         val sut = createVeilarboppfolgingClient(
             expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
             responseBody = ManuellV2Response(false),
+            cache = countingCache,
         )
 
         runBlocking {
@@ -101,7 +90,7 @@ class VeilarboppfolgingClientTest : ClientTestBase() {
             sut.erUnderManuellOppfolging("~personident~")
         }
 
-        coVerify(exactly = 1) { mockAzureAdTokenClient.getMachineToMachineToken(any()) }
+        countingCache.putCount shouldBe 1
     }
 
     @Test
@@ -125,12 +114,21 @@ class VeilarboppfolgingClientTest : ClientTestBase() {
         expectedUrl: String,
         statusCode: HttpStatusCode = HttpStatusCode.OK,
         responseBody: T? = null,
-    ) = VeilarboppfolgingClient(
-        httpClient = createMockHttpClient(expectedUrl, responseBody, statusCode),
-        azureAdTokenClient = mockAzureAdTokenClient,
-        environment = testEnvironment,
-        manuellOppfolgingCache = mockManuellOppfolgingCache,
-    )
+        cache: Cache<String, Boolean>? = null,
+    ): VeilarboppfolgingClient = if (cache != null) {
+        VeilarboppfolgingClient(
+            httpClient = createMockHttpClient(expectedUrl, responseBody, statusCode),
+            azureAdTokenClient = mockAzureAdTokenClient,
+            environment = testEnvironment,
+            manuellOppfolgingCache = cache,
+        )
+    } else {
+        VeilarboppfolgingClient(
+            httpClient = createMockHttpClient(expectedUrl, responseBody, statusCode),
+            azureAdTokenClient = mockAzureAdTokenClient,
+            environment = testEnvironment,
+        )
+    }
 
     companion object {
         val oppfolgingsperiodeId: UUID = UUID.randomUUID()

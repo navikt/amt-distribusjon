@@ -5,25 +5,15 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.HttpStatusCode
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.amt.distribusjon.ClientTestBase
 import no.nav.amt.distribusjon.testEnvironment
+import no.nav.amt.distribusjon.utils.CountingCache
 import no.nav.amt.distribusjon.utils.createMockHttpClient
-import org.junit.Before
 import org.junit.Test
 import java.util.UUID
 
 class DokdistkanalClientTest : ClientTestBase() {
-    private val mockDistribusjonskanalCache: Cache<String, Distribusjonskanal> = mockk(relaxed = true)
-
-    @Before
-    fun localSetup() {
-        coEvery { mockDistribusjonskanalCache.getIfPresent(any()) } returns null
-    }
-
     @Test
     fun `skal returnere DITT_NAV nar bestemDistribusjonskanal kalles med `() {
         val sut = createDokdistkanalClient(
@@ -39,12 +29,11 @@ class DokdistkanalClientTest : ClientTestBase() {
 
     @Test
     fun `skal bruke cache ved andre kall til bestemDistribusjonskanal`() {
-        coEvery {
-            mockDistribusjonskanalCache.getIfPresent(any())
-        } returns null andThen expectedResponse.distribusjonskanal
+        val countingCache = CountingCache<String, Distribusjonskanal>()
 
         val sut = createDokdistkanalClient(
             responseBody = expectedResponse,
+            cache = countingCache,
         )
 
         runBlocking {
@@ -52,7 +41,7 @@ class DokdistkanalClientTest : ClientTestBase() {
             sut.bestemDistribusjonskanal(PERSON_IDENT, null)
         }
 
-        coVerify(exactly = 1) { mockAzureAdTokenClient.getMachineToMachineToken(any()) }
+        countingCache.putCount shouldBe 1
     }
 
     @Test
@@ -84,16 +73,29 @@ class DokdistkanalClientTest : ClientTestBase() {
     private fun createDokdistkanalClient(
         statusCode: HttpStatusCode = HttpStatusCode.OK,
         responseBody: BestemDistribusjonskanalResponse? = null,
-    ) = DokdistkanalClient(
-        httpClient = createMockHttpClient(
+        cache: Cache<String, Distribusjonskanal>? = null,
+    ): DokdistkanalClient {
+        val httpClient = createMockHttpClient(
             expectedUrl = "http://dokdistkanal/rest/bestemDistribusjonskanal",
             statusCode = statusCode,
             responseBody = responseBody,
-        ),
-        azureAdTokenClient = mockAzureAdTokenClient,
-        environment = testEnvironment,
-        distribusjonskanalCache = mockDistribusjonskanalCache,
-    )
+        )
+
+        return if (cache != null) {
+            DokdistkanalClient(
+                httpClient = httpClient,
+                azureAdTokenClient = mockAzureAdTokenClient,
+                environment = testEnvironment,
+                distribusjonskanalCache = cache,
+            )
+        } else {
+            DokdistkanalClient(
+                httpClient = httpClient,
+                azureAdTokenClient = mockAzureAdTokenClient,
+                environment = testEnvironment,
+            )
+        }
+    }
 
     companion object {
         private const val PERSON_IDENT = "~personident~"

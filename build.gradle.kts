@@ -35,7 +35,6 @@ val caffeineVersion = "3.2.1"
 val unleashVersion = "11.0.2"
 val nimbusVersion = "10.3.1"
 val amtLibVersion = "1.2025.07.03_09.15-e63d3f075ead"
-val mockkVersion = "1.14.4"
 
 dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
@@ -85,7 +84,6 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json-jvm:$kotestVersion")
     testImplementation("com.nimbusds:nimbus-jose-jwt:$nimbusVersion")
-    testImplementation("io.mockk:mockk-jvm:$mockkVersion")
 }
 
 kotlin {
