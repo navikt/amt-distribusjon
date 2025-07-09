@@ -6,8 +6,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
-import no.nav.amt.distribusjon.ClientTestBase
 import no.nav.amt.distribusjon.testEnvironment
+import no.nav.amt.distribusjon.utils.ClientTestBase
 import no.nav.amt.distribusjon.utils.CountingCache
 import no.nav.amt.distribusjon.utils.createMockHttpClient
 import org.junit.Test
