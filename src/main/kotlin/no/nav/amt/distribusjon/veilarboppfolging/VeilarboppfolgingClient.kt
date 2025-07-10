@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.veilarboppfolging
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -20,15 +21,14 @@ class VeilarboppfolgingClient(
     private val httpClient: HttpClient,
     private val azureAdTokenClient: AzureAdTokenClient,
     environment: Environment,
+    private val manuellOppfolgingCache: Cache<String, Boolean> = Caffeine
+        .newBuilder()
+        .expireAfterWrite(Duration.ofMinutes(60))
+        .build(),
 ) {
     private val scope = environment.veilarboppfolgingScope
     private val url = environment.veilarboppfolgingUrl
     private val consumerId: String = "amt-distribusjon"
-
-    private val manuellOppfolgingCache = Caffeine
-        .newBuilder()
-        .expireAfterWrite(Duration.ofMinutes(60))
-        .build<String, Boolean>()
 
     suspend fun opprettEllerHentSak(oppfolgingsperiodeId: UUID): Sak {
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
@@ -37,6 +37,7 @@ class VeilarboppfolgingClient(
             header("Nav-Consumer-Id", consumerId)
             contentType(ContentType.Application.Json)
         }
+
         if (!response.status.isSuccess()) {
             error("Kunne ikke hente sak fra veilarboppfolging for oppfolgingsperiode $oppfolgingsperiodeId, status: ${response.status}")
         }

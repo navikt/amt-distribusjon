@@ -60,7 +60,7 @@ class DokdistfordelingClient(
                 log.warn("Journalpost $journalpostId tilhører bruker som er død og som mangler adresse i PDL. Kan ikke sende brev.")
                 return null
             }
-            error("Distrubering av journalpost $journalpostId feilet: ${response.status} ${response.bodyAsText()}")
+            error("Distribuering av journalpost $journalpostId feilet: ${response.status} ${response.bodyAsText()}")
         }
 
         val bestillingsId = response.body<DistribuerJournalpostResponse>().bestillingsId

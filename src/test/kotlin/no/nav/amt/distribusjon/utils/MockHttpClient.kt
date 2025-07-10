@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.utils
 
+import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -41,6 +42,48 @@ import no.nav.amt.distribusjon.veilarboppfolging.ManuellStatusRequest
 import no.nav.amt.distribusjon.veilarboppfolging.ManuellV2Response
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import java.util.UUID
+
+fun <T> createMockHttpClient(
+    expectedUrl: String,
+    responseBody: T?,
+    statusCode: HttpStatusCode = HttpStatusCode.OK,
+    requiresAuthHeader: Boolean = true,
+) = HttpClient(MockEngine) {
+    install(ContentNegotiation) {
+        jackson { applicationConfig() }
+    }
+    engine {
+        addHandler { request ->
+            request.url.toString() shouldBe expectedUrl
+            if (requiresAuthHeader) request.headers[HttpHeaders.Authorization] shouldBe "Bearer XYZ"
+
+            when (responseBody) {
+                null -> {
+                    respond(
+                        content = "",
+                        status = statusCode,
+                    )
+                }
+
+                is ByteArray -> {
+                    respond(
+                        content = responseBody,
+                        status = statusCode,
+                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.OctetStream.toString()),
+                    )
+                }
+
+                else -> {
+                    respond(
+                        content = responseBody.let { objectMapper.writeValueAsString(it) },
+                        status = statusCode,
+                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+                    )
+                }
+            }
+        }
+    }
+}
 
 fun mockHttpClient(defaultResponse: Any? = null): HttpClient {
     val mockEngine = MockEngine {

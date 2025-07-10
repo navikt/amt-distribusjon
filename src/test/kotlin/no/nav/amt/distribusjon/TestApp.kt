@@ -3,9 +3,12 @@ package no.nav.amt.distribusjon
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.jackson.jackson
 import io.ktor.server.testing.testApplication
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.application.isReadyKey
+import no.nav.amt.distribusjon.application.plugins.applicationConfig
 import no.nav.amt.distribusjon.application.plugins.configureAuthentication
 import no.nav.amt.distribusjon.application.plugins.configureRouting
 import no.nav.amt.distribusjon.application.plugins.configureSerialization
@@ -141,7 +144,7 @@ class TestApp {
 
 private val testApp = TestApp()
 
-fun integrationTest(testBlock: suspend (app: TestApp, client: HttpClient) -> Unit) = testApplication {
+fun integrationTest(appShouldBeReady: Boolean = true, testBlock: suspend (app: TestApp, client: HttpClient) -> Unit) = testApplication {
     application {
         configureSerialization()
 
@@ -149,10 +152,17 @@ fun integrationTest(testBlock: suspend (app: TestApp, client: HttpClient) -> Uni
         configureRouting(testApp.digitalBrukerService, testApp.tiltakshendelseService)
         // configureMonitoring()
 
-        attributes.put(isReadyKey, true)
+        if (appShouldBeReady) attributes.put(isReadyKey, true)
     }
 
-    testBlock(testApp, client)
+    testBlock(
+        testApp,
+        createClient {
+            install(ContentNegotiation) {
+                jackson { applicationConfig() }
+            }
+        },
+    )
 }
 
 fun haveOutboxRecord(
