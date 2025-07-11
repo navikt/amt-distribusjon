@@ -18,8 +18,8 @@ import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.produceStringString
 import no.nav.amt.lib.testing.AsyncUtils
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.junit.Assert.assertThrows
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 class JournalforingServiceTest {

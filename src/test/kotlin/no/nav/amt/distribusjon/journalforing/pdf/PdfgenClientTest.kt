@@ -13,7 +13,7 @@ import no.nav.amt.distribusjon.utils.data.Hendelsesdata.ansvarligNavVeileder
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata.deltaker
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
 

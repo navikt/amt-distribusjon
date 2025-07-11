@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 group = "no.nav.amt-distribusjon"
 version = "1.0-SNAPSHOT"
 
@@ -18,7 +16,6 @@ repositories {
     maven { setUrl("https://github-package-registry-mirror.gc.nav.no/cached/maven-release") }
 }
 
-val kotlinVersion = "2.1.21"
 val ktorVersion = "3.2.1"
 val logbackVersion = "1.5.18"
 val prometeusVersion = "1.15.1"
@@ -80,7 +77,7 @@ dependencies {
     testImplementation("no.nav.amt.lib:testing:$amtLibVersion")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-json-jvm:$kotestVersion")
     testImplementation("com.nimbusds:nimbus-jose-jwt:$nimbusVersion")
@@ -88,6 +85,9 @@ dependencies {
 
 kotlin {
     jvmToolchain(21)
+    compilerOptions {
+        freeCompilerArgs.add("-Xjsr305=strict")
+    }
 }
 
 application {
@@ -97,7 +97,12 @@ application {
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
+ktlint {
+    version = ktlintVersion
+}
+
 tasks.test {
+    useJUnitPlatform()
     jvmArgs(
         "-Xshare:off",
         "-XX:+EnableDynamicAgentLoading",
@@ -112,10 +117,6 @@ tasks.jar {
     }
 }
 
-tasks.withType<ShadowJar> {
+tasks.shadowJar {
     mergeServiceFiles()
-}
-
-configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
-    version.set(ktlintVersion)
 }

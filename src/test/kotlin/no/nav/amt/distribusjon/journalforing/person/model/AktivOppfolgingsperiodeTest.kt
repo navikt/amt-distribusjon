@@ -2,7 +2,7 @@ package no.nav.amt.distribusjon.journalforing.person.model
 
 import io.kotest.matchers.shouldBe
 import no.nav.amt.distribusjon.utils.data.Persondata
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 class AktivOppfolgingsperiodeTest {
