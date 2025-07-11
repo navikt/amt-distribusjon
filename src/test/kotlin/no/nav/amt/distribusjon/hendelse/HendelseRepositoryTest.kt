@@ -8,9 +8,9 @@ import no.nav.amt.distribusjon.utils.TestRepository
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.lib.testing.SingletonPostgres16Container
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -20,7 +20,7 @@ class HendelseRepositoryTest {
         lateinit var journalforingstatusRepository: JournalforingstatusRepository
 
         @JvmStatic
-        @BeforeClass
+        @BeforeAll
         fun setup() {
             SingletonPostgres16Container
             hendelseRepository = HendelseRepository()
@@ -28,7 +28,7 @@ class HendelseRepositoryTest {
         }
     }
 
-    @Before
+    @BeforeEach
     fun cleanDatabase() {
         TestRepository.cleanDatabase()
     }

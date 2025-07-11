@@ -5,7 +5,7 @@ import no.nav.amt.distribusjon.journalforing.pdf.visningsnavn
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class VarselTeksterTest {
     @Test

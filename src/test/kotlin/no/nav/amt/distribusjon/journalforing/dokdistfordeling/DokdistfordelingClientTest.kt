@@ -10,7 +10,7 @@ import no.nav.amt.distribusjon.testEnvironment
 import no.nav.amt.distribusjon.utils.ClientTestBase
 import no.nav.amt.distribusjon.utils.createMockHttpClient
 import no.nav.amt.distribusjon.utils.withLogCapture
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.UUID
 
 class DokdistfordelingClientTest : ClientTestBase() {

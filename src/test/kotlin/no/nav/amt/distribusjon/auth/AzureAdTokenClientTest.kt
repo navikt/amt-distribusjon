@@ -14,7 +14,7 @@ import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.runBlocking
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class AzureAdTokenClientTest {
     @Test

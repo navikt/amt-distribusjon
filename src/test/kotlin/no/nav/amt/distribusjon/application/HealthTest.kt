@@ -5,7 +5,7 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import no.nav.amt.distribusjon.integrationTest
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class HealthTest {
     @Test

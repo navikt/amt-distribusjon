@@ -25,7 +25,7 @@ import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.testing.AsyncUtils
 import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.UUID

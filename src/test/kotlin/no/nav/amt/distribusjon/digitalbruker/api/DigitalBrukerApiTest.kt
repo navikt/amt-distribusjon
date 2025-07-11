@@ -11,7 +11,7 @@ import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.MockResponseHandler
 import no.nav.amt.distribusjon.utils.data.randomIdent
 import no.nav.amt.distribusjon.utils.postRequest
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class DigitalBrukerApiTest {
     @Test
