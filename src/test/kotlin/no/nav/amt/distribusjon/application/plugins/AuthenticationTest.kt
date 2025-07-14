@@ -12,7 +12,7 @@ import no.nav.amt.distribusjon.digitalbruker.api.DigitalBrukerRequest
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.data.randomIdent
 import no.nav.amt.distribusjon.utils.generateJWT
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class AuthenticationTest {
     @Test

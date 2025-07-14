@@ -10,8 +10,8 @@ import no.nav.amt.distribusjon.utils.data.Varselsdata
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.distribusjon.varsel.model.innbyggerDeltakerUrl
 import no.nav.amt.lib.testing.shouldBeCloseTo
-import org.junit.Assert.assertThrows
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Test
 import java.util.UUID
 
 class VarselServiceTest {

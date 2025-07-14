@@ -10,7 +10,7 @@ import no.nav.amt.distribusjon.utils.formatDate
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import no.nav.amt.lib.models.hendelse.InnholdDto
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 

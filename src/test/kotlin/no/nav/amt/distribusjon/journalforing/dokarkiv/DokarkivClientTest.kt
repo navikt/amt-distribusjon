@@ -13,7 +13,7 @@ import no.nav.amt.distribusjon.utils.data.Hendelsesdata.tiltak
 import no.nav.amt.distribusjon.utils.withLogCapture
 import no.nav.amt.distribusjon.veilarboppfolging.Sak
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClientTest.Companion.oppfolgingsperiodeId
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.UUID
 
 class DokarkivClientTest : ClientTestBase() {

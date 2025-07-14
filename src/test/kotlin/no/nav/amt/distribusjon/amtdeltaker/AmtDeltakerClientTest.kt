@@ -9,7 +9,7 @@ import no.nav.amt.distribusjon.testEnvironment
 import no.nav.amt.distribusjon.utils.ClientTestBase
 import no.nav.amt.distribusjon.utils.createMockHttpClient
 import no.nav.amt.distribusjon.utils.data.DeltakerData.lagDeltaker
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.UUID
 
 class AmtDeltakerClientTest : ClientTestBase() {

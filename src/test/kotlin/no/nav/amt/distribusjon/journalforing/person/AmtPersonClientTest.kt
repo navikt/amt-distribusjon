@@ -9,7 +9,7 @@ import no.nav.amt.distribusjon.testEnvironment
 import no.nav.amt.distribusjon.utils.ClientTestBase
 import no.nav.amt.distribusjon.utils.createMockHttpClient
 import no.nav.amt.distribusjon.utils.data.Persondata.lagNavBruker
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class AmtPersonClientTest : ClientTestBase() {
     @Test
