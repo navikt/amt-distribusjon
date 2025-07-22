@@ -7,7 +7,6 @@ import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
 import no.nav.amt.lib.utils.objectMapper
 import no.nav.tms.varsel.action.EksternKanal
-import no.nav.tms.varsel.action.EksternVarslingBestilling
 import no.nav.tms.varsel.action.Produsent
 import no.nav.tms.varsel.action.Sensitivitet
 import no.nav.tms.varsel.action.Tekst
@@ -157,14 +156,16 @@ data class Varsel(
         produsent = produsent()
 
         if (erEksterntVarsel) {
-            eksternVarsling = EksternVarslingBestilling(prefererteKanaler = getPrefererteKanaler(varseltype))
+            eksternVarsling {
+                preferertKanal = getPreferertKanal(varseltype)
+            }
         }
     }
 
-    private fun getPrefererteKanaler(varseltype: Varseltype): List<EksternKanal> = if (varseltype == Varseltype.Oppgave) {
-        listOf(EksternKanal.SMS)
+    private fun getPreferertKanal(varseltype: Varseltype): EksternKanal = if (varseltype == Varseltype.Oppgave) {
+        EksternKanal.SMS
     } else {
-        listOf(EksternKanal.EPOST)
+        EksternKanal.EPOST
     }
 
     private fun produsent() = Produsent(
