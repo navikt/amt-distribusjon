@@ -16,5 +16,9 @@ val testEnvironment = Environment(
 
 fun getAzureJwkKeysUrl(): String {
     val path = "src/test/resources/jwkset.json"
-    return Paths.get(path).toUri().toURL().toString()
+    return Paths
+        .get(path)
+        .toUri()
+        .toURL()
+        .toString()
 }

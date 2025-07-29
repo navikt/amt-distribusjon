@@ -11,15 +11,12 @@ data class Journalforingstatus(
     val kanIkkeDistribueres: Boolean?,
     val kanIkkeJournalfores: Boolean?,
 ) {
-    fun erJournalfort(): Boolean {
-        return journalpostId != null || kanIkkeJournalfores == true
-    }
+    fun erJournalfort(): Boolean = journalpostId != null || kanIkkeJournalfores == true
 
-    fun erDistribuert(distribusjonskanal: Distribusjonskanal, erUnderManuellOppfolging: Boolean): Boolean {
-        return if (DigitalBrukerService.skalDistribueresDigitalt(distribusjonskanal, erUnderManuellOppfolging)) {
+    fun erDistribuert(distribusjonskanal: Distribusjonskanal, erUnderManuellOppfolging: Boolean): Boolean =
+        if (DigitalBrukerService.skalDistribueresDigitalt(distribusjonskanal, erUnderManuellOppfolging)) {
             true
         } else {
             bestillingsId != null || kanIkkeDistribueres == true
         }
-    }
 }

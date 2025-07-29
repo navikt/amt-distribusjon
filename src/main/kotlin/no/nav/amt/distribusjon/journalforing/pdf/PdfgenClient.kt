@@ -11,7 +11,10 @@ import io.ktor.http.isSuccess
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 
-class PdfgenClient(private val httpClient: HttpClient, private val environment: Environment) {
+class PdfgenClient(
+    private val httpClient: HttpClient,
+    private val environment: Environment,
+) {
     private val url = environment.amtPdfgenUrl + "/api/v1/genpdf/amt"
 
     suspend fun genererHovedvedtak(hovedvedtakPdfDto: HovedvedtakPdfDto): ByteArray {

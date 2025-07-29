@@ -29,7 +29,8 @@ data class Oppfolgingsperiode(
         return !(
             now.isBefore(
                 startdato.toLocalDate(),
-            ) || (sluttdato != null && now.isAfter(sluttdato.toLocalDate().plusDays(antallDagerGracePeriod)))
+            ) ||
+                (sluttdato != null && now.isAfter(sluttdato.toLocalDate().plusDays(antallDagerGracePeriod)))
         )
     }
 }
