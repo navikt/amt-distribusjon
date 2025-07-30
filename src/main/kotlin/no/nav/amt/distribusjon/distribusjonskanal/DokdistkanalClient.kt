@@ -22,7 +22,8 @@ class DokdistkanalClient(
     private val httpClient: HttpClient,
     private val azureAdTokenClient: AzureAdTokenClient,
     environment: Environment,
-    private val distribusjonskanalCache: Cache<String, Distribusjonskanal> = Caffeine.newBuilder()
+    private val distribusjonskanalCache: Cache<String, Distribusjonskanal> = Caffeine
+        .newBuilder()
         .expireAfterWrite(Duration.ofMinutes(60))
         .build(),
 ) {

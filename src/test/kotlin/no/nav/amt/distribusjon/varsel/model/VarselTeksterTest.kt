@@ -15,7 +15,8 @@ class VarselTeksterTest {
         oppgaveTekst(hendelse) shouldBe String.format(
             OPPGAVE_TEKST,
             hendelse.deltaker.deltakerliste.tiltak.navn,
-            hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+            hendelse.deltaker.deltakerliste.arrangor
+                .visningsnavn(),
         )
     }
 
@@ -33,7 +34,8 @@ class VarselTeksterTest {
         oppgaveTekst(hendelse) shouldBe String.format(
             OPPGAVE_FELLES_OPPSTART_TEKST,
             hendelse.deltaker.deltakerliste.tiltak.navn,
-            hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+            hendelse.deltaker.deltakerliste.arrangor
+                .visningsnavn(),
         )
     }
 
@@ -44,7 +46,8 @@ class VarselTeksterTest {
         beskjedTekst(hendelse) shouldBe String.format(
             BESKJED_TEKST,
             hendelse.deltaker.deltakerliste.tiltak.navn,
-            hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+            hendelse.deltaker.deltakerliste.arrangor
+                .visningsnavn(),
         )
     }
 
@@ -62,13 +65,15 @@ class VarselTeksterTest {
         beskjedTekst(hendelse) shouldBe String.format(
             SOKT_INN_FELLES_OPPSTART_TEKST,
             hendelse.deltaker.deltakerliste.tiltak.navn,
-            hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+            hendelse.deltaker.deltakerliste.arrangor
+                .visningsnavn(),
         )
 
         beskjedTekst(hendelse) shouldBe String.format(
             SOKT_INN_FELLES_OPPSTART_TEKST,
             hendelse.deltaker.deltakerliste.tiltak.navn,
-            hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+            hendelse.deltaker.deltakerliste.arrangor
+                .visningsnavn(),
         )
     }
 
@@ -95,13 +100,15 @@ class VarselTeksterTest {
         beskjedTekst(hendelse) shouldBe String.format(
             BESKJED_TEKST,
             hendelse.deltaker.deltakerliste.tiltak.navn,
-            hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+            hendelse.deltaker.deltakerliste.arrangor
+                .visningsnavn(),
         )
 
         beskjedTekst(hendelse2) shouldBe String.format(
             BESKJED_TEKST,
             hendelse.deltaker.deltakerliste.tiltak.navn,
-            hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+            hendelse.deltaker.deltakerliste.arrangor
+                .visningsnavn(),
         )
     }
 
@@ -119,7 +126,8 @@ class VarselTeksterTest {
         beskjedTekst(hendelse) shouldBe String.format(
             MELDT_PA_DIREKTE_TEKST,
             hendelse.deltaker.deltakerliste.tiltak.navn,
-            hendelse.deltaker.deltakerliste.arrangor.visningsnavn(),
+            hendelse.deltaker.deltakerliste.arrangor
+                .visningsnavn(),
         )
     }
 }
