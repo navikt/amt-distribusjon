@@ -482,6 +482,13 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
         begrunnelseFraArrangor = begrunnelseFraArrangor,
     )
 
+    is Forslag.EndreAvslutning -> ForslagDto.EndreAvslutning(
+        aarsak = endring.aarsak?.visningsnavn(),
+        harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
+        harFullfort = endring.harFullfort?.let { if (it) "Ja" else "Nei" },
+        begrunnelseFraArrangor = begrunnelseFraArrangor,
+    )
+
     is Forslag.Sluttarsak -> throw IllegalArgumentException("Skal ikke opprette endringsvedtak ved endring av sluttårsak")
 }
 

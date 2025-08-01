@@ -55,6 +55,13 @@ sealed interface ForslagDto {
         val begrunnelseFraArrangor: String?,
     ) : ForslagDto
 
+    data class EndreAvslutning(
+        val aarsak: String?,
+        val harDeltatt: String?,
+        val harFullfort: String?,
+        val begrunnelseFraArrangor: String?,
+    ) : ForslagDto
+
     data class FjernOppstartsdato(
         val begrunnelseFraArrangor: String?,
     ) : ForslagDto
