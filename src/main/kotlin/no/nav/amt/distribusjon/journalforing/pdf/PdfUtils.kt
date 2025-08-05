@@ -310,7 +310,7 @@ private fun tilEndringDto(
                 hendelseType.begrunnelseFraArrangor,
             )
         },
-        tittel = "Endret avslutning",
+        tittel = "Endre avslutning",
         harFullfort = if (hendelseType.harFullfort) "Ja" else "Nei",
     )
 
