@@ -29,6 +29,7 @@ data class Hendelse(
         is HendelseType.LeggTilOppstartsdato,
         is HendelseType.FjernOppstartsdato,
         is HendelseType.Avslag,
+        is HendelseType.EndreAvslutning,
         -> true
 
         is HendelseType.InnbyggerGodkjennUtkast,
@@ -66,6 +67,7 @@ data class Hendelse(
         is HendelseType.SettPaaVenteliste,
         is HendelseType.TildelPlass,
         is HendelseType.Avslag,
+        is HendelseType.EndreAvslutning,
         -> null
         is HendelseType.ReaktiverDeltakelse,
         -> payload.begrunnelseFraNav
@@ -73,6 +75,7 @@ data class Hendelse(
 
     fun tillattEndringUtenAktivOppfolgingsperiode() = when (payload) {
         is HendelseType.AvsluttDeltakelse,
+        is HendelseType.EndreAvslutning,
         is HendelseType.AvbrytDeltakelse,
         is HendelseType.EndreSluttarsak,
         is HendelseType.EndreSluttdato,
