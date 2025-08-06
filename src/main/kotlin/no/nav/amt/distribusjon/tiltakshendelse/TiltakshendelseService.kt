@@ -155,5 +155,6 @@ fun getForslagHendelseTekst(forslag: Forslag): String {
         is Forslag.Sluttdato -> "$forslagtekst Sluttdato"
         is Forslag.Sluttarsak -> "$forslagtekst Sluttårsak"
         is Forslag.FjernOppstartsdato -> "$forslagtekst Fjern oppstartsdato"
+        is Forslag.EndreAvslutning -> "$forslagtekst Endre avslutning"
     }
 }

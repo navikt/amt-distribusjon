@@ -94,6 +94,14 @@ sealed interface EndringDto {
         override val tittel: String,
     ) : EndringDto
 
+    data class EndreAvslutning(
+        val aarsak: String?,
+        val begrunnelseFraNav: String?,
+        val forslagFraArrangor: ForslagDto?,
+        val harFullfort: String,
+        override val tittel: String,
+    ) : EndringDto
+
     data class AvbrytDeltakelse(
         val aarsak: String?,
         val begrunnelseFraNav: String?,

@@ -301,6 +301,19 @@ private fun tilEndringDto(
         harFullfort = if (erFellesOppstart) "Ja" else null,
     )
 
+    is HendelseType.EndreAvslutning -> EndringDto.EndreAvslutning(
+        aarsak = hendelseType.aarsak?.visningsnavn(),
+        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+        forslagFraArrangor = hendelseType.endringFraForslag?.let {
+            endringFraForslagToForslagDto(
+                it,
+                hendelseType.begrunnelseFraArrangor,
+            )
+        },
+        tittel = "Avslutning endret",
+        harFullfort = if (hendelseType.harFullfort) "Ja" else "Nei",
+    )
+
     is HendelseType.AvbrytDeltakelse -> EndringDto.AvbrytDeltakelse(
         aarsak = hendelseType.aarsak?.visningsnavn(),
         begrunnelseFraNav = hendelseType.begrunnelseFraNav,
@@ -479,6 +492,13 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
     }
 
     is Forslag.FjernOppstartsdato -> ForslagDto.FjernOppstartsdato(
+        begrunnelseFraArrangor = begrunnelseFraArrangor,
+    )
+
+    is Forslag.EndreAvslutning -> ForslagDto.EndreAvslutning(
+        aarsak = endring.aarsak?.visningsnavn(),
+        harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
+        harFullfort = endring.harFullfort?.let { if (it) "Ja" else "Nei" },
         begrunnelseFraArrangor = begrunnelseFraArrangor,
     )
 
