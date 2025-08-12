@@ -105,5 +105,5 @@ spec:
       value: api://dev-fss.teamdokumenthandtering.dokdistkanal/.default
     - name: DOKDISTFORDELING_URL
       value: https://dokdistfordeling.dev-fss-pub.nais.io
-    - name: SAF_SCOPE
-      value: api://dev-fss.teamdokumenthandtering.saf/.default
+    - name: DOKDISTFORDELING_SCOPE
+      value: api://dev-fss.teamdokumenthandtering.dokdistfordeling/.default
