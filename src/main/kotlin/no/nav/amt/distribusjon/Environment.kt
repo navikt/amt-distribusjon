@@ -21,7 +21,7 @@ data class Environment(
     val dokdistkanalUrl: String = getEnvVar(DOKDISTKANAL_URL_KEY),
     val dokdistkanalScope: String = getEnvVar(DOKDISTKANAL_SCOPE_KEY),
     val dokdistfordelingUrl: String = getEnvVar(DOKDISTFORDELING_URL_KEY),
-    val safScope: String = getEnvVar(SAF_SCOPE_KEY),
+    val dokdistfordelingScope: String = getEnvVar(DOKDISTFORDELING_SCOPE_KEY),
     val leaderElectorUrl: String = getEnvVar(LEADER_ELECTOR_URL),
 ) {
     companion object {
@@ -45,7 +45,7 @@ data class Environment(
         const val DOKDISTKANAL_URL_KEY = "DOKDISTKANAL_URL"
         const val DOKDISTKANAL_SCOPE_KEY = "DOKDISTKANAL_SCOPE"
         const val DOKDISTFORDELING_URL_KEY = "DOKDISTFORDELING_URL"
-        const val SAF_SCOPE_KEY = "SAF_SCOPE"
+        const val DOKDISTFORDELING_SCOPE_KEY = "DOKDISTFORDELING_SCOPE"
         const val SAF_TEMA = "OPP"
 
         const val LEADER_ELECTOR_URL = "ELECTOR_GET_URL"

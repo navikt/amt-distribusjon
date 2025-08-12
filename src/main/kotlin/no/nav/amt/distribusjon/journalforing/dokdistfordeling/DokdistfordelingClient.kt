@@ -22,7 +22,7 @@ class DokdistfordelingClient(
     private val azureAdTokenClient: AzureAdTokenClient,
     environment: Environment,
 ) {
-    private val scope = environment.safScope
+    private val scope = environment.dokdistfordelingScope
     private val url = environment.dokdistfordelingUrl
     private val navCallId = Environment.appName
     private val log = LoggerFactory.getLogger(javaClass)
