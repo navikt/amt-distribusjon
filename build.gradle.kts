@@ -24,14 +24,14 @@ val jacksonVersion = "2.19.2"
 val logstashEncoderVersion = "8.1"
 val commonVersion = "3.2025.06.23_14.50-3af3985d8555"
 val kotestVersion = "5.9.1"
-val flywayVersion = "11.11.0"
+val flywayVersion = "11.11.1"
 val hikariVersion = "7.0.1"
 val kotliqueryVersion = "1.9.1"
 val postgresVersion = "42.7.7"
 val caffeineVersion = "3.2.2"
 val unleashVersion = "11.1.0"
-val nimbusVersion = "10.4.1"
-val amtLibVersion = "1.2025.08.12_09.57-61d1b79c30eb"
+val nimbusVersion = "10.4.2"
+val amtLibVersion = "1.2025.08.12_21.02-f7ceb543f90f"
 
 dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
