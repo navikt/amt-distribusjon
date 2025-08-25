@@ -7,7 +7,7 @@ plugins {
     kotlin("jvm") version kotlinVersion
     id("io.ktor.plugin") version "3.2.3"
     id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
-    id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
+    id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
     id("com.gradleup.shadow") version "9.0.2"
 }
 
@@ -22,16 +22,16 @@ val prometeusVersion = "1.15.3"
 val ktlintVersion = "1.6.0"
 val jacksonVersion = "2.19.2"
 val logstashEncoderVersion = "8.1"
-val commonVersion = "3.2025.06.23_14.50-3af3985d8555"
+val commonVersion = "3.2025.08.18_11.44-04fe318bd185"
 val kotestVersion = "5.9.1"
 val flywayVersion = "11.11.2"
-val hikariVersion = "7.0.1"
+val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
 val postgresVersion = "42.7.7"
 val caffeineVersion = "3.2.2"
 val unleashVersion = "11.1.0"
 val nimbusVersion = "10.4.2"
-val amtLibVersion = "1.2025.08.12_21.02-f7ceb543f90f"
+val amtLibVersion = "1.2025.08.18_15.37-cebd08454799"
 
 dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
