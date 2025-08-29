@@ -1,4 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.transformers.PreserveFirstFoundResourceTransformer
 
 group = "no.nav.amt-distribusjon"
 version = "1.0-SNAPSHOT"
@@ -10,7 +9,8 @@ plugins {
     id("io.ktor.plugin") version "3.2.3"
     id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
     id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
-    id("com.gradleup.shadow") version "9.0.2"
+    application
+    distribution
 }
 
 repositories {
@@ -116,13 +116,5 @@ tasks.jar {
         attributes(
             "Main-Class" to "no.nav.amt.distribusjon.ApplicationKt",
         )
-    }
-}
-
-tasks.shadowJar {
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    mergeServiceFiles()
-    transform<PreserveFirstFoundResourceTransformer> {
-        resources.add("logback.xml")
     }
 }
