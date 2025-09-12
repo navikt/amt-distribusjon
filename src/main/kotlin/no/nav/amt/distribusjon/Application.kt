@@ -7,7 +7,10 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.log
+import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import kotlinx.coroutines.runBlocking
@@ -42,7 +45,6 @@ import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import no.nav.amt.lib.kafka.Producer
-import no.nav.amt.lib.kafka.ShutdownHandlers
 import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.outbox.OutboxProcessor
@@ -52,46 +54,23 @@ import no.nav.amt.lib.utils.job.JobManager
 import no.nav.amt.lib.utils.leaderelection.Leader
 import no.nav.amt.lib.utils.leaderelection.LeaderElectionClient
 import no.nav.amt.lib.utils.leaderelection.LeaderProvider
-import org.slf4j.LoggerFactory
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 
 fun main() {
-    val log = LoggerFactory.getLogger("shutdownlogger")
-
-    lateinit var shutdownHandlers: ShutdownHandlers
-    val server = embeddedServer(Netty, port = 8080) {
-        shutdownHandlers = module()
-    }
-
-    Runtime.getRuntime().addShutdownHook(
-        Thread {
-            log.info("Received shutdown signal")
-            server.application.attributes.put(isReadyKey, false)
-
-            runBlocking {
-                log.info("Shutting down consumers")
-                shutdownHandlers.shutdownConsumers()
-
-                log.info("Shutting down server")
-                server.stop(
-                    shutdownGracePeriod = 5,
-                    shutdownTimeout = 20,
-                    timeUnit = TimeUnit.SECONDS,
-                )
-                log.info("Shut down server completed")
-
-                log.info("Shutting down database")
-                Database.close()
-
-                log.info("Shutting down producers")
-                shutdownHandlers.shutdownProducers()
+    embeddedServer(
+        Netty,
+        configure = {
+            connector {
+                port = 8080
             }
+            shutdownGracePeriod = 5.seconds.inWholeMilliseconds
+            shutdownTimeout = 20.seconds.inWholeMilliseconds
         },
-    )
-    server.start(wait = true)
+        module = Application::module,
+    ).start(wait = true)
 }
 
-fun Application.module(): ShutdownHandlers {
+fun Application.module() {
     configureSerialization()
 
     val environment = Environment()
@@ -178,25 +157,30 @@ fun Application.module(): ShutdownHandlers {
 
     attributes.put(isReadyKey, true)
 
-    fun shutdownKafkaProducers() {
+    monitor.subscribe(ApplicationStopping) {
+        runBlocking {
+            log.info("Shutting down consumers")
+            consumers.forEach {
+                runCatching {
+                    it.close()
+                }.onFailure { throwable ->
+                    log.error("Error shutting down consumer", throwable)
+                }
+            }
+        }
+    }
+
+    monitor.subscribe(ApplicationStopped) {
+        log.info("Shutting down database")
+        Database.close()
+
+        log.info("Shutting down producers")
         runCatching {
             kafkaProducer.close()
         }.onFailure { throwable ->
             log.error("Error shutting down producers", throwable)
         }
     }
-
-    suspend fun shutdownKafkaConsumers() {
-        consumers.forEach {
-            runCatching {
-                it.close()
-            }.onFailure { throwable ->
-                log.error("Error shutting down consumer", throwable)
-            }
-        }
-    }
-
-    return ShutdownHandlers(shutdownProducers = { shutdownKafkaProducers() }, shutdownConsumers = { shutdownKafkaConsumers() })
 }
 
 fun Application.isReady() = attributes.getOrNull(isReadyKey) == true
