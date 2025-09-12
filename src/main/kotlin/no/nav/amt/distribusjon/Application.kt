@@ -7,6 +7,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopPreparing
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.log
@@ -157,9 +158,11 @@ fun Application.module() {
 
     attributes.put(isReadyKey, true)
 
-    monitor.subscribe(ApplicationStopping) {
+    monitor.subscribe(ApplicationStopPreparing) {
         attributes.put(isReadyKey, false)
+    }
 
+    monitor.subscribe(ApplicationStopping) {
         runBlocking {
             log.info("Shutting down consumers")
             consumers.forEach {
