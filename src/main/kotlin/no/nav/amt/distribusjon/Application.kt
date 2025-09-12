@@ -42,6 +42,7 @@ import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import no.nav.amt.lib.kafka.Producer
+import no.nav.amt.lib.kafka.ShutdownHandlers
 import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.outbox.OutboxProcessor
@@ -52,13 +53,16 @@ import no.nav.amt.lib.utils.leaderelection.Leader
 import no.nav.amt.lib.utils.leaderelection.LeaderElectionClient
 import no.nav.amt.lib.utils.leaderelection.LeaderProvider
 import org.slf4j.LoggerFactory
+import java.util.concurrent.TimeUnit
 
 fun main() {
     val log = LoggerFactory.getLogger("shutdownlogger")
-    var shutdownConsumers: suspend () -> Unit = {}
+
+    lateinit var shutdownHandlers: ShutdownHandlers
     val server = embeddedServer(Netty, port = 8080) {
-        shutdownConsumers = module()
+        shutdownHandlers = module()
     }
+
     Runtime.getRuntime().addShutdownHook(
         Thread {
             log.info("Received shutdown signal")
@@ -66,21 +70,28 @@ fun main() {
 
             runBlocking {
                 log.info("Shutting down consumers")
-                shutdownConsumers()
+                shutdownHandlers.shutdownConsumers()
+
+                log.info("Shutting down server")
+                server.stop(
+                    shutdownGracePeriod = 5,
+                    shutdownTimeout = 20,
+                    timeUnit = TimeUnit.SECONDS,
+                )
+                log.info("Shut down server completed")
 
                 log.info("Shutting down database")
                 Database.close()
 
-                log.info("Shutting down server")
-                server.stop(gracePeriodMillis = 5_000, timeoutMillis = 20_000)
-                log.info("Shut down server completed")
+                log.info("Shutting down producers")
+                shutdownHandlers.shutdownProducers()
             }
         },
     )
     server.start(wait = true)
 }
 
-fun Application.module(): suspend () -> Unit {
+fun Application.module(): ShutdownHandlers {
     configureSerialization()
 
     val environment = Environment()
@@ -116,7 +127,11 @@ fun Application.module(): suspend () -> Unit {
 
     val digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
 
-    val kafkaProducer = Producer<String, String>(if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl())
+    val kafkaProducer = Producer<String, String>(
+        kafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
+        addShutdownHook = false,
+    )
+
     val outboxService = OutboxService()
     val outboxProcessor = OutboxProcessor(outboxService, jobManager, kafkaProducer)
 
@@ -163,17 +178,25 @@ fun Application.module(): suspend () -> Unit {
 
     attributes.put(isReadyKey, true)
 
-    suspend fun shutdownConsumers() {
+    fun shutdownKafkaProducers() {
+        runCatching {
+            kafkaProducer.close()
+        }.onFailure { throwable ->
+            log.error("Error shutting down producers", throwable)
+        }
+    }
+
+    suspend fun shutdownKafkaConsumers() {
         consumers.forEach {
-            try {
+            runCatching {
                 it.close()
-            } catch (e: Exception) {
-                log.error("Error shutting down consumer", e)
+            }.onFailure { throwable ->
+                log.error("Error shutting down consumer", throwable)
             }
         }
     }
 
-    return { shutdownConsumers() }
+    return ShutdownHandlers(shutdownProducers = { shutdownKafkaProducers() }, shutdownConsumers = { shutdownKafkaConsumers() })
 }
 
 fun Application.isReady() = attributes.getOrNull(isReadyKey) == true
