@@ -7,7 +7,11 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopPreparing
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.log
+import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import kotlinx.coroutines.runBlocking
@@ -51,36 +55,23 @@ import no.nav.amt.lib.utils.job.JobManager
 import no.nav.amt.lib.utils.leaderelection.Leader
 import no.nav.amt.lib.utils.leaderelection.LeaderElectionClient
 import no.nav.amt.lib.utils.leaderelection.LeaderProvider
-import org.slf4j.LoggerFactory
+import kotlin.time.Duration.Companion.seconds
 
 fun main() {
-    val log = LoggerFactory.getLogger("shutdownlogger")
-    var shutdownConsumers: suspend () -> Unit = {}
-    val server = embeddedServer(Netty, port = 8080) {
-        shutdownConsumers = module()
-    }
-    Runtime.getRuntime().addShutdownHook(
-        Thread {
-            log.info("Received shutdown signal")
-            server.application.attributes.put(isReadyKey, false)
-
-            runBlocking {
-                log.info("Shutting down consumers")
-                shutdownConsumers()
-
-                log.info("Shutting down database")
-                Database.close()
-
-                log.info("Shutting down server")
-                server.stop(gracePeriodMillis = 5_000, timeoutMillis = 20_000)
-                log.info("Shut down server completed")
+    embeddedServer(
+        factory = Netty,
+        configure = {
+            connector {
+                port = 8080
             }
+            shutdownGracePeriod = 5.seconds.inWholeMilliseconds
+            shutdownTimeout = 20.seconds.inWholeMilliseconds
         },
-    )
-    server.start(wait = true)
+        module = Application::module,
+    ).start(wait = true)
 }
 
-fun Application.module(): suspend () -> Unit {
+fun Application.module() {
     configureSerialization()
 
     val environment = Environment()
@@ -116,7 +107,11 @@ fun Application.module(): suspend () -> Unit {
 
     val digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
 
-    val kafkaProducer = Producer<String, String>(if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl())
+    val kafkaProducer = Producer<String, String>(
+        kafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
+        addShutdownHook = false,
+    )
+
     val outboxService = OutboxService()
     val outboxProcessor = OutboxProcessor(outboxService, jobManager, kafkaProducer)
 
@@ -163,17 +158,34 @@ fun Application.module(): suspend () -> Unit {
 
     attributes.put(isReadyKey, true)
 
-    suspend fun shutdownConsumers() {
-        consumers.forEach {
-            try {
-                it.close()
-            } catch (e: Exception) {
-                log.error("Error shutting down consumer", e)
+    monitor.subscribe(ApplicationStopPreparing) {
+        attributes.put(isReadyKey, false)
+    }
+
+    monitor.subscribe(ApplicationStopping) {
+        runBlocking {
+            log.info("Shutting down consumers")
+            consumers.forEach {
+                runCatching {
+                    it.close()
+                }.onFailure { throwable ->
+                    log.error("Error shutting down consumer", throwable)
+                }
             }
         }
     }
 
-    return { shutdownConsumers() }
+    monitor.subscribe(ApplicationStopped) {
+        log.info("Shutting down database")
+        Database.close()
+
+        log.info("Shutting down producers")
+        runCatching {
+            kafkaProducer.close()
+        }.onFailure { throwable ->
+            log.error("Error shutting down producers", throwable)
+        }
+    }
 }
 
 fun Application.isReady() = attributes.getOrNull(isReadyKey) == true
