@@ -108,7 +108,7 @@ fun Application.module() {
     val digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
 
     val kafkaProducer = Producer<String, String>(
-        if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl()
+        if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
     )
 
     val outboxService = OutboxService()
