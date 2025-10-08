@@ -50,7 +50,7 @@ data class Environment(
 
         const val LEADER_ELECTOR_URL = "ELECTOR_GET_URL"
 
-        const val HTTP_CLIENT_TIMEOUT_MS = 10_000
+        const val HTTP_CLIENT_TIMEOUT_MS = 30_000
 
         const val DELTAKER_HENDELSE_TOPIC = "amt.deltaker-hendelse-v1"
         const val MINSIDE_VARSEL_TOPIC = "min-side.aapen-brukervarsel-v1"
