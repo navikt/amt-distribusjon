@@ -120,9 +120,9 @@ class TiltakshendelseRepository {
     fun getByHendelseId(hendelseId: UUID) = Database.query {
         val sql =
             """
-            select * 
-            from tiltakshendelse
-            where :hendelse_id = any(hendelser)
+            SELECT * 
+            FROM tiltakshendelse
+            WHERE hendelser @> ARRAY[:hendelse_id]::uuid[]
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("hendelse_id" to hendelseId))

@@ -148,9 +148,9 @@ class VarselRepository {
     fun getByHendelseId(hendelseId: UUID) = Database.query {
         val sql =
             """
-            select * 
-            from varsel
-            where :hendelse_id = any(hendelser)
+            SELECT *
+            FROM varsel
+            WHERE hendelser @> ARRAY[:hendelse_id]::uuid[]
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("hendelse_id" to hendelseId))
