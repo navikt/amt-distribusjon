@@ -1,7 +1,7 @@
 kind: Application
 apiVersion: nais.io/v1alpha1
 metadata:
-  name: amt-distribusjon
+  name: amt-distribusjon-temp
   namespace: amt
   labels:
     team: amt
@@ -53,7 +53,7 @@ spec:
     - secret: amt-distribusjon-unleash-api-token
   gcp:
     sqlInstances:
-      - name: amt-distribusjon
+      - name: amt-distribusjon-2
         tier: db-f1-micro
         collation: nb_NO.UTF8
         type: POSTGRES_17
