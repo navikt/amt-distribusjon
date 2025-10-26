@@ -3,7 +3,7 @@ group = "no.nav.amt-distribusjon"
 version = "1.0-SNAPSHOT"
 
 plugins {
-    val kotlinVersion = "2.2.20"
+    val kotlinVersion = "2.2.21"
 
     kotlin("jvm") version kotlinVersion
     id("io.ktor.plugin") version "3.3.1"
@@ -26,7 +26,7 @@ val jacksonVersion = "2.20.0"
 val logstashEncoderVersion = "8.1"
 val commonVersion = "3.2025.08.18_11.44-04fe318bd185"
 val kotestVersion = "6.0.4"
-val flywayVersion = "11.14.1"
+val flywayVersion = "11.15.0"
 val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
 val postgresVersion = "42.7.8"
