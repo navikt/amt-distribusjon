@@ -6,7 +6,8 @@ import no.nav.amt.distribusjon.hendelse.model.toModel
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
@@ -91,8 +92,8 @@ object Hendelsesdata {
 
     fun tiltak(
         navn: String = "Tiltaksnavn",
-        tiltakskode: Tiltakstype.Tiltakskode = Tiltakstype.Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
-        arenaKode: Tiltakstype.ArenaKode = tiltakskode.toArenaKode(),
+        tiltakskode: Tiltakskode = Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
+        arenaKode: ArenaKode = tiltakskode.toArenaKode(),
         ledetekst: String = "Beskrivelse av hva tiltaket går ut på",
     ) = HendelseDeltaker.Deltakerliste.Tiltak(navn, arenaKode, ledetekst, tiltakskode)
 }

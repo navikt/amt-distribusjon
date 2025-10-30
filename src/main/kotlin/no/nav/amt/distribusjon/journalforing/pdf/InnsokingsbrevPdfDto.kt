@@ -1,6 +1,6 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.time.LocalDate
 
 data class InnsokingsbrevPdfDto(
@@ -20,7 +20,7 @@ data class InnsokingsbrevPdfDto(
 
     data class DeltakerlisteDto(
         val navn: String,
-        val tiltakskode: Tiltakstype.Tiltakskode,
+        val tiltakskode: Tiltakskode,
         val ledetekst: String?,
         val arrangor: ArrangorDto,
         val startdato: String,

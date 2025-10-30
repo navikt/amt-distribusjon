@@ -3,7 +3,7 @@ package no.nav.amt.distribusjon.tiltakshendelse
 import kotliquery.Row
 import kotliquery.queryOf
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
 import no.nav.amt.lib.utils.database.Database
 import java.util.UUID
 
@@ -17,7 +17,7 @@ class TiltakshendelseRepository {
         personident = row.string("personident"),
         aktiv = row.boolean("aktiv"),
         tekst = row.string("tekst"),
-        tiltakstype = row.string("tiltakstype").let { Tiltakstype.ArenaKode.valueOf(it) },
+        tiltakstype = row.string("tiltakstype").let { ArenaKode.valueOf(it) },
         opprettet = row.localDateTime("created_at"),
     )
 

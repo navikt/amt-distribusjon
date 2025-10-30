@@ -1,6 +1,5 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
-import no.nav.amt.distribusjon.amtdeltaker.Deltakerliste
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.hendelse.model.deltakerAdresseDeles
 import no.nav.amt.distribusjon.hendelse.model.visningsnavn
@@ -12,7 +11,7 @@ import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.arrangor.melding.Vurderingstype
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
@@ -185,7 +184,7 @@ fun lagEndringsvedtakPdfDto(
             forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
             oppstart = deltaker.deltakerliste.oppstartstype,
             klagerett = !(
-                deltaker.deltakerliste.tiltak.tiltakskode == Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING &&
+                deltaker.deltakerliste.tiltak.tiltakskode == Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING &&
                     deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES
             ),
         ),
@@ -222,32 +221,33 @@ private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hend
     .distinctBy { it.payload.javaClass }
 
 private fun skalViseDeltakelsesmengde(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): Boolean =
-    tiltakstype.tiltakskode == Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET ||
-        tiltakstype.tiltakskode == Tiltakstype.Tiltakskode.ARBEIDSFORBEREDENDE_TRENING
+    tiltakstype.tiltakskode == Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET ||
+        tiltakstype.tiltakskode == Tiltakskode.ARBEIDSFORBEREDENDE_TRENING
 
 fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.tiltakskode) {
-    Tiltakstype.Tiltakskode.ARBEIDSFORBEREDENDE_TRENING -> 13
-    Tiltakstype.Tiltakskode.ARBEIDSRETTET_REHABILITERING -> 12
-    Tiltakstype.Tiltakskode.AVKLARING -> 2
-    Tiltakstype.Tiltakskode.DIGITALT_OPPFOLGINGSTILTAK -> 4
-    Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> 7
-    Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> 7
-    Tiltakstype.Tiltakskode.JOBBKLUBB -> 4
-    Tiltakstype.Tiltakskode.OPPFOLGING -> 4
-    Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> 14
+    Tiltakskode.ARBEIDSFORBEREDENDE_TRENING -> 13
+    Tiltakskode.ARBEIDSRETTET_REHABILITERING -> 12
+    Tiltakskode.AVKLARING -> 2
+    Tiltakskode.DIGITALT_OPPFOLGINGSTILTAK -> 4
+    Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> 7
+    Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> 7
+    Tiltakskode.JOBBKLUBB -> 4
+    Tiltakskode.OPPFOLGING -> 4
+    Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> 14
+    else -> throw IllegalArgumentException("Ukjent tiltakstype: ${this.tiltak.tiltakskode}")
 }
 
 fun HendelseDeltaker.Deltakerliste.tittelVisningsnavn() = when (this.tiltak.tiltakskode) {
-    Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> "Varig tilrettelagt arbeid hos ${this.arrangor.visningsnavn()}"
-    Tiltakstype.Tiltakskode.JOBBKLUBB -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
-    Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> "Arbeidsmarkedsopplæring hos ${this.arrangor.visningsnavn()}"
-    Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> "Fag- og yrkesopplæring hos ${this.arrangor.visningsnavn()}"
+    Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> "Varig tilrettelagt arbeid hos ${this.arrangor.visningsnavn()}"
+    Tiltakskode.JOBBKLUBB -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
+    Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> "Arbeidsmarkedsopplæring hos ${this.arrangor.visningsnavn()}"
+    Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> "Fag- og yrkesopplæring hos ${this.arrangor.visningsnavn()}"
     else -> "${this.tiltak.navn} hos ${arrangor.visningsnavn()}"
 }
 
 fun HendelseDeltaker.Deltakerliste.ingressVisningsnavn() = when (this.tiltak.tiltakskode) {
-    Tiltakstype.Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
-    Tiltakstype.Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
+    Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
+    Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
     -> "${this.navn} hos ${arrangor.visningsnavn()}"
 
     else -> tittelVisningsnavn()
@@ -272,7 +272,7 @@ private fun List<InnholdDto>.toVisingstekst() = this.map { innhold ->
 
 private fun tilEndringDto(
     hendelseType: HendelseType,
-    tiltakskode: Tiltakstype.Tiltakskode,
+    tiltakskode: Tiltakskode,
     erFellesOppstart: Boolean,
 ): EndringDto = when (hendelseType) {
     is HendelseType.InnbyggerGodkjennUtkast,
@@ -391,7 +391,7 @@ private fun tilEndringDto(
 
     is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
         innhold = hendelseType.innhold.map { it.visningsnavn() },
-        innholdBeskrivelse = if (tiltakskode == Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET) {
+        innholdBeskrivelse = if (tiltakskode == Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET) {
             hendelseType.innhold.firstOrNull { it.innholdskode == "annet" }?.beskrivelse
         } else {
             null

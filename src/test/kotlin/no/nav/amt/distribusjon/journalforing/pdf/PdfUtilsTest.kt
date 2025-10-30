@@ -8,7 +8,7 @@ import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.formatDate
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.InnholdDto
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -95,7 +95,7 @@ class PdfUtilsTest {
         val deltaker =
             Hendelsesdata.deltaker(
                 deltakerliste = Hendelsesdata.deltakerliste(
-                    tiltak = Hendelsesdata.tiltak(tiltakskode = Tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET),
+                    tiltak = Hendelsesdata.tiltak(tiltakskode = Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET),
                 ),
             )
         val navBruker = Persondata.lagNavBruker()

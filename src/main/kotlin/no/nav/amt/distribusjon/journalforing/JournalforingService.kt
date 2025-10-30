@@ -18,7 +18,7 @@ import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.model.DokumentType
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
@@ -465,7 +465,7 @@ private fun getAnsvarlig(nyesteHendelse: Hendelse, ikkeJournalforteHendelser: Li
 }
 
 private fun getJournalpostNavn(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak, dokumentType: DokumentType): String {
-    val tiltaknavn = if (tiltakstype.tiltakskode == Tiltakstype.Tiltakskode.JOBBKLUBB) "Jobbsøkerkurs" else tiltakstype.navn
+    val tiltaknavn = if (tiltakstype.tiltakskode == Tiltakskode.JOBBKLUBB) "Jobbsøkerkurs" else tiltakstype.navn
     return when (dokumentType) {
         DokumentType.HOVEDVEDTAK -> "Vedtak - $tiltaknavn"
         DokumentType.ENDRINGSVEDTAK -> "Endringsvedtak - $tiltaknavn"

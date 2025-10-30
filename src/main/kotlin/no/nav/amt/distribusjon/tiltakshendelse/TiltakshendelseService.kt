@@ -7,7 +7,7 @@ import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService.Companion.
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
 import no.nav.amt.distribusjon.tiltakshendelse.model.toDto
 import no.nav.amt.lib.models.arrangor.melding.Forslag
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.outbox.OutboxService
 import no.nav.amt.lib.utils.database.Database
@@ -110,7 +110,7 @@ class TiltakshendelseService(
 
 fun Forslag.toHendelse(
     personIdent: String,
-    arenaKode: Tiltakstype.ArenaKode,
+    arenaKode: ArenaKode,
     aktiv: Boolean,
 ) = Tiltakshendelse(
     id = UUID.randomUUID(),

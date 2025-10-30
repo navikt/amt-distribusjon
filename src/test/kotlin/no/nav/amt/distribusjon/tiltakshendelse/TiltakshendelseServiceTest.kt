@@ -13,7 +13,7 @@ import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.junit.jupiter.api.Test
@@ -88,7 +88,7 @@ class TiltakshendelseServiceTest {
 
         tiltakshendelse.hendelser shouldBe emptyList()
         tiltakshendelse.tekst shouldBe "Forslag: Forleng deltakelse"
-        tiltakshendelse.tiltakstype shouldBe Tiltakstype.ArenaKode.ARBFORB
+        tiltakshendelse.tiltakstype shouldBe ArenaKode.ARBFORB
         tiltakshendelse.aktiv shouldBe true
     }
 
