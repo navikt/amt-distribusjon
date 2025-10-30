@@ -50,7 +50,9 @@ data class Environment(
 
         const val LEADER_ELECTOR_URL = "ELECTOR_GET_URL"
 
-        const val HTTP_CLIENT_TIMEOUT_MS = 60_000
+        const val HTTP_REQUEST_TIMEOUT_MILLIS = 10_000L
+        const val HTTP_CONNECT_TIMEOUT_MILLIS = 5_000L
+        const val HTTP_SOCKET_TIMEOUT_MILLIS = 15_000L
 
         const val DELTAKER_HENDELSE_TOPIC = "amt.deltaker-hendelse-v1"
         const val MINSIDE_VARSEL_TOPIC = "min-side.aapen-brukervarsel-v1"
@@ -61,13 +63,6 @@ data class Environment(
         val cluster: String = getEnvVar("NAIS_CLUSTER_NAME", "lokal")
         val appName: String = getEnvVar("NAIS_APP_NAME", "amt-distribusjon")
         val namespace: String = getEnvVar("NAIS_NAMESPACE", "amt")
-
-        val testContainersReuse = getEnvVar("TESTCONTAINERS_REUSE", "false").toBoolean()
-
-        val unleashUrl = getEnvVar("UNLEASH_SERVER_API_URL")
-        val unleashToken = getEnvVar("UNLEASH_SERVER_API_TOKEN")
-
-        const val VARSEL_TOGGLE = "amt.minside-varsel"
 
         fun isDev(): Boolean = cluster == "dev-gcp"
 

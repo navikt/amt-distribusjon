@@ -2,7 +2,8 @@ package no.nav.amt.distribusjon
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.apache.Apache
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.jackson.jackson
@@ -15,7 +16,9 @@ import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import kotlinx.coroutines.runBlocking
-import no.nav.amt.distribusjon.Environment.Companion.HTTP_CLIENT_TIMEOUT_MS
+import no.nav.amt.distribusjon.Environment.Companion.HTTP_CONNECT_TIMEOUT_MILLIS
+import no.nav.amt.distribusjon.Environment.Companion.HTTP_REQUEST_TIMEOUT_MILLIS
+import no.nav.amt.distribusjon.Environment.Companion.HTTP_SOCKET_TIMEOUT_MILLIS
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.application.isReadyKey
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
@@ -78,14 +81,15 @@ fun Application.module() {
 
     Database.init(environment.databaseConfig)
 
-    val httpClient = HttpClient(Apache) {
-        engine {
-            socketTimeout = HTTP_CLIENT_TIMEOUT_MS
-            connectTimeout = HTTP_CLIENT_TIMEOUT_MS
-            connectionRequestTimeout = HTTP_CLIENT_TIMEOUT_MS * 2
-        }
+    val httpClient = HttpClient(CIO.create()) {
         install(ContentNegotiation) {
             jackson { applicationConfig() }
+        }
+
+        install(HttpTimeout) {
+            requestTimeoutMillis = HTTP_REQUEST_TIMEOUT_MILLIS
+            connectTimeoutMillis = HTTP_CONNECT_TIMEOUT_MILLIS
+            socketTimeoutMillis = HTTP_SOCKET_TIMEOUT_MILLIS
         }
     }
 
