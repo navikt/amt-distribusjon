@@ -33,7 +33,7 @@ val postgresVersion = "42.7.8"
 val caffeineVersion = "3.2.2"
 val unleashVersion = "11.1.1"
 val nimbusVersion = "10.5"
-val amtLibVersion = "1.2025.10.26_15.23-9d033d9a9e22"
+val amtLibVersion = "1.2025.10.30_14.15-30d12ccf06bd"
 
 dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm")

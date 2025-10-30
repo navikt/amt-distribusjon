@@ -94,7 +94,7 @@ class HendelseRepository {
 
     fun getHendelser(hendelseIder: List<UUID>) = Database.query {
         if (hendelseIder.isEmpty()) {
-            return@query emptyList<Hendelse>()
+            return@query emptyList()
         }
         val sql =
             """

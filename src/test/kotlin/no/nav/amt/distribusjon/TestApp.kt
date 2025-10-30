@@ -77,6 +77,7 @@ class TestApp {
     val environment: Environment = testEnvironment
 
     init {
+        @Suppress("UnusedExpression")
         SingletonPostgres16Container
         SingletonKafkaProvider.start()
         val kafakConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())

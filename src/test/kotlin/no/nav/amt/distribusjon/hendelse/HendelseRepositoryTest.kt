@@ -22,6 +22,7 @@ class HendelseRepositoryTest {
         @JvmStatic
         @BeforeAll
         fun setup() {
+            @Suppress("UnusedExpression")
             SingletonPostgres16Container
             hendelseRepository = HendelseRepository()
             journalforingstatusRepository = JournalforingstatusRepository()

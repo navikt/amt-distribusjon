@@ -13,7 +13,7 @@ import no.nav.amt.distribusjon.application.plugins.objectMapper
 
 class PdfgenClient(
     private val httpClient: HttpClient,
-    private val environment: Environment,
+    environment: Environment,
 ) {
     private val url = environment.amtPdfgenUrl + "/api/v1/genpdf/amt"
 

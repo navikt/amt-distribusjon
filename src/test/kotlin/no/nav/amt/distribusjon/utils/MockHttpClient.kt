@@ -198,7 +198,7 @@ object MockResponseHandler {
         responseCode: HttpStatusCode = HttpStatusCode.OK,
     ) {
         responses[request] = Response(
-            if (responseBody is String) responseBody else objectMapper.writeValueAsString(responseBody),
+            responseBody as? String ?: objectMapper.writeValueAsString(responseBody),
             responseCode,
         )
     }

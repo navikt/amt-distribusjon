@@ -16,6 +16,7 @@ import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.digitalbruker.api.registerDigitalBrukerApi
 import no.nav.amt.distribusjon.internal.registerInternalApi
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 fun Application.configureRouting(digitalBrukerService: DigitalBrukerService, tiltakshendelseService: TiltakshendelseService) {
@@ -62,7 +63,7 @@ fun Application.configureRouting(digitalBrukerService: DigitalBrukerService, til
 }
 
 object StatusPageLogger {
-    val log = LoggerFactory.getLogger(javaClass)
+    val log: Logger = LoggerFactory.getLogger(javaClass)
 
     fun log(
         statusCode: HttpStatusCode,

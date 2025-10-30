@@ -90,9 +90,7 @@ class JournalforingService(
         utkast: UtkastDto,
         journalforingstatus: Journalforingstatus?,
     ) {
-        val oppstartstype = hendelse.deltaker.deltakerliste.oppstartstype
-
-        when (oppstartstype) {
+        when (val oppstartstype = hendelse.deltaker.deltakerliste.oppstartstype) {
             HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE -> journalforHovedvedtak(hendelse, utkast, journalforingstatus)
             HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES -> journalforOgSendInnsokingsbrev(hendelse, journalforingstatus)
             else -> throw IllegalStateException("Oppstartstype $oppstartstype er ikke implementert")
