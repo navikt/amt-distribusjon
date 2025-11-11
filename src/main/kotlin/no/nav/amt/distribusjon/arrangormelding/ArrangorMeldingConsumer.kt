@@ -11,6 +11,7 @@ import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.arrangor.melding.Melding
+import no.nav.amt.lib.utils.database.Database
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.slf4j.LoggerFactory
@@ -37,7 +38,9 @@ class ArrangorMeldingConsumer(
         val melding = value?.let { objectMapper.readValue<Melding>(value) }
         if (melding is Forslag) {
             log.info("Mottok forslag som skal distribueres på tiltakhendelse topic. deltakerId:${melding.deltakerId}")
-            tiltakshendelseService.handleForslag(melding)
+            Database.transaction {
+                tiltakshendelseService.handleForslag(melding)
+            }
         }
     }
 
