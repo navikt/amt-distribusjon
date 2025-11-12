@@ -10,6 +10,7 @@ import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.outbox.OutboxService
+import no.nav.amt.lib.utils.database.Database
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -25,7 +26,7 @@ class TiltakshendelseService(
         const val UTKAST_TIL_PAMELDING_TEKST = "Utkast til påmelding"
     }
 
-    fun handleHendelse(hendelse: Hendelse) {
+    suspend fun handleHendelse(hendelse: Hendelse) {
         if (repository.getByHendelseId(hendelse.id).isSuccess) {
             log.info("Tiltakshendelse for hendelse ${hendelse.id} er allerede håndtert.")
             return
@@ -53,7 +54,7 @@ class TiltakshendelseService(
         }
     }
 
-    fun opprettStartHendelse(hendelse: Hendelse) {
+    suspend fun opprettStartHendelse(hendelse: Hendelse) {
         lagreOgDistribuer(hendelse.toTiltakshendelse())
     }
 
@@ -69,7 +70,7 @@ class TiltakshendelseService(
         )
     }
 
-    private fun stoppUtkastHendelse(hendelse: Hendelse) {
+    private suspend fun stoppUtkastHendelse(hendelse: Hendelse) {
         repository.getHendelse(hendelse.deltaker.id, Tiltakshendelse.Type.UTKAST).onSuccess {
             val inaktivertHendelse = it.copy(
                 aktiv = false,
@@ -79,7 +80,7 @@ class TiltakshendelseService(
         }
     }
 
-    fun stoppForslagHendelse(forslagId: UUID) {
+    suspend fun stoppForslagHendelse(forslagId: UUID) {
         repository.getForslagHendelse(forslagId).onSuccess {
             val inaktivertHendelse = it.copy(
                 aktiv = false,
@@ -88,14 +89,15 @@ class TiltakshendelseService(
         }
     }
 
-    private fun lagreOgDistribuer(tiltakshendelse: Tiltakshendelse) {
-        repository.upsert(tiltakshendelse)
-        outboxService.insertRecord(
-            key = tiltakshendelse.id,
-            value = tiltakshendelse.toDto(),
-            topic = Environment.TILTAKSHENDELSE_TOPIC,
-        )
-
+    private suspend fun lagreOgDistribuer(tiltakshendelse: Tiltakshendelse) {
+        Database.transaction {
+            repository.upsert(tiltakshendelse)
+            outboxService.insertRecord(
+                key = tiltakshendelse.id,
+                value = tiltakshendelse.toDto(),
+                topic = Environment.TILTAKSHENDELSE_TOPIC,
+            )
+        }
         log.info("Upsertet tiltakshendelse ${tiltakshendelse.id}")
     }
 

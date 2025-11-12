@@ -35,7 +35,7 @@ class VarselTest {
     fun `opprettUtkast - oppretter nytt varsel og produserer`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.opprettUtkast())
 
-        produce(hendelse) // PREPARE
+        produce(hendelse)
 
         AsyncUtils.eventually {
             val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
