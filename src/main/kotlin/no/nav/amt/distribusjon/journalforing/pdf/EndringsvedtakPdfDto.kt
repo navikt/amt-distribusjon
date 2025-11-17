@@ -99,6 +99,7 @@ sealed interface EndringDto {
         val begrunnelseFraNav: String?,
         val forslagFraArrangor: ForslagDto?,
         val harFullfort: String,
+        val sluttdato: LocalDate?,
         override val tittel: String,
     ) : EndringDto
 

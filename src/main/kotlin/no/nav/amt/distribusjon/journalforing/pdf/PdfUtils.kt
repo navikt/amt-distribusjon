@@ -312,6 +312,7 @@ private fun tilEndringDto(
         },
         tittel = "Avslutning endret",
         harFullfort = if (hendelseType.harFullfort) "Ja" else "Nei",
+        sluttdato = hendelseType.sluttdato,
     )
 
     is HendelseType.AvbrytDeltakelse -> EndringDto.AvbrytDeltakelse(
