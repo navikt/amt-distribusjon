@@ -311,7 +311,13 @@ private fun tilEndringDto(
             )
         },
         tittel = "Avslutning endret",
-        harFullfort = if (hendelseType.harFullfort == true) "Ja" else if (hendelseType.harFullfort == false) "Nei" else null,
+        harFullfort = if (hendelseType.harFullfort == true) {
+            "Ja"
+        } else if (hendelseType.harFullfort == false) {
+            "Nei"
+        } else {
+            null
+        },
         sluttdato = hendelseType.sluttdato,
     )
 
