@@ -31,12 +31,17 @@ fun toTitleCase(tekst: String): String = tekst.lowercase().split(Regex("(?<=\\s|
 }
 
 fun formatDate(date: LocalDate): String {
+    val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+    return date.format(formatter)
+}
+
+fun formatDateWithMonthName(date: LocalDate): String {
     val locale = Locale
         .Builder()
         .setLanguageTag("no")
         .setLanguageTag("no")
         .setRegion("NO")
         .build()
-    val formatter = DateTimeFormatter.ofPattern("d. MMMM yyyy", locale)
+    val formatter = DateTimeFormatter.ofPattern("d. MMMM yyyy")
     return date.format(formatter)
 }

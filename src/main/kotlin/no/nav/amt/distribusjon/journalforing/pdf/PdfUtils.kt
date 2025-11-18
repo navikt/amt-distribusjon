@@ -5,6 +5,7 @@ import no.nav.amt.distribusjon.hendelse.model.deltakerAdresseDeles
 import no.nav.amt.distribusjon.hendelse.model.visningsnavn
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.formatDate
+import no.nav.amt.distribusjon.utils.formatDateWithMonthName
 import no.nav.amt.distribusjon.utils.toStringDate
 import no.nav.amt.distribusjon.utils.toTitleCase
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
@@ -296,7 +297,7 @@ private fun tilEndringDto(
                 hendelseType.begrunnelseFraArrangor,
             )
         },
-        tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
+        tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
         harDeltatt = if (erFellesOppstart) "Ja" else null,
         harFullfort = if (erFellesOppstart) "Ja" else null,
     )
@@ -316,7 +317,7 @@ private fun tilEndringDto(
             false -> "Nei"
             null -> null
         },
-        sluttdato = hendelseType.sluttdato,
+        sluttdato = if (hendelseType.sluttdato != null) "Sluttdato: ${formatDate(hendelseType.sluttdato!!)}" else null,
     )
 
     is HendelseType.AvbrytDeltakelse -> EndringDto.AvbrytDeltakelse(
@@ -328,7 +329,7 @@ private fun tilEndringDto(
                 hendelseType.begrunnelseFraArrangor,
             )
         },
-        tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
+        tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
         harDeltatt = if (erFellesOppstart) "Ja" else null,
         harFullfort = if (erFellesOppstart) "Nei" else null,
     )
@@ -348,17 +349,18 @@ private fun tilEndringDto(
     is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
         begrunnelseFraNav = hendelseType.begrunnelseFraNav,
         forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
-        tittel = "Ny sluttdato er ${formatDate(hendelseType.sluttdato)}",
+        tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
     )
 
     is HendelseType.EndreStartdato -> {
-        val tittel = hendelseType.startdato?.let { "Oppstartsdato er endret til ${formatDate(it)}" } ?: "Oppstartsdato er fjernet"
+        val tittel =
+            hendelseType.startdato?.let { "Oppstartsdato er endret til ${formatDateWithMonthName(it)}" } ?: "Oppstartsdato er fjernet"
 
         val sluttdato = hendelseType.sluttdato
 
         if (sluttdato != null) {
             EndringDto.EndreStartdatoOgVarighet(
-                sluttdato = sluttdato,
+                sluttdato = "Forventet sluttdato: ${formatDate(sluttdato)}",
                 begrunnelseFraNav = hendelseType.begrunnelseFraNav,
                 forslagFraArrangor = hendelseType.endringFraForslag?.let {
                     endringFraForslagToForslagDto(
@@ -385,7 +387,7 @@ private fun tilEndringDto(
     is HendelseType.ForlengDeltakelse -> EndringDto.ForlengDeltakelse(
         begrunnelseFraNav = hendelseType.begrunnelseFraNav,
         forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
-        tittel = "Deltakelsen er forlenget til ${formatDate(hendelseType.sluttdato)}",
+        tittel = "Deltakelsen er forlenget til ${formatDateWithMonthName(hendelseType.sluttdato)}",
     )
 
     is HendelseType.IkkeAktuell -> EndringDto.IkkeAktuell(
@@ -413,7 +415,7 @@ private fun tilEndringDto(
 
     is HendelseType.LeggTilOppstartsdato -> EndringDto.LeggTilOppstartsdato(
         sluttdatoFraArrangor = hendelseType.sluttdato,
-        tittel = "Oppstartsdato er ${formatDate(hendelseType.startdato)}",
+        tittel = "Oppstartsdato er ${formatDateWithMonthName(hendelseType.startdato)}",
     )
 
     is HendelseType.FjernOppstartsdato -> EndringDto.FjernOppstartsdato(
