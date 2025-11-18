@@ -165,7 +165,7 @@ fun lagEndringsvedtakPdfDto(
     hendelser: List<Hendelse>,
     opprettetDato: LocalDate,
 ): EndringsvedtakPdfDto {
-    val endringer = fjernEldreHendelserAvSammeType(hendelser).map { it.payload }
+    val endringer = fjernEldreHendelserAvSammeTypeUtenomEndreAvslutning(hendelser)
 
     return EndringsvedtakPdfDto(
         deltaker = EndringsvedtakPdfDto.DeltakerDto(
@@ -216,9 +216,17 @@ private fun HendelseAnsvarlig.getAvsendernavn() = when (this) {
     -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker eller system")
 }
 
-private fun fjernEldreHendelserAvSammeType(hendelser: List<Hendelse>): List<Hendelse> = hendelser
-    .sortedByDescending { it.opprettet }
-    .distinctBy { it.payload.javaClass }
+private fun fjernEldreHendelserAvSammeTypeUtenomEndreAvslutning(hendelser: List<Hendelse>): List<HendelseType> {
+    val unikeHendelser = hendelser
+        .filter { it.payload !is HendelseType.EndreAvslutning }
+        .sortedByDescending { it.opprettet }
+        .distinctBy { it.payload.javaClass }
+    val endreAvslutninger = hendelser.filter { it.payload is HendelseType.EndreAvslutning }
+    val endringer = (unikeHendelser + endreAvslutninger)
+        .sortedByDescending { it.opprettet }
+        .map { it.payload }
+    return endringer
+}
 
 private fun skalViseDeltakelsesmengde(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): Boolean =
     tiltakstype.tiltakskode == Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET ||
