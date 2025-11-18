@@ -42,6 +42,6 @@ fun formatDateWithMonthName(date: LocalDate): String {
         .setLanguageTag("no")
         .setRegion("NO")
         .build()
-    val formatter = DateTimeFormatter.ofPattern("d. MMMM yyyy")
+    val formatter = DateTimeFormatter.ofPattern("d. MMMM yyyy", locale)
     return date.format(formatter)
 }
