@@ -60,7 +60,7 @@ sealed interface EndringDto {
     ) : EndringDto
 
     data class EndreStartdatoOgVarighet(
-        val sluttdato: LocalDate,
+        val sluttdato: String,
         val begrunnelseFraNav: String?,
         val forslagFraArrangor: ForslagDto?,
         override val tittel: String,
@@ -99,7 +99,7 @@ sealed interface EndringDto {
         val begrunnelseFraNav: String?,
         val forslagFraArrangor: ForslagDto?,
         val harFullfort: String?,
-        val sluttdato: LocalDate?,
+        val sluttdato: String?,
         override val tittel: String,
     ) : EndringDto
 
