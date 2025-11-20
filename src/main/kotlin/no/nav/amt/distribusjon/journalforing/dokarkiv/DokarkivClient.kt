@@ -103,7 +103,7 @@ class DokarkivClient(
         eksternReferanseId = hendelseId.toString(),
     )
 
-    // må mest sannsynlig bruke Arena-kode her for at ting ikke skal knekke
+    // må benytte Arena-kode her for at ting ikke skal knekke
     private fun getBrevkode(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): String =
         "tiltak-vedtak-${tiltakstype.tiltakskode.toArenaKode().name}"
 }
