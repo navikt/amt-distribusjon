@@ -10,7 +10,7 @@ data class TiltakshendelseDto(
     val aktiv: Boolean,
     val tekst: String,
     val lenke: String,
-    val tiltakstype: ArenaKode,
+    val tiltakstype: ArenaKode, // kan ikke endres, publiseres på obo.tiltakshendelse-v1
     val opprettet: LocalDateTime,
     val avsender: String = "KOMET",
 )
@@ -21,6 +21,6 @@ fun Tiltakshendelse.toDto() = TiltakshendelseDto(
     aktiv = aktiv,
     tekst = tekst,
     lenke = lenke,
-    tiltakstype = tiltakstype,
+    tiltakstype = tiltakskode.toArenaKode(),
     opprettet = opprettet,
 )

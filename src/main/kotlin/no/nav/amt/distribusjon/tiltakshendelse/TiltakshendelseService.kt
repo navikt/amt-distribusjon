@@ -7,7 +7,7 @@ import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService.Companion.
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
 import no.nav.amt.distribusjon.tiltakshendelse.model.toDto
 import no.nav.amt.lib.models.arrangor.melding.Forslag
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.outbox.OutboxService
 import no.nav.amt.lib.utils.database.Database
@@ -64,7 +64,7 @@ class TiltakshendelseService(
         lagreOgDistribuer(
             forslag.toHendelse(
                 personIdent = deltaker.navBruker.personident,
-                arenaKode = deltaker.deltakerliste.tiltakstype.arenaKode,
+                tiltakskode = deltaker.deltakerliste.tiltakstype.tiltakskode,
                 aktiv = true,
             ),
         )
@@ -110,7 +110,7 @@ class TiltakshendelseService(
 
 fun Forslag.toHendelse(
     personIdent: String,
-    arenaKode: ArenaKode,
+    tiltakskode: Tiltakskode,
     aktiv: Boolean,
 ) = Tiltakshendelse(
     id = UUID.randomUUID(),
@@ -121,7 +121,7 @@ fun Forslag.toHendelse(
     personident = personIdent,
     aktiv = aktiv,
     tekst = getForslagHendelseTekst(this),
-    tiltakstype = arenaKode,
+    tiltakskode = tiltakskode,
     opprettet = opprettet,
 )
 
@@ -135,7 +135,7 @@ fun Hendelse.toTiltakshendelse() = when (this.payload) {
         personident = this.deltaker.personident,
         aktiv = true,
         tekst = UTKAST_TIL_PAMELDING_TEKST,
-        tiltakstype = this.deltaker.deltakerliste.tiltak.type,
+        tiltakskode = this.deltaker.deltakerliste.tiltak.tiltakskode,
         opprettet = this.opprettet,
     )
 

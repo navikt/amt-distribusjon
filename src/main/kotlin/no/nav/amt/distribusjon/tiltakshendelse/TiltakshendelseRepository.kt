@@ -3,7 +3,7 @@ package no.nav.amt.distribusjon.tiltakshendelse
 import kotliquery.Row
 import kotliquery.queryOf
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.utils.database.Database
 import java.util.UUID
 
@@ -17,7 +17,7 @@ class TiltakshendelseRepository {
         personident = row.string("personident"),
         aktiv = row.boolean("aktiv"),
         tekst = row.string("tekst"),
-        tiltakstype = row.string("tiltakstype").let { ArenaKode.valueOf(it) },
+        tiltakskode = row.string("tiltakskode").let { Tiltakskode.valueOf(it) },
         opprettet = row.localDateTime("created_at"),
     )
 
@@ -33,7 +33,7 @@ class TiltakshendelseRepository {
                 personident, 
                 aktiv, 
                 tekst, 
-                tiltakstype
+                tiltakskode
             )
             values (
                 :id, 
@@ -44,7 +44,7 @@ class TiltakshendelseRepository {
                 :personident, 
                 :aktiv, 
                 :tekst, 
-                :tiltakstype
+                :tiltakskode
             )
             on conflict (id) do update set
                 hendelser = :hendelser,
@@ -63,7 +63,7 @@ class TiltakshendelseRepository {
             "personident" to tiltakshendelse.personident,
             "aktiv" to tiltakshendelse.aktiv,
             "tekst" to tiltakshendelse.tekst,
-            "tiltakstype" to tiltakshendelse.tiltakstype.name,
+            "tiltakskode" to tiltakshendelse.tiltakskode.name,
         )
 
         it.update(queryOf(sql, params))

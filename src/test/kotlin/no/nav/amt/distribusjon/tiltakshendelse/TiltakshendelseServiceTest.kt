@@ -13,7 +13,7 @@ import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.junit.jupiter.api.Test
@@ -38,7 +38,7 @@ class TiltakshendelseServiceTest {
         tiltakshendelse.type shouldBe Tiltakshendelse.Type.UTKAST
         tiltakshendelse.tekst shouldBe TiltakshendelseService.UTKAST_TIL_PAMELDING_TEKST
         tiltakshendelse.opprettet shouldBeCloseTo hendelse.opprettet
-        tiltakshendelse.tiltakstype shouldBe hendelse.deltaker.deltakerliste.tiltak.type
+        tiltakshendelse.tiltakskode shouldBe hendelse.deltaker.deltakerliste.tiltak.tiltakskode
 
         app should haveOutboxRecord(tiltakshendelse.id, Environment.TILTAKSHENDELSE_TOPIC)
     }
@@ -88,7 +88,7 @@ class TiltakshendelseServiceTest {
 
         tiltakshendelse.hendelser shouldBe emptyList()
         tiltakshendelse.tekst shouldBe "Forslag: Forleng deltakelse"
-        tiltakshendelse.tiltakstype shouldBe ArenaKode.ARBFORB
+        tiltakshendelse.tiltakskode shouldBe Tiltakskode.ARBEIDSFORBEREDENDE_TRENING
         tiltakshendelse.aktiv shouldBe true
     }
 

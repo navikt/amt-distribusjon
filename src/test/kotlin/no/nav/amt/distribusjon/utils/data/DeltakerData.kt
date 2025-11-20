@@ -4,7 +4,6 @@ import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerResponse
 import no.nav.amt.distribusjon.amtdeltaker.Deltakerliste
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.lib.models.deltaker.Innsatsgruppe
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import java.time.LocalDate
@@ -42,7 +41,6 @@ object DeltakerData {
         id = UUID.randomUUID(),
         navn = "Tiltaksnavn",
         tiltakskode = Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
-        arenaKode = ArenaKode.ARBFORB,
         innsatsgrupper = setOf(Innsatsgruppe.SITUASJONSBESTEMT_INNSATS),
         innhold = null,
     )
