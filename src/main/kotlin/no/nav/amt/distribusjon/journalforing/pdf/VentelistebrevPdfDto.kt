@@ -21,5 +21,7 @@ data class VentelistebrevPdfDto(
         val tittelNavn: String,
         val arrangor: ArrangorDto,
         val startdato: LocalDate?,
+        val sluttdato: LocalDate?,
+        val oppmoteSted: String?
     )
 }
