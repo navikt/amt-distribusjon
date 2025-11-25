@@ -6,7 +6,6 @@ import no.nav.amt.distribusjon.hendelse.model.visningsnavn
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.formatDate
 import no.nav.amt.distribusjon.utils.formatDateWithMonthName
-import no.nav.amt.distribusjon.utils.toStringDate
 import no.nav.amt.distribusjon.utils.toTitleCase
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
