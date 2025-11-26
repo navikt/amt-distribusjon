@@ -91,7 +91,7 @@ fun lagHovedopptakFellesOppstart(
         arrangor = ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
-        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.removeSuffix("."),
+        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trim()?.removeSuffix("."),
     ),
     avsender = HovedvedtakFellesOppstartPdfDto.AvsenderDto(
         navn = ansvarlig.navn,
@@ -121,7 +121,7 @@ fun lagInnsokingsbrevPdfDto(
         ),
         startdato = deltaker.deltakerliste.startdato,
         sluttdato = deltaker.deltakerliste.sluttdato,
-        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.removeSuffix("."),
+        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trim()?.removeSuffix("."),
     ),
     avsender = AvsenderDto(
         navn = veileder.navn,
@@ -153,7 +153,7 @@ fun lagVentelistebrevPdfDto(
         ),
         startdato = deltaker.deltakerliste.startdato,
         sluttdato = deltaker.deltakerliste.sluttdato,
-        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.removeSuffix("."),
+        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trim()?.removeSuffix("."),
     ),
     avsender = AvsenderDto(
         navn = endretAv.navn,
