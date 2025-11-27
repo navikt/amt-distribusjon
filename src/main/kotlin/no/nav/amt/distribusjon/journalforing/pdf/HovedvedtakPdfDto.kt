@@ -31,6 +31,7 @@ data class HovedvedtakPdfDto(
         val ledetekst: String,
         val arrangor: ArrangorDto,
         val forskriftskapittel: Int,
+        val oppmoteSted: String?,
     )
 
     data class ArrangorDto(

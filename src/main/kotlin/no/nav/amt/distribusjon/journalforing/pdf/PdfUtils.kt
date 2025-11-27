@@ -6,7 +6,6 @@ import no.nav.amt.distribusjon.hendelse.model.visningsnavn
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.utils.formatDate
 import no.nav.amt.distribusjon.utils.formatDateWithMonthName
-import no.nav.amt.distribusjon.utils.toStringDate
 import no.nav.amt.distribusjon.utils.toTitleCase
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
@@ -57,6 +56,7 @@ fun lagHovedvedtakPdfDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
         forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
+        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
     ),
     avsender = HovedvedtakPdfDto.AvsenderDto(
         navn = veileder.navn,
@@ -86,12 +86,14 @@ fun lagHovedopptakFellesOppstart(
         ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "",
         tittelNavn = deltaker.deltakerliste.tittelVisningsnavn(),
         ingressNavn = deltaker.deltakerliste.ingressVisningsnavn(),
-        startdato = deltaker.deltakerliste.startdato!!.toStringDate(),
-        sluttdato = deltaker.deltakerliste.sluttdato?.toStringDate(),
+        startdato = deltaker.deltakerliste.startdato,
+        sluttdato = deltaker.deltakerliste.sluttdato,
         forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
+        harKursetStartet = deltaker.deltakerliste.startdato?.isBefore(LocalDate.now()) == true,
         arrangor = ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
+        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
     ),
     avsender = HovedvedtakFellesOppstartPdfDto.AvsenderDto(
         navn = ansvarlig.navn,
@@ -119,8 +121,9 @@ fun lagInnsokingsbrevPdfDto(
         arrangor = ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
-        startdato = deltaker.deltakerliste.startdato!!.toStringDate(),
-        sluttdato = deltaker.deltakerliste.sluttdato?.toStringDate(),
+        startdato = deltaker.deltakerliste.startdato,
+        sluttdato = deltaker.deltakerliste.sluttdato,
+        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
     ),
     avsender = AvsenderDto(
         navn = veileder.navn,
@@ -151,6 +154,8 @@ fun lagVentelistebrevPdfDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
         startdato = deltaker.deltakerliste.startdato,
+        sluttdato = deltaker.deltakerliste.sluttdato,
+        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
     ),
     avsender = AvsenderDto(
         navn = endretAv.navn,

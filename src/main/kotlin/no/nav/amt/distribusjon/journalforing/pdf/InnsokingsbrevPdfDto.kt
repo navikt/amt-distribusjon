@@ -23,7 +23,8 @@ data class InnsokingsbrevPdfDto(
         val tiltakskode: Tiltakskode,
         val ledetekst: String?,
         val arrangor: ArrangorDto,
-        val startdato: String,
-        val sluttdato: String?,
+        val startdato: LocalDate?,
+        val sluttdato: LocalDate?,
+        val oppmoteSted: String?,
     )
 }
