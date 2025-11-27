@@ -56,6 +56,7 @@ fun lagHovedvedtakPdfDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
         forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
+        oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
     ),
     avsender = HovedvedtakPdfDto.AvsenderDto(
         navn = veileder.navn,
