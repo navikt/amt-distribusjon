@@ -88,6 +88,7 @@ fun lagHovedopptakFellesOppstart(
         startdato = deltaker.deltakerliste.startdato,
         sluttdato = deltaker.deltakerliste.sluttdato,
         forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
+        harKursetStartet = deltaker.deltakerliste.startdato?.isBefore(LocalDate.now()) == true,
         arrangor = ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
