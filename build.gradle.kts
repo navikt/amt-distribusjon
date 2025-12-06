@@ -33,7 +33,18 @@ val postgresVersion = "42.7.8"
 val caffeineVersion = "3.2.3"
 val unleashVersion = "11.1.1"
 val nimbusVersion = "10.6"
-val amtLibVersion = "1.2025.11.25_12.34-71700b697128"
+val amtLibVersion = "1.2025.12.06_12.56-a9fdb0b96ea0"
+
+// fjernes ved neste release av org.apache.kafka:kafka-clients
+configurations.configureEach {
+    resolutionStrategy {
+        capabilitiesResolution {
+            withCapability("org.lz4:lz4-java") {
+                select(candidates.first { (it.id as ModuleComponentIdentifier).group == "at.yawk.lz4" })
+            }
+        }
+    }
+}
 
 dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
