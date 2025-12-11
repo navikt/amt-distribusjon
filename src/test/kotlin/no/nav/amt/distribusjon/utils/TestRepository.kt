@@ -1,8 +1,8 @@
 package no.nav.amt.distribusjon.utils
 
 import kotliquery.queryOf
-import no.nav.amt.distribusjon.db.toPGObject
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
+import no.nav.amt.distribusjon.utils.DbUtils.toPGObject
 import no.nav.amt.lib.utils.database.Database
 
 object TestRepository {
