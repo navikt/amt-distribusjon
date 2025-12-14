@@ -1,80 +1,40 @@
 package no.nav.amt.distribusjon.journalforing.pdf
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
-import no.nav.amt.distribusjon.Environment
-import no.nav.amt.distribusjon.application.plugins.objectMapper
+import no.nav.amt.distribusjon.exchangeWithLogging
+import org.springframework.stereotype.Service
+import org.springframework.web.client.RestClient
 
+@Service
 class PdfgenClient(
-    private val httpClient: HttpClient,
-    environment: Environment,
+    private val pdfGenHttpClient: RestClient,
 ) {
-    private val url = environment.amtPdfgenUrl + "/api/v1/genpdf/amt"
+    fun genererHovedvedtak(hovedvedtakPdfDto: HovedvedtakPdfDto): ByteArray = pdfGenHttpClient
+        .post()
+        .uri("/hovedvedtak")
+        .body(hovedvedtakPdfDto)
+        .exchangeWithLogging("Kunne ikke hente/opprette hovedvedtak-PDF i amt-pdfgen")
 
-    suspend fun genererHovedvedtak(hovedvedtakPdfDto: HovedvedtakPdfDto): ByteArray {
-        val response = httpClient.post("$url/hovedvedtak") {
-            contentType(ContentType.Application.Json)
-            setBody(objectMapper.writeValueAsString(hovedvedtakPdfDto))
-        }
-        if (!response.status.isSuccess()) {
-            error("Kunne ikke hente opprette hovedvedtak-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}")
-        }
-        return response.body()
-    }
+    fun genererHovedvedtakFellesOppstart(hovedvedtakPdfDto: HovedvedtakFellesOppstartPdfDto): ByteArray = pdfGenHttpClient
+        .post()
+        .uri("/hovedvedtak-felles-oppstart")
+        .body(hovedvedtakPdfDto)
+        .exchangeWithLogging("Kunne ikke hente/opprette felles oppstart hovedvedtak-PDF i amt-pdfgen")
 
-    suspend fun genererHovedvedtakFellesOppstart(hovedvedtakPdfDto: HovedvedtakFellesOppstartPdfDto): ByteArray {
-        val response = httpClient.post("$url/hovedvedtak-felles-oppstart") {
-            contentType(ContentType.Application.Json)
-            setBody(objectMapper.writeValueAsString(hovedvedtakPdfDto))
-        }
-        if (!response.status.isSuccess()) {
-            error("Kunne ikke hente opprette hovedvedtak-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}")
-        }
-        return response.body()
-    }
+    fun genererInnsokingsbrevPDF(innsokingsbrevPdfDto: InnsokingsbrevPdfDto): ByteArray = pdfGenHttpClient
+        .post()
+        .uri("/innsokingsbrev")
+        .body(innsokingsbrevPdfDto)
+        .exchangeWithLogging("Kunne ikke hente/opprette kurs-innsoking-PDF i amt-pdfgen")
 
-    suspend fun genererInnsokingsbrevPDF(innsokingsbrevPdfDto: InnsokingsbrevPdfDto): ByteArray {
-        val response = httpClient.post("$url/innsokingsbrev") {
-            contentType(ContentType.Application.Json)
-            setBody(objectMapper.writeValueAsString(innsokingsbrevPdfDto))
-        }
-        if (!response.status.isSuccess()) {
-            error(
-                "Kunne ikke hente opprette kurs-innsoking-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}",
-            )
-        }
-        return response.body()
-    }
+    fun genererVentelistebrevPDF(ventelistebrevPdfDto: VentelistebrevPdfDto): ByteArray = pdfGenHttpClient
+        .post()
+        .uri("/ventelistebrev")
+        .body(ventelistebrevPdfDto)
+        .exchangeWithLogging("Kunne ikke hente/opprette venteliste-PDF i amt-pdfgen")
 
-    suspend fun genererVentelistebrevPDF(ventelistebrevPdfDto: VentelistebrevPdfDto): ByteArray {
-        val response = httpClient.post("$url/ventelistebrev") {
-            contentType(ContentType.Application.Json)
-            setBody(objectMapper.writeValueAsString(ventelistebrevPdfDto))
-        }
-        if (!response.status.isSuccess()) {
-            error(
-                "Kunne ikke hente opprette venteliste-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}",
-            )
-        }
-        return response.body()
-    }
-
-    suspend fun endringsvedtak(endringsvedtakPdfDto: EndringsvedtakPdfDto): ByteArray {
-        val response = httpClient.post("$url/endringsvedtak") {
-            contentType(ContentType.Application.Json)
-            setBody(objectMapper.writeValueAsString(endringsvedtakPdfDto))
-        }
-        if (!response.status.isSuccess()) {
-            error(
-                "Kunne ikke hente opprette endringsvedtak-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}",
-            )
-        }
-        return response.body()
-    }
+    fun endringsvedtak(endringsvedtakPdfDto: EndringsvedtakPdfDto): ByteArray = pdfGenHttpClient
+        .post()
+        .uri("/endringsvedtak")
+        .body(endringsvedtakPdfDto)
+        .exchangeWithLogging("Kunne ikke hente/opprette endringsvedtak-PDF i amt-pdfgen")
 }

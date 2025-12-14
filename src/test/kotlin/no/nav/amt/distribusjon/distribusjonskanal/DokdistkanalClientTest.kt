@@ -1,57 +1,96 @@
 package no.nav.amt.distribusjon.distribusjonskanal
 
-import com.github.benmanes.caffeine.cache.Cache
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.runBlocking
-import no.nav.amt.distribusjon.testEnvironment
-import no.nav.amt.distribusjon.utils.ClientTestBase
-import no.nav.amt.distribusjon.utils.CountingCache
-import no.nav.amt.distribusjon.utils.createMockHttpClient
+import no.nav.amt.deltaker.bff.utils.withLogCapture
+import no.nav.amt.distribusjon.AppConstants.APPLICATION_NAME
+import no.nav.amt.distribusjon.AppConstants.NAV_CALL_ID_HEADER_KEY
+import no.nav.amt.distribusjon.HttpClientTestBase
+import no.nav.amt.distribusjon.config.CacheConfig
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest
+import org.springframework.context.annotation.Import
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
+import org.springframework.http.MediaType
+import org.springframework.test.context.TestPropertySource
+import org.springframework.test.web.client.match.MockRestRequestMatchers.header
+import org.springframework.test.web.client.match.MockRestRequestMatchers.method
+import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.test.web.client.response.MockRestResponseCreators.withServerError
+import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
+import org.springframework.web.util.UriComponentsBuilder
 import java.util.UUID
 
-class DokdistkanalClientTest : ClientTestBase() {
+@RestClientTest(DokdistkanalClient::class)
+@Import(CacheConfig::class)
+@TestPropertySource(
+    properties = [
+        "app.app-name=$APPLICATION_NAME",
+        "app.dok-dist-kanal-url=http://localhost:8080",
+    ],
+)
+class DokdistkanalClientTest(
+    @Value($$"${app.dok-dist-kanal-url}") private val dokDistKanalUrl: String,
+    @Value($$"${app.app-name}") private val applicationName: String,
+    private val sut: DokdistkanalClient,
+) : HttpClientTestBase() {
+    @BeforeEach
+    fun setup() = mockServer.reset()
+
     @Test
     fun `skal returnere DITT_NAV nar bestemDistribusjonskanal kalles med `() {
-        val sut = createDokdistkanalClient(
-            responseBody = expectedResponse,
-        )
+        mockServer
+            .expect(requestTo(expectedUrl))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(header(NAV_CALL_ID_HEADER_KEY, applicationName))
+            .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer $MOCKED_TOKEN"))
+            .andRespond(
+                withSuccess(
+                    objectMapper.writeValueAsString(expectedResponse),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
 
-        val actualResponse = runBlocking {
-            sut.bestemDistribusjonskanal(PERSON_IDENT, deltakerId)
-        }
+        val actualResponse = sut.bestemDistribusjonskanal(PERSON_IDENT, deltakerId)
 
         actualResponse shouldBe expectedResponse.distribusjonskanal
     }
 
     @Test
     fun `skal bruke cache ved andre kall til bestemDistribusjonskanal`() {
-        val countingCache = CountingCache<String, Distribusjonskanal>()
+        mockServer
+            .expect(requestTo(expectedUrl))
+            .andRespond(
+                withSuccess(
+                    objectMapper.writeValueAsString(expectedResponse),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
 
-        val sut = createDokdistkanalClient(
-            responseBody = expectedResponse,
-            cache = countingCache,
-        )
-
-        runBlocking {
+        withLogCapture("no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient") { logEvents ->
             sut.bestemDistribusjonskanal(PERSON_IDENT, null)
             sut.bestemDistribusjonskanal(PERSON_IDENT, null)
+
+            logEvents.size shouldBe 1
+            logEvents.map { it.formattedMessage } shouldContain "Hentet distribusjonskanal for personident"
         }
-
-        countingCache.putCount shouldBe 1
     }
 
     @Test
     fun `skal kaste feil nar bestemDistribusjonskanal returnerer feilkode, deltakerId != null`() {
-        val sut = createDokdistkanalClient(statusCode = HttpStatusCode.BadGateway)
+        mockServer
+            .expect(requestTo(expectedUrl))
+            .andRespond(withServerError())
 
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
-                sut.bestemDistribusjonskanal(PERSON_IDENT, deltakerId)
-            }
+        val thrown = shouldThrow<IllegalStateException> {
+            sut.bestemDistribusjonskanal("$PERSON_IDENT-1", deltakerId)
         }
 
         thrown.message shouldStartWith "Kunne ikke hente distribusjonskanal for deltaker"
@@ -59,43 +98,24 @@ class DokdistkanalClientTest : ClientTestBase() {
 
     @Test
     fun `skal kaste feil nar bestemDistribusjonskanal returnerer feilkode, deltakerId = null`() {
-        val sut = createDokdistkanalClient(statusCode = HttpStatusCode.BadGateway)
+        mockServer
+            .expect(requestTo(expectedUrl))
+            .andRespond(withServerError())
 
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
-                sut.bestemDistribusjonskanal(PERSON_IDENT, null)
-            }
+        val thrown = shouldThrow<IllegalStateException> {
+            sut.bestemDistribusjonskanal("$PERSON_IDENT-2", null)
         }
 
         thrown.message shouldStartWith "Kunne ikke hente distribusjonskanal, status"
     }
 
-    private fun createDokdistkanalClient(
-        statusCode: HttpStatusCode = HttpStatusCode.OK,
-        responseBody: BestemDistribusjonskanalResponse? = null,
-        cache: Cache<String, Distribusjonskanal>? = null,
-    ): DokdistkanalClient {
-        val httpClient = createMockHttpClient(
-            expectedUrl = "http://dokdistkanal/rest/bestemDistribusjonskanal",
-            statusCode = statusCode,
-            responseBody = responseBody,
-        )
-
-        return if (cache != null) {
-            DokdistkanalClient(
-                httpClient = httpClient,
-                azureAdTokenClient = mockAzureAdTokenClient,
-                environment = testEnvironment,
-                distribusjonskanalCache = cache,
-            )
-        } else {
-            DokdistkanalClient(
-                httpClient = httpClient,
-                azureAdTokenClient = mockAzureAdTokenClient,
-                environment = testEnvironment,
-            )
-        }
-    }
+    private val expectedUrl =
+        UriComponentsBuilder
+            .fromUriString(dokDistKanalUrl)
+            .pathSegment("rest")
+            .pathSegment("bestemDistribusjonskanal")
+            .build()
+            .toUri()
 
     companion object {
         private const val PERSON_IDENT = "~personident~"

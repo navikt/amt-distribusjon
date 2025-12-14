@@ -8,11 +8,13 @@ import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.utils.database.Database
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.UUID
 
+@Service
 class VarselService(
     private val repository: VarselRepository,
     private val outboxHandler: VarselOutboxHandler,
@@ -24,10 +26,17 @@ class VarselService(
         if (skalIkkeVarsles(hendelse)) return@transaction
 
         when (hendelse.payload) {
-            is HendelseType.OpprettUtkast -> handleNyttVarsel(Varsel.nyOppgave(hendelse), true)
+            is HendelseType.OpprettUtkast -> {
+                handleNyttVarsel(Varsel.nyOppgave(hendelse), true)
+            }
 
-            is HendelseType.AvbrytUtkast -> inaktiverOppgave(hendelse.deltaker)
-            is HendelseType.InnbyggerGodkjennUtkast -> utforOppgave(hendelse.deltaker)
+            is HendelseType.AvbrytUtkast -> {
+                inaktiverOppgave(hendelse.deltaker)
+            }
+
+            is HendelseType.InnbyggerGodkjennUtkast -> {
+                utforOppgave(hendelse.deltaker)
+            }
 
             is HendelseType.ReaktiverDeltakelse,
             is HendelseType.NavGodkjennUtkast,
@@ -49,7 +58,9 @@ class VarselService(
             is HendelseType.IkkeAktuell,
             is HendelseType.LeggTilOppstartsdato,
             is HendelseType.FjernOppstartsdato,
-            -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)))
+            -> {
+                handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)))
+            }
 
             is HendelseType.EndreUtkast,
             is HendelseType.EndreSluttarsak,
@@ -57,12 +68,16 @@ class VarselService(
                 log.info("Oppretter ikke varsel for hendelse ${hendelse.payload::class} for deltaker ${hendelse.deltaker.id}")
             }
 
-            is HendelseType.DeltakerSistBesokt -> utforBeskjed(hendelse.deltaker, hendelse.payload.sistBesokt)
+            is HendelseType.DeltakerSistBesokt -> {
+                utforBeskjed(hendelse.deltaker, hendelse.payload.sistBesokt)
+            }
 
             is HendelseType.Avslag,
             is HendelseType.SettPaaVenteliste,
             is HendelseType.TildelPlass,
-            -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
+            -> {
+                handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
+            }
         }
     }
 

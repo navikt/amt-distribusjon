@@ -1,47 +1,67 @@
 package no.nav.amt.distribusjon.veilarboppfolging
 
-import com.github.benmanes.caffeine.cache.Cache
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.runBlocking
-import no.nav.amt.distribusjon.testEnvironment
-import no.nav.amt.distribusjon.utils.ClientTestBase
-import no.nav.amt.distribusjon.utils.CountingCache
-import no.nav.amt.distribusjon.utils.createMockHttpClient
+import no.nav.amt.distribusjon.AppConstants.APPLICATION_NAME
+import no.nav.amt.distribusjon.AppConstants.NAV_CONSUMER_ID_HEADER_KEY
+import no.nav.amt.distribusjon.HttpClientTestBase
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
+import org.springframework.http.MediaType
+import org.springframework.test.context.TestPropertySource
+import org.springframework.test.web.client.match.MockRestRequestMatchers.header
+import org.springframework.test.web.client.match.MockRestRequestMatchers.method
+import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.test.web.client.response.MockRestResponseCreators.withServerError
+import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import java.util.UUID
 
-class VeilarboppfolgingClientTest : ClientTestBase() {
+@RestClientTest(VeilarboppfolgingClient::class)
+@TestPropertySource(
+    properties = [
+        "app.app-name=$APPLICATION_NAME",
+        "app.veilarbo-url=http://localhost",
+    ],
+)
+class VeilarboppfolgingClientTest(
+    @Value($$"${app.app-name}") private val applicationName: String,
+    @Value($$"${app.veilarbo-url}") private val veilarboUrl: String,
+    private val sut: VeilarboppfolgingClient,
+) : HttpClientTestBase() {
     @Test
     fun `skal returnere sak nar opprettEllerHentSak kalles med gyldig respons`() {
         val expectedSak = Sak(oppfolgingsperiodeId, sakId = 42, fagsaksystem = "~fagsaksystem~")
 
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = opprettEllerHentSakUrl,
-            responseBody = expectedSak,
-        )
+        mockServer
+            .expect(requestTo("$veilarboUrl/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(header(NAV_CONSUMER_ID_HEADER_KEY, applicationName))
+            .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer $MOCKED_TOKEN"))
+            .andRespond(
+                withSuccess(
+                    objectMapper.writeValueAsString(expectedSak),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
 
-        val actualSak = runBlocking {
-            sut.opprettEllerHentSak(oppfolgingsperiodeId)
-        }
+        val actualResponse = sut.opprettEllerHentSak(oppfolgingsperiodeId)
 
-        actualSak shouldBe expectedSak
+        actualResponse shouldBe expectedSak
     }
 
     @Test
     fun `skal kaste feil nar opprettEllerHentSak returnerer feilkode`() {
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = opprettEllerHentSakUrl,
-            statusCode = HttpStatusCode.BadRequest,
-            responseBody = null,
-        )
+        mockServer
+            .expect(requestTo("$veilarboUrl/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId"))
+            .andRespond(withServerError())
 
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
-                sut.opprettEllerHentSak(oppfolgingsperiodeId)
-            }
+        val thrown = shouldThrow<IllegalStateException> {
+            sut.opprettEllerHentSak(oppfolgingsperiodeId)
         }
 
         thrown.message shouldStartWith "Kunne ikke hente sak fra veilarboppfolging for oppfolgingsperiode $oppfolgingsperiodeId"
@@ -49,90 +69,55 @@ class VeilarboppfolgingClientTest : ClientTestBase() {
 
     @Test
     fun `skal returnere true nar bruker er under manuell oppfolging`() {
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
-            responseBody = ManuellV2Response(true),
-        )
+        mockServer
+            .expect(requestTo("$veilarboUrl/veilarboppfolging/api/v3/hent-manuell"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(header(NAV_CONSUMER_ID_HEADER_KEY, applicationName))
+            .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer $MOCKED_TOKEN"))
+            .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+            .andRespond(
+                withSuccess(
+                    objectMapper.writeValueAsString(ManuellV2Response(true)),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
 
-        val result = runBlocking {
-            sut.erUnderManuellOppfolging("~personident~")
-        }
+        val result = sut.erUnderManuellOppfolging("~personident~")
 
         result shouldBe true
     }
 
     @Test
     fun `skal returnere false nar bruker ikke er under manuell oppfolging`() {
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
-            responseBody = ManuellV2Response(false),
-        )
+        mockServer
+            .expect(requestTo("$veilarboUrl/veilarboppfolging/api/v3/hent-manuell"))
+            .andRespond(
+                withSuccess(
+                    objectMapper.writeValueAsString(ManuellV2Response(false)),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
 
-        val result = runBlocking {
-            sut.erUnderManuellOppfolging("~personident~")
-        }
+        val result = sut.erUnderManuellOppfolging("~personident~")
 
         result shouldBe false
     }
 
     @Test
-    fun `skal bruke cache ved andre kall til erUnderManuellOppfolging`() {
-        val countingCache = CountingCache<String, Boolean>()
-
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
-            responseBody = ManuellV2Response(false),
-            cache = countingCache,
-        )
-
-        runBlocking {
-            sut.erUnderManuellOppfolging("~personident~")
-            sut.erUnderManuellOppfolging("~personident~")
-        }
-
-        countingCache.putCount shouldBe 1
-    }
-
-    @Test
     fun `skal kaste feil nar erUnderManuellOppfolging returnerer feilkode`() {
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
-            responseBody = null,
-            statusCode = HttpStatusCode.BadRequest,
-        )
+        mockServer
+            .expect(requestTo("$veilarboUrl/veilarboppfolging/api/v3/hent-manuell"))
+            .andRespond(withServerError())
 
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
-                sut.erUnderManuellOppfolging("~personident~")
-            }
+        val thrown = shouldThrow<IllegalStateException> {
+            sut.erUnderManuellOppfolging("~personident~")
         }
 
         thrown.message shouldStartWith "Kunne ikke hente manuell oppfølging fra veilarboppfolging"
     }
 
-    private fun <T> createVeilarboppfolgingClient(
-        expectedUrl: String,
-        statusCode: HttpStatusCode = HttpStatusCode.OK,
-        responseBody: T? = null,
-        cache: Cache<String, Boolean>? = null,
-    ): VeilarboppfolgingClient = if (cache != null) {
-        VeilarboppfolgingClient(
-            httpClient = createMockHttpClient(expectedUrl, responseBody, statusCode),
-            azureAdTokenClient = mockAzureAdTokenClient,
-            environment = testEnvironment,
-            manuellOppfolgingCache = cache,
-        )
-    } else {
-        VeilarboppfolgingClient(
-            httpClient = createMockHttpClient(expectedUrl, responseBody, statusCode),
-            azureAdTokenClient = mockAzureAdTokenClient,
-            environment = testEnvironment,
-        )
-    }
-
     companion object {
         val oppfolgingsperiodeId: UUID = UUID.randomUUID()
-        val opprettEllerHentSakUrl = "http://veilarboppfolging/veilarboppfolging/api/v3/sak/$oppfolgingsperiodeId"
-        const val ER_UNDER_MANUELL_OPPFOLGING_URL = "http://veilarboppfolging/veilarboppfolging/api/v3/hent-manuell"
     }
 }

@@ -1,10 +1,12 @@
 package no.nav.amt.distribusjon.utils
 
-import no.nav.amt.distribusjon.application.plugins.objectMapper
 import org.postgresql.util.PGobject
+import tools.jackson.databind.ObjectMapper
+
+// fun <V> sqlParameters(vararg pairs: Pair<String, V>): MapSqlParameterSource = MapSqlParameterSource().addValues(pairs.toMap())
 
 object DbUtils {
-    fun toPGObject(value: Any?) = PGobject().also {
+    fun toPGObject(value: Any?, objectMapper: ObjectMapper) = PGobject().also {
         it.type = "json"
         it.value = value?.let { v -> objectMapper.writeValueAsString(v) }
     }

@@ -1,8 +1,6 @@
 package no.nav.amt.distribusjon.arrangormelding
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.amt.distribusjon.Environment
-import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
 import no.nav.amt.lib.kafka.Consumer
 import no.nav.amt.lib.kafka.ManagedKafkaConsumer
@@ -14,10 +12,15 @@ import no.nav.amt.lib.models.arrangor.melding.Melding
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.util.UUID
 
+@Component
 class ArrangorMeldingConsumer(
     private val tiltakshendelseService: TiltakshendelseService,
+    private val objectMapper: ObjectMapper,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
 ) : Consumer<UUID, String?> {

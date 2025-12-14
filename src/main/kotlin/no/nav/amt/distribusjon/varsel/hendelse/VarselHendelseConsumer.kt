@@ -1,8 +1,6 @@
 package no.nav.amt.distribusjon.varsel.hendelse
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.amt.distribusjon.Environment
-import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.distribusjon.varsel.nowUTC
@@ -13,10 +11,15 @@ import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.util.UUID
 
+@Component
 class VarselHendelseConsumer(
     private val varselService: VarselService,
+    private val objectMapper: ObjectMapper,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
 ) : Consumer<String, String> {
@@ -61,6 +64,7 @@ class VarselHendelseConsumer(
                     varselService.utlopBeskjed(varsel)
                 }
             }
+
             is OpprettetVarselHendelse,
             is SlettetVarselHendelse,
             -> {

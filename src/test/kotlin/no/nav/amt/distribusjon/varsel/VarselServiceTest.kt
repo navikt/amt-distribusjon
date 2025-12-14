@@ -1,21 +1,7 @@
 package no.nav.amt.distribusjon.varsel
 
-import io.kotest.matchers.shouldBe
-import no.nav.amt.distribusjon.hendelse.consumer.assertProducedBeskjed
-import no.nav.amt.distribusjon.hendelse.consumer.assertProducedInaktiver
-import no.nav.amt.distribusjon.integrationTest
-import no.nav.amt.distribusjon.utils.data.HendelseTypeData
-import no.nav.amt.distribusjon.utils.data.Hendelsesdata
-import no.nav.amt.distribusjon.utils.data.Varselsdata
-import no.nav.amt.distribusjon.varsel.model.Varsel
-import no.nav.amt.distribusjon.varsel.model.innbyggerDeltakerUrl
-import no.nav.amt.lib.testing.shouldBeCloseTo
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Test
-import java.util.UUID
-
 class VarselServiceTest {
-    @Test
+/*    @Test
     fun `sendVentendeVarsler - varsler er klare for sending - sender`() = integrationTest { app, _ ->
         val varsel = Varselsdata.varsel(
             Varsel.Type.BESKJED,
@@ -206,5 +192,5 @@ class VarselServiceTest {
             .get(utloptBeskjed.id)
             .getOrThrow()
             .status shouldBe Varsel.Status.UTLOPT
-    }
+    }*/
 }

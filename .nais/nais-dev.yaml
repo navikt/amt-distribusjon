@@ -87,7 +87,7 @@ spec:
     - name: AMT_PDFGEN_SCOPE
       value: api://dev-gcp.amt.amt-pdfgen/.default
     - name: AMT_PDFGEN
-      value: http://amt-pdfgen
+      value: http://amt-pdfgen/api/v1/genpdf/amt
     - name: VEILARBOPPFOLGING_SCOPE
       value: api://dev-gcp.poao.veilarboppfolging/.default
     - name: VEILARBOPPFOLGING_URL

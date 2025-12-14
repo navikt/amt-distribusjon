@@ -24,8 +24,10 @@ import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.models.hendelse.UtkastDto
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import java.util.UUID
 
+@Service
 class JournalforingService(
     private val journalforingstatusRepository: JournalforingstatusRepository,
     private val amtPersonClient: AmtPersonClient,
@@ -43,21 +45,30 @@ class JournalforingService(
             return
         }
         when (hendelse.payload) {
-            is HendelseType.InnbyggerGodkjennUtkast -> handleUtkastGodkjent(
-                hendelse,
-                hendelse.payload.utkast,
-                journalforingstatus,
-            )
-            is HendelseType.ReaktiverDeltakelse -> handleUtkastGodkjent(
-                hendelse,
-                hendelse.payload.utkast,
-                journalforingstatus,
-            )
-            is HendelseType.NavGodkjennUtkast -> handleUtkastGodkjent(
-                hendelse,
-                hendelse.payload.utkast,
-                journalforingstatus,
-            )
+            is HendelseType.InnbyggerGodkjennUtkast -> {
+                handleUtkastGodkjent(
+                    hendelse,
+                    hendelse.payload.utkast,
+                    journalforingstatus,
+                )
+            }
+
+            is HendelseType.ReaktiverDeltakelse -> {
+                handleUtkastGodkjent(
+                    hendelse,
+                    hendelse.payload.utkast,
+                    journalforingstatus,
+                )
+            }
+
+            is HendelseType.NavGodkjennUtkast -> {
+                handleUtkastGodkjent(
+                    hendelse,
+                    hendelse.payload.utkast,
+                    journalforingstatus,
+                )
+            }
+
             is HendelseType.AvsluttDeltakelse,
             is HendelseType.EndreAvslutning,
             is HendelseType.AvbrytDeltakelse,
@@ -70,7 +81,9 @@ class JournalforingService(
             is HendelseType.EndreBakgrunnsinformasjon,
             is HendelseType.LeggTilOppstartsdato,
             is HendelseType.FjernOppstartsdato,
-            -> handleEndringsvedtak(hendelse, journalforingstatus)
+            -> {
+                handleEndringsvedtak(hendelse, journalforingstatus)
+            }
 
             is HendelseType.EndreSluttarsak,
             is HendelseType.EndreUtkast,
@@ -79,9 +92,18 @@ class JournalforingService(
             is HendelseType.DeltakerSistBesokt,
             -> {
             }
-            is HendelseType.SettPaaVenteliste -> journalforOgSendVentelisteBrev(hendelse, journalforingstatus)
-            is HendelseType.TildelPlass -> journalforHovedvedtakForFellesOppstart(hendelse, journalforingstatus)
-            is HendelseType.Avslag -> journalforAvslag(hendelse, journalforingstatus)
+
+            is HendelseType.SettPaaVenteliste -> {
+                journalforOgSendVentelisteBrev(hendelse, journalforingstatus)
+            }
+
+            is HendelseType.TildelPlass -> {
+                journalforHovedvedtakForFellesOppstart(hendelse, journalforingstatus)
+            }
+
+            is HendelseType.Avslag -> {
+                journalforAvslag(hendelse, journalforingstatus)
+            }
         }
     }
 
@@ -481,6 +503,7 @@ private fun getJournalforendeEnhet(ansvarlig: HendelseAnsvarlig): String = when 
 
 private fun HendelseAnsvarlig.hentVeileder(): HendelseAnsvarlig.NavVeileder = when (this) {
     is HendelseAnsvarlig.NavVeileder -> this
+
     else -> throw IllegalArgumentException(
         "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
     )
@@ -488,6 +511,7 @@ private fun HendelseAnsvarlig.hentVeileder(): HendelseAnsvarlig.NavVeileder = wh
 
 private fun HendelseAnsvarlig.hentTiltakskoordinator(): HendelseAnsvarlig.NavTiltakskoordinator = when (this) {
     is HendelseAnsvarlig.NavTiltakskoordinator -> this
+
     else -> throw IllegalArgumentException(
         "Deltaker, system eller arrangør kan ikke være ansvarlig for vedtaket",
     )

@@ -1,8 +1,6 @@
 package no.nav.amt.distribusjon.hendelse
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.amt.distribusjon.Environment
-import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.distribusjonskanal.DokdistkanalClient
 import no.nav.amt.distribusjon.hendelse.model.HendelseDto
 import no.nav.amt.distribusjon.hendelse.model.toModel
@@ -18,8 +16,12 @@ import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.util.UUID
 
+@Component
 class HendelseConsumer(
     private val varselService: VarselService,
     private val journalforingService: JournalforingService,
@@ -27,6 +29,7 @@ class HendelseConsumer(
     private val hendelseRepository: HendelseRepository,
     private val dokdistkanalClient: DokdistkanalClient,
     private val veilarboppfolgingClient: VeilarboppfolgingClient,
+    private val objectMapper: ObjectMapper,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
     kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
 ) : Consumer<UUID, String> {

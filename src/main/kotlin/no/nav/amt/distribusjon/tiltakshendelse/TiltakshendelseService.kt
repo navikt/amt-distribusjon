@@ -12,8 +12,10 @@ import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.outbox.OutboxService
 import no.nav.amt.lib.utils.database.Database
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import java.util.UUID
 
+@Service
 class TiltakshendelseService(
     private val repository: TiltakshendelseRepository,
     private val producer: TiltakshendelseProducer,
@@ -33,11 +35,16 @@ class TiltakshendelseService(
         }
 
         when (hendelse.payload) {
-            is HendelseType.OpprettUtkast -> opprettStartHendelse(hendelse)
+            is HendelseType.OpprettUtkast -> {
+                opprettStartHendelse(hendelse)
+            }
+
             is HendelseType.AvbrytUtkast,
             is HendelseType.InnbyggerGodkjennUtkast,
             is HendelseType.NavGodkjennUtkast,
-            -> stoppUtkastHendelse(hendelse)
+            -> {
+                stoppUtkastHendelse(hendelse)
+            }
 
             else -> {}
         }
@@ -46,6 +53,7 @@ class TiltakshendelseService(
     suspend fun handleForslag(forslag: Forslag) {
         when (forslag.status) {
             is Forslag.Status.VenterPaSvar -> opprettStartHendelse(forslag)
+
             is Forslag.Status.Godkjent,
             is Forslag.Status.Avvist,
             is Forslag.Status.Tilbakekalt,

@@ -1,49 +1,39 @@
 package no.nav.amt.distribusjon.tiltakshendelse
 
-import kotliquery.Row
-import kotliquery.queryOf
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
-import no.nav.amt.lib.utils.database.Database
+import org.springframework.jdbc.core.RowMapper
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.stereotype.Service
 import java.util.UUID
 
-class TiltakshendelseRepository {
-    fun rowmapper(row: Row) = Tiltakshendelse(
-        id = row.uuid("id"),
-        type = row.string("type").let { Tiltakshendelse.Type.valueOf(it) },
-        deltakerId = row.uuid("deltaker_id"),
-        forslagId = row.uuidOrNull("forslag_id"),
-        hendelser = row.array<UUID>("hendelser").toList(),
-        personident = row.string("personident"),
-        aktiv = row.boolean("aktiv"),
-        tekst = row.string("tekst"),
-        tiltakskode = row.string("tiltakskode").let { Tiltakskode.valueOf(it) },
-        opprettet = row.localDateTime("created_at"),
-    )
-
-    fun upsert(tiltakshendelse: Tiltakshendelse) = Database.query {
+@Service
+class TiltakshendelseRepository(
+    private val template: NamedParameterJdbcTemplate,
+) {
+    fun upsert(tiltakshendelse: Tiltakshendelse): Int {
         val sql =
             """
             insert into tiltakshendelse (
-                id, 
-                type, 
-                deltaker_id, 
-                forslag_id, 
-                hendelser, 
-                personident, 
-                aktiv, 
-                tekst, 
+                id,
+                type,
+                deltaker_id,
+                forslag_id,
+                hendelser,
+                personident,
+                aktiv,
+                tekst,
                 tiltakskode
             )
             values (
-                :id, 
-                :type, 
-                :deltaker_id, 
-                :forslag_id, 
-                :hendelser, 
-                :personident, 
-                :aktiv, 
-                :tekst, 
+                :id,
+                :type,
+                :deltaker_id,
+                :forslag_id,
+                :hendelser,
+                :personident,
+                :aktiv,
+                :tekst,
                 :tiltakskode
             )
             on conflict (id) do update set
@@ -66,30 +56,36 @@ class TiltakshendelseRepository {
             "tiltakskode" to tiltakshendelse.tiltakskode.name,
         )
 
-        it.update(queryOf(sql, params))
+        return template.update(sql, params)
     }
 
-    fun get(id: UUID): Result<Tiltakshendelse> = Database.query {
+    fun get(id: UUID): Result<Tiltakshendelse> {
         val sql =
             """
-            select * 
+            select *
             from tiltakshendelse
             where id = :id
             """.trimIndent()
 
-        val query = queryOf(sql, mapOf("id" to id))
+        val result = template.query(
+            sql,
+            mapOf("id" to id),
+            tiltakshendelseRowMapper,
+        )
 
-        it.run(query.map(::rowmapper).asSingle)?.let { tiltakshendelse ->
-            Result.success(tiltakshendelse)
-        } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse $id"))
+        return result
+            .firstOrNull()
+            ?.let { Result.success(it) }
+            ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse $id"))
     }
 
-    fun getHendelse(deltakerId: UUID, hendelseType: Tiltakshendelse.Type) = Database.query {
+    fun getHendelse(deltakerId: UUID, hendelseType: Tiltakshendelse.Type): Result<Tiltakshendelse> {
         val sql =
             """
-            select * 
+            select *
             from tiltakshendelse
-            where deltaker_id = :deltaker_id and type = :type
+            where deltaker_id = :deltaker_id
+              and type = :type
             """.trimIndent()
 
         val params = mapOf(
@@ -97,38 +93,78 @@ class TiltakshendelseRepository {
             "type" to hendelseType.name,
         )
 
-        it.run(queryOf(sql, params).map(::rowmapper).asSingle)?.let { tiltakshendelse ->
-            Result.success(tiltakshendelse)
-        } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse for deltaker $deltakerId"))
+        val result = template.query(sql, params, tiltakshendelseRowMapper)
+
+        return result
+            .firstOrNull()
+            ?.let { Result.success(it) }
+            ?: Result.failure(
+                NoSuchElementException("Fant ikke tiltakshendelse for deltaker $deltakerId"),
+            )
     }
 
-    fun getForslagHendelse(forslagId: UUID) = Database.query {
+    fun getForslagHendelse(forslagId: UUID): Result<Tiltakshendelse> {
         val sql =
             """
-            select * 
+            select *
             from tiltakshendelse
             where forslag_id = :forslag_id
             """.trimIndent()
 
-        val params = mapOf("forslag_id" to forslagId)
+        val result = template.query(
+            sql,
+            mapOf("forslag_id" to forslagId),
+            tiltakshendelseRowMapper,
+        )
 
-        it.run(queryOf(sql, params).map(::rowmapper).asSingle)?.let { tiltakshendelse ->
-            Result.success(tiltakshendelse)
-        } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse for med forslagId $forslagId"))
+        return result
+            .firstOrNull()
+            ?.let { Result.success(it) }
+            ?: Result.failure(
+                NoSuchElementException("Fant ikke tiltakshendelse med forslagId $forslagId"),
+            )
     }
 
-    fun getByHendelseId(hendelseId: UUID) = Database.query {
+    fun getByHendelseId(hendelseId: UUID): Result<Tiltakshendelse> {
         val sql =
             """
-            SELECT * 
-            FROM tiltakshendelse
-            WHERE hendelser @> ARRAY[:hendelse_id]::uuid[]
+            select *
+            from tiltakshendelse
+            where hendelser @> ARRAY[:hendelse_id]::uuid[]
             """.trimIndent()
 
-        val query = queryOf(sql, mapOf("hendelse_id" to hendelseId))
+        val result = template.query(
+            sql,
+            mapOf("hendelse_id" to hendelseId),
+            tiltakshendelseRowMapper,
+        )
 
-        it.run(query.map(::rowmapper).asSingle)?.let { varsel ->
-            Result.success(varsel)
-        } ?: Result.failure(java.util.NoSuchElementException("Fant ikke tiltakshendelse for hendelse $hendelseId"))
+        return result
+            .firstOrNull()
+            ?.let { Result.success(it) }
+            ?: Result.failure(
+                NoSuchElementException("Fant ikke tiltakshendelse for hendelse $hendelseId"),
+            )
+    }
+
+    companion object {
+        private val tiltakshendelseRowMapper = RowMapper { rs, _ ->
+            Tiltakshendelse(
+                id = UUID.fromString(rs.getString("id")),
+                type = Tiltakshendelse.Type.valueOf(rs.getString("type")),
+                deltakerId = UUID.fromString(rs.getString("deltaker_id")),
+                forslagId = rs.getString("forslag_id")?.let(UUID::fromString),
+                hendelser = rs
+                    .getArray("hendelser")
+                    .array
+                    .let { it as Array<UUID> }
+                    .toList(),
+                personident = rs.getString("personident"),
+                aktiv = rs.getBoolean("aktiv"),
+                tekst = rs.getString("tekst"),
+                tiltakskode = Tiltakskode.valueOf(rs.getString("tiltakskode")),
+                opprettet = rs.getTimestamp("created_at").toLocalDateTime(),
+            )
+        }
     }
 }

@@ -5,10 +5,12 @@ import no.nav.amt.distribusjon.journalforing.JournalforingService
 import no.nav.amt.lib.utils.job.JobManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
+@Component
 class EndringsvedtakJob(
     private val jobManager: JobManager,
     private val hendelseRepository: HendelseRepository,

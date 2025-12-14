@@ -18,7 +18,7 @@
         <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
     </appender>
 
-    <root level="${ROOT_LOG_LEVEL:-INFO}">
+    <root level="${ROOT_LOG_LEVEL:-DEBUG}">
         <appender-ref ref="stdout_json_masked"/>
     </root>
 

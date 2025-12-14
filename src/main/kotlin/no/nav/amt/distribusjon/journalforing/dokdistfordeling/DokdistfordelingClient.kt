@@ -1,30 +1,19 @@
 package no.nav.amt.distribusjon.journalforing.dokdistfordeling
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.header
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
+import no.nav.amt.distribusjon.AppConstants.NAV_CALL_ID_HEADER_KEY
 import no.nav.amt.distribusjon.Environment
-import no.nav.amt.distribusjon.application.plugins.objectMapper
-import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
+import org.springframework.stereotype.Service
+import org.springframework.web.client.RestClient
 import java.util.UUID
 
+@Service
 class DokdistfordelingClient(
-    private val httpClient: HttpClient,
-    private val azureAdTokenClient: AzureAdTokenClient,
-    environment: Environment,
+    private val dokDistFordelingHttpClient: RestClient,
+    @Value($$"${app.app-name}") private val applicationName: String,
 ) {
-    private val scope = environment.dokdistfordelingScope
-    private val url = environment.dokdistfordelingUrl
-    private val navCallId = Environment.appName
     private val log = LoggerFactory.getLogger(javaClass)
 
     /*
@@ -32,43 +21,52 @@ class DokdistfordelingClient(
         distribusjon av dokumenter knyttet til en utgående, ferdigstilt journalpost.
         Denne brukes kun dersom brukeren ikke er digital så resultatet blir i praksis at det sendes brev
      */
-    suspend fun distribuerJournalpost(
+    fun distribuerJournalpost(
         journalpostId: String,
         distribusjonstype: DistribuerJournalpostRequest.Distribusjonstype = DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,
         tvingSentralPrint: Boolean = false,
-    ): UUID? {
-        val request = DistribuerJournalpostRequest(journalpostId, tvingSentralPrint, distribusjonstype = distribusjonstype)
-        return distribuerJournalpost(request)
-    }
+    ): UUID? = dokDistFordelingHttpClient
+        .post()
+        .uri("/rest/v1/distribuerjournalpost")
+        .header(NAV_CALL_ID_HEADER_KEY, applicationName)
+        .body(
+            DistribuerJournalpostRequest(
+                journalpostId = journalpostId,
+                tvingSentralPrint = tvingSentralPrint,
+                distribusjonstype = distribusjonstype,
+            ),
+        ).exchange { _, response ->
+            when (response.statusCode.value()) {
+                in 200..299 -> {
+                    response
+                        .bodyTo(DistribuerJournalpostResponse::class.java)
+                        ?.bestillingsId
+                        ?.also { log.info("Distribuerte journalpost $journalpostId, bestillingsId=$it") }
+                        ?: error("Tom respons ved distribuering av journalpost $journalpostId")
+                }
 
-    suspend fun distribuerJournalpost(request: DistribuerJournalpostRequest): UUID? {
-        val token = azureAdTokenClient.getMachineToMachineToken(scope)
-        val journalpostId = request.journalpostId
-        val response = httpClient.post("$url/rest/v1/distribuerjournalpost") {
-            header(HttpHeaders.Authorization, token)
-            header("Nav-Callid", navCallId)
-            contentType(ContentType.Application.Json)
-            setBody(objectMapper.writeValueAsString(request))
-        }
+                HttpStatus.CONFLICT.value() -> {
+                    log.warn("Journalpost $journalpostId er allerede distribuert")
+                    response.bodyTo(DistribuerJournalpostResponse::class.java)?.bestillingsId
+                }
 
-        if (!response.status.isSuccess()) {
-            if (response.status == HttpStatusCode.Conflict) {
-                log.warn("Journalpost $journalpostId er allerede distribuert")
-                return response.body<DistribuerJournalpostResponse>().bestillingsId
+                HttpStatus.GONE.value() -> {
+                    log.warn(
+                        "Journalpost $journalpostId tilhører bruker som er død og som mangler adresse i PDL. Kan ikke sende brev.",
+                    )
+                    null
+                }
+
+                else -> {
+                    val bodyText = response.bodyTo(String::class.java)
+
+                    throw IllegalStateException(
+                        "Distribuering av journalpost $journalpostId feilet: " +
+                            "Status=${response.statusCode} error=$bodyText",
+                    )
+                }
             }
-            if (response.status == HttpStatusCode.Gone) {
-                log.warn("Journalpost $journalpostId tilhører bruker som er død og som mangler adresse i PDL. Kan ikke sende brev.")
-                return null
-            }
-            error("Distribuering av journalpost $journalpostId feilet: ${response.status} ${response.bodyAsText()}")
         }
-
-        val bestillingsId = response.body<DistribuerJournalpostResponse>().bestillingsId
-
-        log.info("Distribuerte journalpost $journalpostId, bestillingsId=$bestillingsId")
-
-        return bestillingsId
-    }
 }
 
 data class DistribuerJournalpostRequest(

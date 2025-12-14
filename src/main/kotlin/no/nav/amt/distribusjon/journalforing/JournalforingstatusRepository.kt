@@ -1,21 +1,16 @@
 package no.nav.amt.distribusjon.journalforing
 
-import kotliquery.Row
-import kotliquery.queryOf
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
-import no.nav.amt.lib.utils.database.Database
+import org.springframework.jdbc.core.RowMapper
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.stereotype.Service
 import java.util.UUID
 
-class JournalforingstatusRepository {
-    private fun rowmapper(row: Row) = Journalforingstatus(
-        hendelseId = row.uuid("hendelse_id"),
-        journalpostId = row.stringOrNull("journalpost_id"),
-        bestillingsId = row.uuidOrNull("bestillingsid"),
-        kanIkkeDistribueres = row.boolean("kan_ikke_distribueres"),
-        kanIkkeJournalfores = row.boolean("kan_ikke_journalfores"),
-    )
-
-    fun upsert(journalforingstatus: Journalforingstatus) = Database.query {
+@Service
+class JournalforingstatusRepository(
+    private val template: NamedParameterJdbcTemplate,
+) {
+    fun upsert(journalforingstatus: Journalforingstatus): Int {
         val sql =
             """
             insert into journalforingstatus (hendelse_id, journalpost_id, bestillingsid, kan_ikke_distribueres, kan_ikke_journalfores)
@@ -36,10 +31,10 @@ class JournalforingstatusRepository {
             "kan_ikke_journalfores" to journalforingstatus.kanIkkeJournalfores,
         )
 
-        it.update(queryOf(sql, params))
+        return template.update(sql, params)
     }
 
-    fun get(hendelseId: UUID) = Database.query {
+    fun get(hendelseId: UUID): Journalforingstatus {
         val sql =
             """
             select * 
@@ -47,8 +42,22 @@ class JournalforingstatusRepository {
             where hendelse_id = :hendelse_id
             """.trimIndent()
 
-        val query = queryOf(sql, mapOf("hendelse_id" to hendelseId))
+        return template.queryForObject(
+            sql,
+            mapOf("hendelse_id" to hendelseId),
+            journalforingstatusRowMapper,
+        )
+    }
 
-        it.run(query.map(::rowmapper).asSingle)
+    companion object {
+        private val journalforingstatusRowMapper = RowMapper { rs, _ ->
+            Journalforingstatus(
+                hendelseId = UUID.fromString(rs.getString("hendelse_id")),
+                journalpostId = rs.getString("journalpost_id"),
+                bestillingsId = UUID.fromString(rs.getString("bestillingsid")),
+                kanIkkeDistribueres = rs.getBoolean("kan_ikke_distribueres"),
+                kanIkkeJournalfores = rs.getBoolean("kan_ikke_journalfores"),
+            )
+        }
     }
 }

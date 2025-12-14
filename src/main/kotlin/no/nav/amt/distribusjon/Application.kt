@@ -1,5 +1,18 @@
 package no.nav.amt.distribusjon
 
+import no.nav.security.token.support.spring.api.EnableJwtTokenValidation
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
+
+@SpringBootApplication
+@EnableJwtTokenValidation
+class Application
+
+fun main(args: Array<String>) {
+    runApplication<Application>(*args)
+}
+
+/*
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -59,6 +72,7 @@ import no.nav.amt.lib.utils.leaderelection.Leader
 import no.nav.amt.lib.utils.leaderelection.LeaderElectionClient
 import no.nav.amt.lib.utils.leaderelection.LeaderProvider
 import kotlin.time.Duration.Companion.seconds
+
 
 fun main() {
     embeddedServer(
@@ -196,3 +210,4 @@ fun Application.module() {
 }
 
 fun Application.isReady() = attributes.getOrNull(isReadyKey) == true
+*/

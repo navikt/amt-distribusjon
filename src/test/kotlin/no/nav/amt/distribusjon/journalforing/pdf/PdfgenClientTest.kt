@@ -3,193 +3,191 @@ package no.nav.amt.distribusjon.journalforing.pdf
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.runBlocking
-import no.nav.amt.distribusjon.testEnvironment
-import no.nav.amt.distribusjon.utils.ClientTestBase
-import no.nav.amt.distribusjon.utils.createMockHttpClient
+import no.nav.amt.distribusjon.HttpClientTestBase
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData.utkast
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata.ansvarligNavVeileder
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata.deltaker
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
+import org.springframework.http.MediaType
+import org.springframework.test.context.TestPropertySource
+import org.springframework.test.web.client.match.MockRestRequestMatchers.header
+import org.springframework.test.web.client.match.MockRestRequestMatchers.method
+import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.test.web.client.response.MockRestResponseCreators.withForbiddenRequest
+import org.springframework.test.web.client.response.MockRestResponseCreators.withServerError
+import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
+import org.springframework.test.web.client.response.MockRestResponseCreators.withUnauthorizedRequest
 import java.time.LocalDate
 import java.util.UUID
 
-class PdfgenClientTest : ClientTestBase() {
+@RestClientTest(PdfgenClient::class)
+@TestPropertySource(
+    properties = [
+        "app.pdf-gen-url=http://localhost/api/v1/genpdf/amt",
+    ],
+)
+class PdfgenClientTest(
+    @Value($$"${app.pdf-gen-url}") private val pdfGenUrl: String,
+    private val sut: PdfgenClient,
+) : HttpClientTestBase() {
     @Test
     fun `skal returnere ByteArray nar genererHovedvedtak kalles med gyldig respons`() {
-        val sut = createPdfgenClient(
-            expectedUrl = GENERER_HOVEDVEDTAK_URL,
-            responseBody = expectedResponse,
-        )
+        mockServer
+            .expect(requestTo("$pdfGenUrl/hovedvedtak"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer $MOCKED_TOKEN"))
+            .andRespond(
+                withSuccess(expectedResponse, MediaType.APPLICATION_PDF),
+            )
 
-        val actualResponse = runBlocking {
-            sut.genererHovedvedtak(hovedVedtakPdfDto)
-        }
+        val actualResponse = sut.genererHovedvedtak(hovedVedtakPdfDto)
 
         actualResponse shouldBe expectedResponse
     }
 
     @Test
     fun `skal kaste feil nar genererHovedvedtak returnerer feilkode`() {
-        val sut = createPdfgenClient(
-            expectedUrl = GENERER_HOVEDVEDTAK_URL,
-            statusCode = HttpStatusCode.BadGateway,
-        )
+        mockServer
+            .expect(requestTo("$pdfGenUrl/hovedvedtak"))
+            .andRespond(withForbiddenRequest())
 
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
-                sut.genererHovedvedtak(hovedVedtakPdfDto)
-            }
+        val thrown = shouldThrow<IllegalStateException> {
+            sut.genererHovedvedtak(hovedVedtakPdfDto)
         }
 
-        thrown.message shouldStartWith "Kunne ikke hente opprette hovedvedtak-pdf i amt-pdfgen."
+        thrown.message shouldStartWith "Kunne ikke hente/opprette hovedvedtak-PDF i amt-pdfgen."
     }
 
     @Test
     fun `skal returnere ByteArray nar genererHovedvedtakFellesOppstart kalles med gyldig respons`() {
-        val sut = createPdfgenClient(
-            expectedUrl = GENERER_HOVEDVEDTAK_FELLES_OPPSTART_URL,
-            responseBody = expectedResponse,
-        )
+        mockServer
+            .expect(requestTo("$pdfGenUrl/hovedvedtak-felles-oppstart"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer $MOCKED_TOKEN"))
+            .andRespond(
+                withSuccess(expectedResponse, MediaType.APPLICATION_PDF),
+            )
 
-        val actualResponse = runBlocking {
-            sut.genererHovedvedtakFellesOppstart(hovedopptakFellesOppstart)
-        }
+        val actualResponse = sut.genererHovedvedtakFellesOppstart(hovedopptakFellesOppstart)
 
         actualResponse shouldBe expectedResponse
     }
 
     @Test
     fun `skal kaste feil nar genererHovedvedtakFellesOppstart returnerer feilkode`() {
-        val sut = createPdfgenClient(
-            expectedUrl = GENERER_HOVEDVEDTAK_FELLES_OPPSTART_URL,
-            statusCode = HttpStatusCode.BadGateway,
-        )
+        mockServer
+            .expect(requestTo("$pdfGenUrl/hovedvedtak-felles-oppstart"))
+            .andRespond(withServerError())
 
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
-                sut.genererHovedvedtakFellesOppstart(hovedopptakFellesOppstart)
-            }
+        val thrown = shouldThrow<IllegalStateException> {
+            sut.genererHovedvedtakFellesOppstart(hovedopptakFellesOppstart)
         }
 
-        thrown.message shouldStartWith "Kunne ikke hente opprette hovedvedtak-pdf i amt-pdfgen."
+        thrown.message shouldStartWith "Kunne ikke hente/opprette felles oppstart hovedvedtak-PDF i amt-pdfgen"
     }
 
     @Test
     fun `skal returnere ByteArray nar genererInnsokingsbrevPDF kalles med gyldig respons`() {
-        val sut = createPdfgenClient(
-            expectedUrl = GENERER_INNSOKINGSBREV_PDF_URL,
-            responseBody = expectedResponse,
-        )
+        mockServer
+            .expect(requestTo("$pdfGenUrl/innsokingsbrev"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer $MOCKED_TOKEN"))
+            .andRespond(
+                withSuccess(expectedResponse, MediaType.APPLICATION_PDF),
+            )
 
-        val actualResponse = runBlocking {
-            sut.genererInnsokingsbrevPDF(innsokingsbrevPdfDto)
-        }
+        val actualResponse = sut.genererInnsokingsbrevPDF(innsokingsbrevPdfDto)
 
         actualResponse shouldBe expectedResponse
     }
 
     @Test
     fun `skal kaste feil nar genererInnsokingsbrevPDF returnerer feilkode`() {
-        val sut = createPdfgenClient(
-            expectedUrl = GENERER_INNSOKINGSBREV_PDF_URL,
-            statusCode = HttpStatusCode.BadGateway,
-        )
+        mockServer
+            .expect(requestTo("$pdfGenUrl/innsokingsbrev"))
+            .andRespond(withUnauthorizedRequest())
 
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
-                sut.genererInnsokingsbrevPDF(innsokingsbrevPdfDto)
-            }
+        val thrown = shouldThrow<IllegalStateException> {
+            sut.genererInnsokingsbrevPDF(innsokingsbrevPdfDto)
         }
 
-        thrown.message shouldStartWith "Kunne ikke hente opprette kurs-innsoking-pdf i amt-pdfgen."
+        thrown.message shouldStartWith "Kunne ikke hente/opprette kurs-innsoking-PDF i amt-pdfgen"
     }
 
     @Test
     fun `skal returnere ByteArray nar genererVentelistebrevPDF kalles med gyldig respons`() {
-        val sut = createPdfgenClient(
-            expectedUrl = GENERER_VENTELISTEBREV_PDF_URL,
-            responseBody = expectedResponse,
-        )
+        mockServer
+            .expect(requestTo("$pdfGenUrl/ventelistebrev"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer $MOCKED_TOKEN"))
+            .andRespond(
+                withSuccess(expectedResponse, MediaType.APPLICATION_PDF),
+            )
 
-        val actualResponse = runBlocking {
-            sut.genererVentelistebrevPDF(ventelistebrevPdfDto)
-        }
+        val actualResponse = sut.genererVentelistebrevPDF(ventelistebrevPdfDto)
 
         actualResponse shouldBe expectedResponse
     }
 
     @Test
     fun `skal kaste feil nar genererVentelistebrevPDF returnerer feilkode`() {
-        val sut = createPdfgenClient(
-            expectedUrl = GENERER_VENTELISTEBREV_PDF_URL,
-            statusCode = HttpStatusCode.BadGateway,
-        )
+        mockServer
+            .expect(requestTo("$pdfGenUrl/ventelistebrev"))
+            .andRespond(withUnauthorizedRequest())
 
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
-                sut.genererVentelistebrevPDF(ventelistebrevPdfDto)
-            }
+        val thrown = shouldThrow<IllegalStateException> {
+            sut.genererVentelistebrevPDF(ventelistebrevPdfDto)
         }
 
-        thrown.message shouldStartWith "Kunne ikke hente opprette venteliste-pdf i amt-pdfgen."
+        thrown.message shouldStartWith "Kunne ikke hente/opprette venteliste-PDF i amt-pdfgen"
     }
 
     @Test
     fun `skal returnere ByteArray nar endringsvedtak kalles med gyldig respons`() {
-        val sut = createPdfgenClient(
-            expectedUrl = ENDRINGSVEDTAK_URL,
-            responseBody = expectedResponse,
-        )
+        mockServer
+            .expect(requestTo("$pdfGenUrl/endringsvedtak"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer $MOCKED_TOKEN"))
+            .andRespond(
+                withSuccess(expectedResponse, MediaType.APPLICATION_PDF),
+            )
 
-        val actualResponse = runBlocking {
-            sut.endringsvedtak(endringsvedtakPdfDto)
-        }
+        val actualResponse = sut.endringsvedtak(endringsvedtakPdfDto)
 
         actualResponse shouldBe expectedResponse
     }
 
     @Test
     fun `skal kaste feil nar endringsvedtak returnerer feilkode`() {
-        val sut = createPdfgenClient(
-            expectedUrl = ENDRINGSVEDTAK_URL,
-            statusCode = HttpStatusCode.BadGateway,
-        )
+        mockServer
+            .expect(requestTo("$pdfGenUrl/endringsvedtak"))
+            .andRespond(withUnauthorizedRequest())
 
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
-                sut.endringsvedtak(endringsvedtakPdfDto)
-            }
+        val thrown = shouldThrow<IllegalStateException> {
+            sut.endringsvedtak(endringsvedtakPdfDto)
         }
 
-        thrown.message shouldStartWith "Kunne ikke hente opprette endringsvedtak-pdf i amt-pdfgen."
+        thrown.message shouldStartWith "Kunne ikke hente/opprette endringsvedtak-PDF i amt-pdfgen"
     }
-
-    private fun createPdfgenClient(
-        expectedUrl: String,
-        statusCode: HttpStatusCode = HttpStatusCode.OK,
-        responseBody: ByteArray? = null,
-    ) = PdfgenClient(
-        httpClient = createMockHttpClient(
-            expectedUrl = expectedUrl,
-            responseBody = responseBody,
-            statusCode = statusCode,
-            requiresAuthHeader = false,
-        ),
-        environment = testEnvironment,
-    )
 
     companion object {
         private val expectedResponse = "Hello World!".toByteArray()
-
-        private const val GENERER_HOVEDVEDTAK_URL = "http://localhost/api/v1/genpdf/amt/hovedvedtak"
-        private const val GENERER_HOVEDVEDTAK_FELLES_OPPSTART_URL = "http://localhost/api/v1/genpdf/amt/hovedvedtak-felles-oppstart"
-        private const val GENERER_INNSOKINGSBREV_PDF_URL = "http://localhost/api/v1/genpdf/amt/innsokingsbrev"
-        private const val GENERER_VENTELISTEBREV_PDF_URL = "http://localhost/api/v1/genpdf/amt/ventelistebrev"
-        private const val ENDRINGSVEDTAK_URL = "http://localhost/api/v1/genpdf/amt/endringsvedtak"
 
         private val hovedVedtakPdfDto = lagHovedvedtakPdfDto(
             deltaker = deltaker(),

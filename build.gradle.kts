@@ -1,4 +1,3 @@
-
 group = "no.nav.amt-distribusjon"
 version = "1.0-SNAPSHOT"
 
@@ -6,9 +5,13 @@ plugins {
     val kotlinVersion = "2.2.21"
 
     kotlin("jvm") version kotlinVersion
+    kotlin("plugin.spring") version kotlinVersion
+    id("org.springframework.boot") version "4.0.0"
+    id("io.spring.dependency-management") version "1.1.7"
+    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
+
     id("io.ktor.plugin") version "3.3.3"
     id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
-    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
     application
     distribution
 }
@@ -17,6 +20,10 @@ repositories {
     mavenCentral()
     maven { setUrl("https://github-package-registry-mirror.gc.nav.no/cached/maven-release") }
 }
+
+val tokenSupportVersion = "6.0.0"
+val jacksonModuleKotlinVersion = "3.0.3"
+val springmockkVersion = "5.0.1"
 
 val ktorVersion = "3.3.3"
 val logbackVersion = "1.5.21"
@@ -47,6 +54,42 @@ configurations.configureEach {
 }
 
 dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-logging")
+    implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("org.springframework.boot:spring-boot-flyway")
+    implementation("org.springframework.boot:spring-boot-kafka")
+
+    implementation("tools.jackson.module:jackson-module-kotlin:$jacksonModuleKotlinVersion")
+
+    implementation("org.flywaydb:flyway-database-postgresql")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+
+    implementation("no.nav.security:token-validation-spring:$tokenSupportVersion")
+    implementation("no.nav.security:token-client-spring:$tokenSupportVersion")
+
+    implementation("org.postgresql:postgresql")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-data-jdbc-test")
+    testImplementation("org.springframework.boot:spring-boot-restclient-test")
+    testImplementation("org.springframework.boot:spring-boot-resttestclient")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+
+    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
+    testImplementation("io.kotest:kotest-assertions-json-jvm:$kotestVersion")
+    testImplementation("no.nav.security:token-validation-spring-test:$tokenSupportVersion")
+
+    testImplementation("org.testcontainers:testcontainers-postgresql")
+    testImplementation("org.testcontainers:testcontainers-kafka")
+
+    testImplementation("com.ninja-squad:springmockk:$springmockkVersion")
+
+    // orig from here
+
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
@@ -66,7 +109,8 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
 
-    implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
+    // implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
+    implementation("com.github.ben-manes.caffeine:caffeine")
 
     implementation("no.nav.tms.varsel:kotlin-builder:2.1.1")
 
@@ -97,35 +141,29 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(21)
     compilerOptions {
-        freeCompilerArgs.add("-Xjsr305=strict")
+        freeCompilerArgs.addAll(
+            "-Xjsr305=strict",
+            "-Xannotation-default-target=param-property",
+            "-Xwarning-level=IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE:disabled",
+        )
+        // jvmTarget = JvmTarget.JVM_21
     }
-}
-
-application {
-    mainClass.set("no.nav.amt.distribusjon.ApplicationKt")
-
-    val isDevelopment: Boolean = project.ext.has("development")
-    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
 ktlint {
     version = ktlintVersion
 }
 
-tasks.test {
+tasks.named<Test>("test") {
     useJUnitPlatform()
+
     jvmArgs(
         "-Xshare:off",
         "-XX:+EnableDynamicAgentLoading",
     )
 }
 
-tasks.jar {
-    manifest {
-        attributes(
-            "Main-Class" to "no.nav.amt.distribusjon.ApplicationKt",
-        )
-    }
+tasks.named<Jar>("jar") {
+    enabled = false
 }

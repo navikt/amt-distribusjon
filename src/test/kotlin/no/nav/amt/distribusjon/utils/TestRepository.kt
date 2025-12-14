@@ -1,28 +1,31 @@
 package no.nav.amt.distribusjon.utils
 
-import kotliquery.queryOf
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.utils.DbUtils.toPGObject
-import no.nav.amt.lib.utils.database.Database
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.stereotype.Service
+import tools.jackson.databind.ObjectMapper
 
-object TestRepository {
-    fun cleanDatabase() = Database.query { session ->
-        val tables = listOf(
+@Service
+class TestRepository(
+    private val template: NamedParameterJdbcTemplate,
+    private val objectMapper: ObjectMapper,
+) {
+    companion object {
+        private val tablesToClean = setOf(
             "varsel",
             "journalforingstatus",
             "hendelse",
         )
-        tables.forEach {
-            val query = queryOf(
-                """delete from $it""",
-                emptyMap(),
-            )
-
-            session.update(query)
-        }
     }
 
-    fun insert(hendelse: Hendelse) = Database.query {
+    fun cleanDatabase() = tablesToClean
+        .map { "DELETE FROM $it" }
+        .forEach { currentSql ->
+            template.update(currentSql, emptyMap<String, Any>())
+        }
+
+    fun insert(hendelse: Hendelse) {
         val sql =
             """
             insert into hendelse (id, deltaker_id, deltaker, ansvarlig, payload, distribusjonskanal, manuelloppfolging, created_at)
@@ -33,14 +36,14 @@ object TestRepository {
         val params = mapOf(
             "id" to hendelse.id,
             "deltaker_id" to hendelse.deltaker.id,
-            "deltaker" to toPGObject(hendelse.deltaker),
-            "ansvarlig" to toPGObject(hendelse.ansvarlig),
-            "payload" to toPGObject(hendelse.payload),
+            "deltaker" to toPGObject(hendelse.deltaker, objectMapper),
+            "ansvarlig" to toPGObject(hendelse.ansvarlig, objectMapper),
+            "payload" to toPGObject(hendelse.payload, objectMapper),
             "created_at" to hendelse.opprettet,
             "distribusjonskanal" to hendelse.distribusjonskanal.name,
             "manuelloppfolging" to hendelse.manuellOppfolging,
         )
 
-        it.update(queryOf(sql, params))
+        template.update(sql, params)
     }
 }

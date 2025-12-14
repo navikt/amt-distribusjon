@@ -3,55 +3,75 @@ package no.nav.amt.distribusjon.amtdeltaker
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.runBlocking
-import no.nav.amt.distribusjon.testEnvironment
-import no.nav.amt.distribusjon.utils.ClientTestBase
-import no.nav.amt.distribusjon.utils.createMockHttpClient
+import no.nav.amt.distribusjon.HttpClientTestBase
 import no.nav.amt.distribusjon.utils.data.DeltakerData.lagDeltaker
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
+import org.springframework.http.MediaType
+import org.springframework.test.context.TestPropertySource
+import org.springframework.test.web.client.match.MockRestRequestMatchers.header
+import org.springframework.test.web.client.match.MockRestRequestMatchers.method
+import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.test.web.client.response.MockRestResponseCreators.withForbiddenRequest
+import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
+import org.springframework.web.util.UriComponentsBuilder
 
-class AmtDeltakerClientTest : ClientTestBase() {
+@RestClientTest(AmtDeltakerClient::class)
+@TestPropertySource(
+    properties = [
+        "app.amt-deltaker-url=http://localhost:8080",
+    ],
+)
+class AmtDeltakerClientTest(
+    @Value($$"${app.amt-deltaker-url}") private val amtDeltakerUrl: String,
+    private val sut: AmtDeltakerClient,
+) : HttpClientTestBase() {
     @Test
     fun `skal returnere deltakerliste nar getDeltaker kalles med gyldig respons`() {
-        val expectedDeltaker = lagDeltaker()
+        val expectedResponseBody = objectMapper.writeValueAsString(expectedDeltaker)
 
-        val sut = createAmtDeltakerClient(
-            responseBody = expectedDeltaker,
-        )
+        mockServer
+            .expect(requestTo(expectedUrl))
+            .andExpect(method(HttpMethod.GET))
+            .andExpect(header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer $MOCKED_TOKEN"))
+            .andRespond(
+                withSuccess(expectedResponseBody, MediaType.APPLICATION_JSON),
+            )
 
-        val actualDeltaker = runBlocking {
-            sut.getDeltaker(deltakerId)
-        }
+        val actualDeltaker = sut.getDeltaker(expectedDeltaker.id)
 
         actualDeltaker.deltakerliste shouldBe expectedDeltaker.deltakerliste
     }
 
     @Test
     fun `skal kaste feil nar getDeltaker returnerer feilkode`() {
-        val sut = createAmtDeltakerClient(
-            HttpStatusCode.BadRequest,
-        )
+        mockServer
+            .expect(requestTo(expectedUrl))
+            .andRespond(
+                withForbiddenRequest(),
+            )
 
-        val thrown = runBlocking {
+        val thrown =
             shouldThrow<IllegalStateException> {
-                sut.getDeltaker(deltakerId)
+                sut.getDeltaker(expectedDeltaker.id)
             }
-        }
 
-        thrown.message shouldStartWith "Kunne ikke hente deltaker fra amt-deltaker."
+        thrown.message shouldStartWith "Kunne ikke hente deltaker fra amt-deltaker. Metode: GET, status: 403 FORBIDDEN, error="
     }
 
-    private fun createAmtDeltakerClient(statusCode: HttpStatusCode = HttpStatusCode.OK, responseBody: AmtDeltakerResponse? = null) =
-        AmtDeltakerClient(
-            httpClient = createMockHttpClient(ENDRINGSVEDTAK_URL, responseBody, statusCode),
-            azureAdTokenClient = mockAzureAdTokenClient,
-            environment = testEnvironment,
-        )
+    private val expectedUrl =
+        UriComponentsBuilder
+            .fromUriString(amtDeltakerUrl)
+            .pathSegment("deltaker")
+            .pathSegment(expectedDeltaker.id.toString())
+            .build()
+            .toUri()
 
     companion object {
-        private val deltakerId: UUID = UUID.randomUUID()
-        private val ENDRINGSVEDTAK_URL = "http://localhost/deltaker/$deltakerId"
+        private val expectedDeltaker = lagDeltaker()
     }
 }
