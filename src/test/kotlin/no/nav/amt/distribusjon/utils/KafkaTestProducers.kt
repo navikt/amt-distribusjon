@@ -1,6 +1,6 @@
 package no.nav.amt.distribusjon.utils
 
-import no.nav.amt.lib.testing.SingletonKafkaProvider
+import no.nav.amt.distribusjon.IntegrationTestBase.Companion.kafkaContainer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -11,7 +11,7 @@ import java.util.Properties
 fun produceStringString(record: ProducerRecord<String, String>): RecordMetadata {
     KafkaProducer<String, String>(
         Properties().apply {
-            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, SingletonKafkaProvider.getHost())
+            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.bootstrapServers)
             put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java)
             put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java)
         },

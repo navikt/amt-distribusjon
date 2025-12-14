@@ -6,7 +6,6 @@ import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
-import no.nav.amt.lib.utils.database.Database
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.ZoneId
@@ -22,8 +21,9 @@ class VarselService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    suspend fun handleHendelse(hendelse: Hendelse) = Database.transaction {
-        if (skalIkkeVarsles(hendelse)) return@transaction
+    fun handleHendelse(hendelse: Hendelse) {
+        // TODO = Database.transaction
+        if (skalIkkeVarsles(hendelse)) return
 
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> {

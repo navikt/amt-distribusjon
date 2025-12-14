@@ -1,8 +1,8 @@
 package no.nav.amt.distribusjon.varsel
 
 import no.nav.amt.distribusjon.Environment
+import no.nav.amt.distribusjon.outbox.OutboxService
 import no.nav.amt.distribusjon.varsel.model.Varsel
-import no.nav.amt.lib.outbox.OutboxService
 import org.springframework.stereotype.Service
 
 @Service

@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestConstructor
 import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.kafka.KafkaContainer
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 
@@ -37,14 +36,6 @@ abstract class RepositoryTestBase {
             addEnv("TZ", "Europe/Oslo")
             waitingFor(Wait.forListeningPort())
             withCommand("postgres", "-c", "wal_level=logical")
-        }
-
-        @Suppress("unused")
-        val kafkaContainer = KafkaContainer(DockerImageName.parse("apache/kafka")).apply {
-            // workaround for https://github.com/testcontainers/testcontainers-java/issues/9506
-            withEnv("KAFKA_LISTENERS", "PLAINTEXT://:9092,BROKER://:9093,CONTROLLER://:9094")
-            start()
-            System.setProperty("KAFKA_BROKERS", bootstrapServers)
         }
     }
 }

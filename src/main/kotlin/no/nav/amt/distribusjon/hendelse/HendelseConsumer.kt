@@ -11,8 +11,6 @@ import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
 import no.nav.amt.lib.kafka.Consumer
 import no.nav.amt.lib.kafka.ManagedKafkaConsumer
 import no.nav.amt.lib.kafka.config.KafkaConfig
-import no.nav.amt.lib.kafka.config.KafkaConfigImpl
-import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.slf4j.LoggerFactory
@@ -31,7 +29,7 @@ class HendelseConsumer(
     private val veilarboppfolgingClient: VeilarboppfolgingClient,
     private val objectMapper: ObjectMapper,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
-    kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
+    kafkaConfig: KafkaConfig,
 ) : Consumer<UUID, String> {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -43,7 +41,7 @@ class HendelseConsumer(
             groupId = groupId,
         ),
         consume = ::consume,
-    )
+    ).apply { start() }
 
     override suspend fun consume(key: UUID, value: String) {
         val hendelseDto: HendelseDto = objectMapper.readValue(value)

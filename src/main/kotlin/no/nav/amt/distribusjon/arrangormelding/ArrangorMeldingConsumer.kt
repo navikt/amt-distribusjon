@@ -5,8 +5,6 @@ import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
 import no.nav.amt.lib.kafka.Consumer
 import no.nav.amt.lib.kafka.ManagedKafkaConsumer
 import no.nav.amt.lib.kafka.config.KafkaConfig
-import no.nav.amt.lib.kafka.config.KafkaConfigImpl
-import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.arrangor.melding.Melding
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -22,7 +20,7 @@ class ArrangorMeldingConsumer(
     private val tiltakshendelseService: TiltakshendelseService,
     private val objectMapper: ObjectMapper,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
-    kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
+    kafkaConfig: KafkaConfig,
 ) : Consumer<UUID, String?> {
     private val log = LoggerFactory.getLogger(javaClass)
 

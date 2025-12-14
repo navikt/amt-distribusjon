@@ -3,14 +3,13 @@ package no.nav.amt.distribusjon.tiltakshendelse
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
+import no.nav.amt.distribusjon.outbox.OutboxService
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService.Companion.UTKAST_TIL_PAMELDING_TEKST
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
 import no.nav.amt.distribusjon.tiltakshendelse.model.toDto
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseType
-import no.nav.amt.lib.outbox.OutboxService
-import no.nav.amt.lib.utils.database.Database
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -98,14 +97,14 @@ class TiltakshendelseService(
     }
 
     private suspend fun lagreOgDistribuer(tiltakshendelse: Tiltakshendelse) {
-        Database.transaction {
-            repository.upsert(tiltakshendelse)
-            outboxService.insertRecord(
-                key = tiltakshendelse.id,
-                value = tiltakshendelse.toDto(),
-                topic = Environment.TILTAKSHENDELSE_TOPIC,
-            )
-        }
+        // Database.transaction { // TODO
+        repository.upsert(tiltakshendelse)
+        outboxService.insertRecord(
+            key = tiltakshendelse.id,
+            value = tiltakshendelse.toDto(),
+            topic = Environment.TILTAKSHENDELSE_TOPIC,
+        )
+
         log.info("Upsertet tiltakshendelse ${tiltakshendelse.id}")
     }
 

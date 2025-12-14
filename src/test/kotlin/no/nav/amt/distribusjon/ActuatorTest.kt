@@ -8,17 +8,15 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.boot.resttestclient.TestRestTemplate
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate
 import org.springframework.boot.resttestclient.getForEntity
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalManagementPort
 import org.springframework.http.HttpStatus
 import org.springframework.web.util.UriComponentsBuilder
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 class ActuatorTest(
     @LocalManagementPort private val managementPort: Int,
     private val restTemplate: TestRestTemplate,
-) : RepositoryTestBase() {
+) : IntegrationTestBase() {
     @ParameterizedTest(name = "{0} probe skal returnere OK og status = UP")
     @ValueSource(strings = ["liveness", "readiness"])
     fun probe_skal_returnere_OK_og_status_UP(probeName: String) {

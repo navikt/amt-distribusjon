@@ -61,13 +61,13 @@ class VarselRepository(
             "hendelser" to varsel.hendelser.toTypedArray(),
             "status" to varsel.status.name,
             "tekst" to varsel.tekst,
-            "aktiv_fra" to varsel.aktivFra,
-            "aktiv_til" to varsel.aktivTil,
+            "aktiv_fra" to varsel.aktivFra.toLocalDateTime(),
+            "aktiv_til" to varsel.aktivTil?.toLocalDateTime(),
             "deltaker_id" to varsel.deltakerId,
             "personident" to varsel.personident,
             "er_eksternt_varsel" to varsel.erEksterntVarsel,
             "revarsel_for_varsel" to varsel.revarselForVarsel,
-            "revarsles" to varsel.revarsles,
+            "revarsles" to varsel.revarsles?.toLocalDateTime(),
         )
 
         return template.update(sql, params)

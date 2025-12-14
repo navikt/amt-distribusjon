@@ -175,39 +175,4 @@ fun Application.module() {
     varselJobService.startJobs()
 
     outboxProcessor.start()
-
-    attributes.put(isReadyKey, true)
-
-    monitor.subscribe(ApplicationStopPreparing) {
-        attributes.put(isReadyKey, false)
-        log.info("Shutting down application (ApplicationStopPreparing)")
-    }
-
-    monitor.subscribe(ApplicationStopping) {
-        runBlocking {
-            log.info("Shutting down consumers")
-            consumers.forEach {
-                runCatching {
-                    it.close()
-                }.onFailure { throwable ->
-                    log.error("Error shutting down consumer", throwable)
-                }
-            }
-        }
-    }
-
-    monitor.subscribe(ApplicationStopped) {
-        log.info("Shutting down database")
-        Database.close()
-
-        log.info("Shutting down producers")
-        runCatching {
-            kafkaProducer.close()
-        }.onFailure { throwable ->
-            log.error("Error shutting down producers", throwable)
-        }
-    }
-}
-
-fun Application.isReady() = attributes.getOrNull(isReadyKey) == true
 */

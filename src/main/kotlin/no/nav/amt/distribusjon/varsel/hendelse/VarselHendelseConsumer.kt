@@ -7,8 +7,6 @@ import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.amt.lib.kafka.Consumer
 import no.nav.amt.lib.kafka.ManagedKafkaConsumer
 import no.nav.amt.lib.kafka.config.KafkaConfig
-import no.nav.amt.lib.kafka.config.KafkaConfigImpl
-import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -21,7 +19,7 @@ class VarselHendelseConsumer(
     private val varselService: VarselService,
     private val objectMapper: ObjectMapper,
     groupId: String = Environment.KAFKA_CONSUMER_GROUP_ID,
-    kafkaConfig: KafkaConfig = if (Environment.isLocal()) LocalKafkaConfig() else KafkaConfigImpl(),
+    kafkaConfig: KafkaConfig,
 ) : Consumer<String, String> {
     private val log = LoggerFactory.getLogger(javaClass)
 

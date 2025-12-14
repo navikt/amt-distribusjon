@@ -1,18 +1,11 @@
 package no.nav.amt.distribusjon.application.plugins
 
-import com.auth0.jwk.JwkProviderBuilder
 import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.application.log
-import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.jwt.JWTCredential
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.jwt.jwt
 import no.nav.amt.distribusjon.Environment
-import java.net.URI
-import java.util.concurrent.TimeUnit
 
 fun Application.configureAuthentication(environment: Environment) {
+/*
     val jwkProvider = JwkProviderBuilder(URI(environment.azureJwkKeysUrl).toURL())
         .cached(5, 12, TimeUnit.HOURS)
         .build()
@@ -32,6 +25,7 @@ fun Application.configureAuthentication(environment: Environment) {
             }
         }
     }
+*/
 }
 
 fun erMaskinTilMaskin(credentials: JWTCredential): Boolean {
