@@ -84,7 +84,7 @@ class DokarkivClient(
         ),
         dokumenter = listOf(
             Dokument(
-                brevkode = getBrevkode(tiltakstype),
+                brevkode = getBrevkode(tiltakstype), // Denne verdien har ikke noen betydning utrnom hvis man skal gjøre feilsøking i joark
                 dokumentvarianter = listOf(
                     DokumentVariant(
                         fysiskDokument = pdf,
@@ -103,7 +103,5 @@ class DokarkivClient(
         eksternReferanseId = hendelseId.toString(),
     )
 
-    // må benytte Arena-kode her for at ting ikke skal knekke
-    private fun getBrevkode(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): String =
-        "tiltak-vedtak-${tiltakstype.tiltakskode.toArenaKode().name}"
+    private fun getBrevkode(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): String = "tiltak-vedtak-${tiltakstype.tiltakskode.name}"
 }
