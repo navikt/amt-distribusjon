@@ -1,6 +1,6 @@
 package no.nav.amt.distribusjon.tiltakshendelse.model
 
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -10,7 +10,7 @@ data class TiltakshendelseDto(
     val aktiv: Boolean,
     val tekst: String,
     val lenke: String,
-    val tiltakstype: ArenaKode, // kan ikke endres, publiseres på obo.tiltakshendelse-v1
+    val tiltakstype: Tiltakskode,
     val opprettet: LocalDateTime,
     val avsender: String = "KOMET",
 )
@@ -21,6 +21,6 @@ fun Tiltakshendelse.toDto() = TiltakshendelseDto(
     aktiv = aktiv,
     tekst = tekst,
     lenke = lenke,
-    tiltakstype = tiltakskode.toArenaKode(),
+    tiltakstype = tiltakskode,
     opprettet = opprettet,
 )
