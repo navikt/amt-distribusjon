@@ -22,14 +22,14 @@ spec:
     timeout: 3
   replicas:
     min: 2
-    max: 3
+    max: 4
     scalingStrategy:
       cpu:
-        thresholdPercentage: 300
+        thresholdPercentage: 100
   resources:
     requests:
-      cpu: 40m
-      memory: 512Mi
+      cpu: 30m
+      memory: 736Mi
     limits:
       memory: 1024Mi
   azure:
