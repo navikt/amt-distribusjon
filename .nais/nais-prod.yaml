@@ -21,15 +21,13 @@ spec:
     initialDelay: 30
     timeout: 3
   replicas:
-    min: 2
+    disableAutoScaling: true
+    min: 4
     max: 4
-    scalingStrategy:
-      cpu:
-        thresholdPercentage: 100
   resources:
     requests:
-      cpu: 30m
-      memory: 736Mi
+      cpu: 10m
+      memory: 650Mi
     limits:
       memory: 1024Mi
   azure:
