@@ -19,7 +19,7 @@ repositories {
 }
 
 val ktorVersion = "3.3.3"
-val logbackVersion = "1.5.21"
+val logbackVersion = "1.5.22"
 val prometeusVersion = "1.16.1"
 val ktlintVersion = "1.6.0"
 val jacksonVersion = "2.20.1"
@@ -31,7 +31,7 @@ val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
 val postgresVersion = "42.7.8"
 val caffeineVersion = "3.2.3"
-val unleashVersion = "11.1.1"
+val unleashVersion = "11.2.0"
 val nimbusVersion = "10.6"
 val amtLibVersion = "1.2025.12.11_11.16-62287e250f37"
 
