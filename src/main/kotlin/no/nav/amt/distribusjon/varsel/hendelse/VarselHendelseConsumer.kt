@@ -32,7 +32,7 @@ class VarselHendelseConsumer(
         consume = ::consume,
     )
 
-    override suspend fun consume(key: String, value: String) {
+    suspend fun consume(key: String, value: String) {
         val hendelse = objectMapper.readValue<VarselHendelseDto>(value)
         if (hendelse.namespace != Environment.namespace && hendelse.appnavn != Environment.appName) {
             return
@@ -61,6 +61,7 @@ class VarselHendelseConsumer(
                     varselService.utlopBeskjed(varsel)
                 }
             }
+
             is OpprettetVarselHendelse,
             is SlettetVarselHendelse,
             -> {
