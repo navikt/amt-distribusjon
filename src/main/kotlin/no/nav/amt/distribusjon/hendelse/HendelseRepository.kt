@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 class HendelseRepository {
-    private fun rowmapper(row: Row) = Hendelse(
+    private fun hendelseRowMapper(row: Row) = Hendelse(
         id = row.uuid("id"),
         deltaker = objectMapper.readValue(row.string("deltaker")),
         ansvarlig = objectMapper.readValue(row.string("ansvarlig")),
@@ -24,16 +24,8 @@ class HendelseRepository {
         manuellOppfolging = row.boolean("manuelloppfolging"),
     )
 
-    private fun rowmapperHendelseMedJournalforingstatus(row: Row) = HendelseMedJournalforingstatus(
-        hendelse = Hendelse(
-            id = row.uuid("id"),
-            deltaker = objectMapper.readValue(row.string("deltaker")),
-            ansvarlig = objectMapper.readValue(row.string("ansvarlig")),
-            payload = objectMapper.readValue(row.string("payload")),
-            opprettet = row.localDateTime("h.created_at"),
-            distribusjonskanal = row.string("distribusjonskanal").let { Distribusjonskanal.valueOf(it) },
-            manuellOppfolging = row.boolean("manuelloppfolging"),
-        ),
+    private fun hendelseMedJournalforingstatusRowMapper(row: Row) = HendelseMedJournalforingstatus(
+        hendelse = hendelseRowMapper(row),
         journalforingstatus = Journalforingstatus(
             hendelseId = row.uuid("id"),
             journalpostId = row.stringOrNull("journalpost_id"),
@@ -64,32 +56,52 @@ class HendelseRepository {
         it.update(queryOf(sql, params))
     }
 
+    private val ikkeJournalforteHendelserBaseSql =
+        """
+        SELECT
+            h.id,
+            h.deltaker,
+            h.ansvarlig,
+            h.payload,
+            h.created_at,
+            h.distribusjonskanal,
+            h.manuelloppfolging,
+            js.journalpost_id,
+            js.bestillingsid,
+            js.kan_ikke_distribueres,
+            js.kan_ikke_journalfores
+        FROM 
+            hendelse h
+            JOIN journalforingstatus js ON h.id = js.hendelse_id            
+        """.trimIndent()
+
     fun getIkkeJournalforteHendelser(opprettet: LocalDateTime) = Database.query {
         val sql =
             """
-            select h.id as "id",
-                h.deltaker as "deltaker",
-                h.ansvarlig as "ansvarlig",
-                h.payload as "payload",
-                h.created_at as "h.created_at",
-                h.distribusjonskanal as "distribusjonskanal",
-                h.manuelloppfolging as "manuelloppfolging",
-                js.journalpost_id as "journalpost_id",
-                js.bestillingsid as "bestillingsid",
-                js.kan_ikke_distribueres as "kan_ikke_distribueres",
-                js.kan_ikke_journalfores as "kan_ikke_journalfores"
-            from hendelse h
-                left join journalforingstatus js on h.id = js.hendelse_id
-            where h.created_at < :opprettet 
-                and js.hendelse_id is not null
-                and (js.journalpost_id is null and (js.kan_ikke_journalfores is null or js.kan_ikke_journalfores = false)
-                    or (js.bestillingsid is null and h.distribusjonskanal not in ('DITT_NAV','SDP') 
-                    and (js.kan_ikke_distribueres is null or js.kan_ikke_distribueres = false)))
+            $ikkeJournalforteHendelserBaseSql                
+            WHERE
+                js.journalpost_id IS NULL
+                AND js.kan_ikke_journalfores IS NOT TRUE
+                AND h.created_at < :opprettet
+                            
+            UNION ALL
+            
+            $ikkeJournalforteHendelserBaseSql                
+            WHERE
+                js.bestillingsid IS NULL
+                AND js.kan_ikke_distribueres IS NOT TRUE
+                AND h.distribusjonskanal NOT IN ('DITT_NAV','SDP')
+                AND h.created_at < :opprettet
+                -- utelukker records fra første spørring
+                AND NOT (
+                    js.journalpost_id IS NULL
+                    AND js.kan_ikke_journalfores IS NOT TRUE
+                )                
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("opprettet" to opprettet))
 
-        it.run(query.map(::rowmapperHendelseMedJournalforingstatus).asList)
+        it.run(query.map(::hendelseMedJournalforingstatusRowMapper).asList)
     }
 
     fun getHendelser(hendelseIder: List<UUID>) = Database.query {
@@ -105,7 +117,7 @@ class HendelseRepository {
         val query = queryOf(
             sql,
             *hendelseIder.toTypedArray(),
-        ).map(::rowmapper).asList
+        ).map(::hendelseRowMapper).asList
 
         it.run(query)
     }

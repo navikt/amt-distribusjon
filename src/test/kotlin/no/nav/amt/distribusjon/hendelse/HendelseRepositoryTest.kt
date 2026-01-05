@@ -16,16 +16,14 @@ import java.util.UUID
 
 class HendelseRepositoryTest {
     companion object {
-        lateinit var hendelseRepository: HendelseRepository
-        lateinit var journalforingstatusRepository: JournalforingstatusRepository
+        private val hendelseRepository = HendelseRepository()
+        private val journalforingstatusRepository = JournalforingstatusRepository()
 
         @JvmStatic
         @BeforeAll
         fun setup() {
             @Suppress("UnusedExpression")
             SingletonPostgres16Container
-            hendelseRepository = HendelseRepository()
-            journalforingstatusRepository = JournalforingstatusRepository()
         }
     }
 
@@ -185,5 +183,15 @@ class HendelseRepositoryTest {
         val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
 
         ikkeJournalforteHendelser.size shouldBe 0
+    }
+
+    @Test
+    fun `getHendelser - skal returnere hendelser`() {
+        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
+        TestRepository.insert(hendelse)
+
+        val hendelser = hendelseRepository.getHendelser(listOf(hendelse.id))
+
+        hendelser.size shouldBe 1
     }
 }
