@@ -90,13 +90,9 @@ class HendelseRepository {
             WHERE
                 js.bestillingsid IS NULL
                 AND js.kan_ikke_distribueres IS NOT TRUE
+                AND js.journalpost_id IS NOT NULL -- utelukker records fra første spørring
                 AND h.distribusjonskanal NOT IN ('DITT_NAV','SDP')
-                AND h.created_at < :opprettet
-                -- utelukker records fra første spørring
-                AND NOT (
-                    js.journalpost_id IS NULL
-                    AND js.kan_ikke_journalfores IS NOT TRUE
-                )                
+                AND h.created_at < :opprettet                
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("opprettet" to opprettet))
