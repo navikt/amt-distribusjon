@@ -21,9 +21,11 @@ spec:
     initialDelay: 30
     timeout: 3
   replicas:
-    disableAutoScaling: true
-    min: 4
-    max: 4
+    min: 2
+    max: 3
+    scalingStrategy:
+      cpu:
+        thresholdPercentage: 150
   resources:
     requests:
       cpu: 10m
