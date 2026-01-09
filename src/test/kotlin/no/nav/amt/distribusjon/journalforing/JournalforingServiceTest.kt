@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.journalforing
 
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.runBlocking
@@ -16,7 +17,6 @@ import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.produceStringString
-import no.nav.amt.lib.testing.AsyncUtils
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -29,7 +29,7 @@ class JournalforingServiceTest {
 
         produce(hendelseDto)
 
-        AsyncUtils.eventually {
+        eventually {
             app.journalforingstatusRepository.get(hendelseDto.id)!!.journalpostId shouldNotBe null
         }
     }

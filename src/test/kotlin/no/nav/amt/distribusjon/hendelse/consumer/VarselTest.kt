@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.hendelse.consumer
 
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
@@ -22,11 +23,9 @@ import no.nav.amt.distribusjon.varsel.model.oppgaveTekst
 import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
 import no.nav.amt.lib.models.hendelse.HendelseType
-import no.nav.amt.lib.testing.AsyncUtils
 import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Test
-import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -37,7 +36,7 @@ class VarselTest {
 
         produce(hendelse)
 
-        AsyncUtils.eventually {
+        eventually {
             val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
 
             varsel.aktivTil shouldBe null
@@ -65,7 +64,7 @@ class VarselTest {
 
         produce(hendelse)
 
-        AsyncUtils.eventually {
+        eventually {
             val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
             varsel.erAktiv shouldBe false
             app.assertNotProduced(varsel.id)
@@ -108,7 +107,7 @@ class VarselTest {
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
 
-        AsyncUtils.eventually {
+        eventually {
             val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
 
             varsel.id shouldBe forrigeVarsel.id
@@ -130,7 +129,7 @@ class VarselTest {
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
 
-        AsyncUtils.eventually {
+        eventually {
             val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
 
             varsel.id shouldBe forrigeVarsel.id
@@ -144,7 +143,7 @@ class VarselTest {
     fun `navGodkjennUtkast - ingen tidligere varsel - oppretter beskjed`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.navGodkjennUtkast())
         produce(hendelse)
-        AsyncUtils.eventually {
+        eventually {
             assertNyBeskjed(app, hendelse, nowUTC())
         }
     }
@@ -162,7 +161,7 @@ class VarselTest {
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
 
-        AsyncUtils.eventually {
+        eventually {
             assertNyBeskjed(app, hendelse, nowUTC())
 
             val inaktivertVarsel = app.varselRepository.get(forrigeVarsel.id).getOrThrow()
@@ -199,14 +198,14 @@ class VarselTest {
     fun `endreSluttdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreSluttdato())
         produce(hendelse)
-        AsyncUtils.eventually { assertNyBeskjed(app, hendelse, Varsel.nesteUtsendingstidspunkt()) }
+        eventually { assertNyBeskjed(app, hendelse, Varsel.nesteUtsendingstidspunkt()) }
     }
 
     @Test
     fun `endreStartdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreStartdato())
         produce(hendelse)
-        AsyncUtils.eventually { assertNyBeskjed(app, hendelse, Varsel.nesteUtsendingstidspunkt()) }
+        eventually { assertNyBeskjed(app, hendelse, Varsel.nesteUtsendingstidspunkt()) }
     }
 
     @Test
@@ -222,7 +221,7 @@ class VarselTest {
         app.varselRepository.upsert(varsel)
         produce(hendelse)
 
-        AsyncUtils.eventually {
+        eventually {
             val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
             oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
         }
@@ -242,7 +241,7 @@ class VarselTest {
         app.varselRepository.upsert(varsel)
         produce(hendelse)
 
-        AsyncUtils.eventually(Duration.ofSeconds(10)) {
+        eventually {
             val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
             oppdatertVarsel.status shouldBe Varsel.Status.UTFORT
             oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
@@ -270,7 +269,7 @@ class VarselTest {
 
         produce(hendelse)
 
-        AsyncUtils.eventually {
+        eventually {
             val oppdatertAktivtVarsel = app.varselRepository.get(aktivtVarsel.id).getOrThrow()
             oppdatertAktivtVarsel.status shouldBe Varsel.Status.UTFORT
             oppdatertAktivtVarsel.aktivFra shouldBeCloseTo aktivtVarsel.aktivFra
@@ -323,7 +322,7 @@ class VarselTest {
         oppdatertVarsel.aktivTil!! shouldBeCloseTo varsel.aktivTil
     }
 
-    private fun assertNyBeskjed(
+    private suspend fun assertNyBeskjed(
         app: TestApp,
         hendelse: HendelseDto,
         aktivFra: ZonedDateTime,

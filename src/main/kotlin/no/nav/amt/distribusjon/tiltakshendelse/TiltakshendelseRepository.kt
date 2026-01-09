@@ -21,7 +21,7 @@ class TiltakshendelseRepository {
         opprettet = row.localDateTime("created_at"),
     )
 
-    fun upsert(tiltakshendelse: Tiltakshendelse) = Database.query {
+    suspend fun upsert(tiltakshendelse: Tiltakshendelse) = Database.query {
         val sql =
             """
             insert into tiltakshendelse (
@@ -69,7 +69,7 @@ class TiltakshendelseRepository {
         it.update(queryOf(sql, params))
     }
 
-    fun get(id: UUID): Result<Tiltakshendelse> = Database.query {
+    suspend fun get(id: UUID): Result<Tiltakshendelse> = Database.query {
         val sql =
             """
             select * 
@@ -84,7 +84,7 @@ class TiltakshendelseRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse $id"))
     }
 
-    fun getHendelse(deltakerId: UUID, hendelseType: Tiltakshendelse.Type) = Database.query {
+    suspend fun getHendelse(deltakerId: UUID, hendelseType: Tiltakshendelse.Type) = Database.query {
         val sql =
             """
             select * 
@@ -102,7 +102,7 @@ class TiltakshendelseRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse for deltaker $deltakerId"))
     }
 
-    fun getForslagHendelse(forslagId: UUID) = Database.query {
+    suspend fun getForslagHendelse(forslagId: UUID) = Database.query {
         val sql =
             """
             select * 
@@ -117,7 +117,7 @@ class TiltakshendelseRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse for med forslagId $forslagId"))
     }
 
-    fun getByHendelseId(hendelseId: UUID) = Database.query {
+    suspend fun getByHendelseId(hendelseId: UUID) = Database.query {
         val sql =
             """
             SELECT * 

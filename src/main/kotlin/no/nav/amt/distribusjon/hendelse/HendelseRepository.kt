@@ -35,7 +35,7 @@ class HendelseRepository {
         ),
     )
 
-    fun insert(hendelse: Hendelse) = Database.query {
+    suspend fun insert(hendelse: Hendelse) = Database.query {
         val sql =
             """
             insert into hendelse (id, deltaker_id, deltaker, ansvarlig, payload, distribusjonskanal, manuelloppfolging)
@@ -75,7 +75,7 @@ class HendelseRepository {
             JOIN journalforingstatus js ON h.id = js.hendelse_id            
         """.trimIndent()
 
-    fun getIkkeJournalforteHendelser(opprettet: LocalDateTime) = Database.query {
+    suspend fun getIkkeJournalforteHendelser(opprettet: LocalDateTime) = Database.query {
         val sql =
             """
             $ikkeJournalforteHendelserBaseSql                
@@ -104,7 +104,7 @@ class HendelseRepository {
         it.run(query.map(::hendelseMedJournalforingstatusRowMapper).asList)
     }
 
-    fun getHendelser(hendelseIder: List<UUID>) = Database.query {
+    suspend fun getHendelser(hendelseIder: List<UUID>) = Database.query {
         if (hendelseIder.isEmpty()) {
             return@query emptyList()
         }

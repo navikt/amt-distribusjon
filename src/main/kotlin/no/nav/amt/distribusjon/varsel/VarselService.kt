@@ -6,7 +6,7 @@ import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
-import no.nav.amt.lib.utils.database.Database
+import no.nav.amt.lib.utils.database.Database.withTransaction
 import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -20,14 +20,21 @@ class VarselService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    suspend fun handleHendelse(hendelse: Hendelse) = Database.transaction {
-        if (skalIkkeVarsles(hendelse)) return@transaction
+    suspend fun handleHendelse(hendelse: Hendelse) = withTransaction {
+        if (skalIkkeVarsles(hendelse)) return@withTransaction
 
         when (hendelse.payload) {
-            is HendelseType.OpprettUtkast -> handleNyttVarsel(Varsel.nyOppgave(hendelse), true)
+            is HendelseType.OpprettUtkast -> {
+                handleNyttVarsel(Varsel.nyOppgave(hendelse), true)
+            }
 
-            is HendelseType.AvbrytUtkast -> inaktiverOppgave(hendelse.deltaker)
-            is HendelseType.InnbyggerGodkjennUtkast -> utforOppgave(hendelse.deltaker)
+            is HendelseType.AvbrytUtkast -> {
+                inaktiverOppgave(hendelse.deltaker)
+            }
+
+            is HendelseType.InnbyggerGodkjennUtkast -> {
+                utforOppgave(hendelse.deltaker)
+            }
 
             is HendelseType.ReaktiverDeltakelse,
             is HendelseType.NavGodkjennUtkast,
@@ -49,7 +56,9 @@ class VarselService(
             is HendelseType.IkkeAktuell,
             is HendelseType.LeggTilOppstartsdato,
             is HendelseType.FjernOppstartsdato,
-            -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)))
+            -> {
+                handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)))
+            }
 
             is HendelseType.EndreUtkast,
             is HendelseType.EndreSluttarsak,
@@ -57,23 +66,27 @@ class VarselService(
                 log.info("Oppretter ikke varsel for hendelse ${hendelse.payload::class} for deltaker ${hendelse.deltaker.id}")
             }
 
-            is HendelseType.DeltakerSistBesokt -> utforBeskjed(hendelse.deltaker, hendelse.payload.sistBesokt)
+            is HendelseType.DeltakerSistBesokt -> {
+                utforBeskjed(hendelse.deltaker, hendelse.payload.sistBesokt)
+            }
 
             is HendelseType.Avslag,
             is HendelseType.SettPaaVenteliste,
             is HendelseType.TildelPlass,
-            -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
+            -> {
+                handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
+            }
         }
     }
 
-    private fun skalIkkeVarsles(hendelse: Hendelse): Boolean = if (repository.getByHendelseId(hendelse.id).isSuccess) {
+    private suspend fun skalIkkeVarsles(hendelse: Hendelse): Boolean = if (repository.getByHendelseId(hendelse.id).isSuccess) {
         log.info("Varsel for hendelse ${hendelse.id} er allerede opprettet. Oppretter ikke nytt varsel.")
         true
     } else {
         !DigitalBrukerService.skalDistribueresDigitalt(hendelse.distribusjonskanal, hendelse.manuellOppfolging)
     }
 
-    private fun slaSammenMedVentendeVarsel(nyttVarsel: Varsel): Varsel {
+    private suspend fun slaSammenMedVentendeVarsel(nyttVarsel: Varsel): Varsel {
         val varsel = repository.getVentendeVarsel(nyttVarsel.deltakerId).fold(
             onSuccess = { it.merge(nyttVarsel) },
             onFailure = { nyttVarsel },
@@ -82,7 +95,7 @@ class VarselService(
         return varsel
     }
 
-    private fun handleNyttVarsel(varsel: Varsel, sendUmiddelbart: Boolean = false) {
+    private suspend fun handleNyttVarsel(varsel: Varsel, sendUmiddelbart: Boolean = false) {
         if (varsel.kanRevarsles || varsel.erRevarsel) {
             repository.stoppRevarsler(varsel.deltakerId)
         }
@@ -95,7 +108,7 @@ class VarselService(
         }
     }
 
-    private fun sendVarsel(varsel: Varsel) {
+    private suspend fun sendVarsel(varsel: Varsel) {
         inaktiverTidligereBeskjed(varsel.deltakerId)
 
         val oppdatertVarsel = varsel.copy(aktivFra = nowUTC(), status = Varsel.Status.AKTIV)
@@ -109,7 +122,7 @@ class VarselService(
         log.info("Sendte varsel ${varsel.id} for deltaker ${varsel.deltakerId}")
     }
 
-    private fun ferdigstillSendtVarsel(varsel: Varsel, nyStatus: Varsel.Status) {
+    private suspend fun ferdigstillSendtVarsel(varsel: Varsel, nyStatus: Varsel.Status) {
         if (varsel.erAktiv) {
             val revarsles = if (nyStatus == Varsel.Status.UTFORT) null else varsel.revarsles
 
@@ -119,7 +132,7 @@ class VarselService(
         }
     }
 
-    private fun inaktiverTidligereBeskjed(deltakerId: UUID) {
+    private suspend fun inaktiverTidligereBeskjed(deltakerId: UUID) {
         val varsel = repository.getAktivt(deltakerId).getOrNull()
         require(varsel?.type != Varsel.Type.OPPGAVE) {
             "Kan ikke inaktivere oppgave ${varsel?.id} som om den var en beskjed"
@@ -130,19 +143,19 @@ class VarselService(
         }
     }
 
-    private fun inaktiverOppgave(deltaker: HendelseDeltaker) {
+    private suspend fun inaktiverOppgave(deltaker: HendelseDeltaker) {
         repository.getSisteVarsel(deltaker.id, Varsel.Type.OPPGAVE).onSuccess { varsel ->
             ferdigstillSendtVarsel(varsel, Varsel.Status.INAKTIVERT)
         }
     }
 
-    private fun utforOppgave(deltaker: HendelseDeltaker) {
+    private suspend fun utforOppgave(deltaker: HendelseDeltaker) {
         repository.getSisteVarsel(deltaker.id, Varsel.Type.OPPGAVE).onSuccess { varsel ->
             ferdigstillSendtVarsel(varsel, Varsel.Status.UTFORT)
         }
     }
 
-    private fun utforBeskjed(deltaker: HendelseDeltaker, sistBesokt: ZonedDateTime) {
+    private suspend fun utforBeskjed(deltaker: HendelseDeltaker, sistBesokt: ZonedDateTime) {
         val beskjeder = repository.getAktiveEllerVentendeBeskjeder(deltaker.id)
         if (beskjeder.isEmpty()) {
             return
@@ -176,7 +189,7 @@ class VarselService(
         repository.stoppRevarsler(deltaker.id)
     }
 
-    fun utlopBeskjed(varsel: Varsel) {
+    suspend fun utlopBeskjed(varsel: Varsel) {
         require(varsel.type == Varsel.Type.BESKJED && varsel.erAktiv) {
             "Varsel må være en aktiv beskjed for å kunne utløpe. Varsel: ${varsel.id}"
         }
@@ -200,9 +213,9 @@ class VarselService(
         return besokForSendt || besokForIkkeSendt
     }
 
-    fun get(varselId: UUID) = repository.get(varselId)
+    suspend fun get(varselId: UUID) = repository.get(varselId)
 
-    fun sendVentendeVarsler() {
+    suspend fun sendVentendeVarsler() {
         val varsler = repository.getVarslerSomSkalSendes()
         require(varsler.size == varsler.distinctBy { it.deltakerId }.size) {
             "Det finnes flere enn et ventende varsel for en eller flere deltakere"
@@ -212,14 +225,14 @@ class VarselService(
         }
     }
 
-    fun sendRevarsler() {
+    suspend fun sendRevarsler() {
         val varsler = repository.getVarslerSomSkalRevarsles()
         val revarsler = varsler.map { slaSammenMedVentendeVarsel(Varsel.revarsel(it)) }
 
         revarsler.forEach { handleNyttVarsel(it, true) }
     }
 
-    private fun skalViseHistorikkModal(hendelseIder: List<UUID>): Boolean {
+    private suspend fun skalViseHistorikkModal(hendelseIder: List<UUID>): Boolean {
         val hendelser = hendelseRepository.getHendelser(hendelseIder)
         return hendelser.firstOrNull { it.payload !is HendelseType.NavGodkjennUtkast && it.payload !is HendelseType.TildelPlass } != null
     }

@@ -15,7 +15,7 @@ class JournalforingstatusRepository {
         kanIkkeJournalfores = row.boolean("kan_ikke_journalfores"),
     )
 
-    fun upsert(journalforingstatus: Journalforingstatus) = Database.query {
+    suspend fun upsert(journalforingstatus: Journalforingstatus) = Database.query {
         val sql =
             """
             insert into journalforingstatus (hendelse_id, journalpost_id, bestillingsid, kan_ikke_distribueres, kan_ikke_journalfores)
@@ -39,7 +39,7 @@ class JournalforingstatusRepository {
         it.update(queryOf(sql, params))
     }
 
-    fun get(hendelseId: UUID) = Database.query {
+    suspend fun get(hendelseId: UUID) = Database.query {
         val sql =
             """
             select * 

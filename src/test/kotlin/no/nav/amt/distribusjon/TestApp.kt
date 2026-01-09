@@ -6,6 +6,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.testing.testApplication
+import kotlinx.coroutines.runBlocking
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.application.isReadyKey
 import no.nav.amt.distribusjon.application.plugins.applicationConfig
@@ -171,10 +172,11 @@ fun haveOutboxRecord(
     topic: String,
     additionalConditions: (record: OutboxRecord) -> Boolean = { true },
 ) = object : Matcher<TestApp> {
-    override fun test(value: TestApp): MatcherResult {
+    override fun test(value: TestApp): MatcherResult = runBlocking {
         val records = value.outboxService.getRecordsByTopicAndKey(topic, key.toString())
         val passed = records.any(additionalConditions)
-        return MatcherResult(
+
+        return@runBlocking MatcherResult(
             passed,
             {
                 if (records.isEmpty()) {

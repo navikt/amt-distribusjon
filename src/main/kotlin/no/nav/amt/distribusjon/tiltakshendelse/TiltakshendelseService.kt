@@ -10,7 +10,7 @@ import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.outbox.OutboxService
-import no.nav.amt.lib.utils.database.Database
+import no.nav.amt.lib.utils.database.Database.withTransaction
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -33,11 +33,16 @@ class TiltakshendelseService(
         }
 
         when (hendelse.payload) {
-            is HendelseType.OpprettUtkast -> opprettStartHendelse(hendelse)
+            is HendelseType.OpprettUtkast -> {
+                opprettStartHendelse(hendelse)
+            }
+
             is HendelseType.AvbrytUtkast,
             is HendelseType.InnbyggerGodkjennUtkast,
             is HendelseType.NavGodkjennUtkast,
-            -> stoppUtkastHendelse(hendelse)
+            -> {
+                stoppUtkastHendelse(hendelse)
+            }
 
             else -> {}
         }
@@ -46,6 +51,7 @@ class TiltakshendelseService(
     suspend fun handleForslag(forslag: Forslag) {
         when (forslag.status) {
             is Forslag.Status.VenterPaSvar -> opprettStartHendelse(forslag)
+
             is Forslag.Status.Godkjent,
             is Forslag.Status.Avvist,
             is Forslag.Status.Tilbakekalt,
@@ -90,7 +96,7 @@ class TiltakshendelseService(
     }
 
     private suspend fun lagreOgDistribuer(tiltakshendelse: Tiltakshendelse) {
-        Database.transaction {
+        withTransaction {
             repository.upsert(tiltakshendelse)
             outboxService.insertRecord(
                 key = tiltakshendelse.id,
@@ -101,7 +107,7 @@ class TiltakshendelseService(
         log.info("Upsertet tiltakshendelse ${tiltakshendelse.id}")
     }
 
-    fun reproduser(id: UUID) {
+    suspend fun reproduser(id: UUID) {
         val tiltakshendelse = repository.get(id).getOrThrow()
         producer.produce(tiltakshendelse)
         log.info("Reproduserte tiltakshendelse $id")
