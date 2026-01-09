@@ -10,7 +10,6 @@ import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.outbox.OutboxService
-import no.nav.amt.lib.utils.database.Database.withTransaction
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -96,14 +95,12 @@ class TiltakshendelseService(
     }
 
     private suspend fun lagreOgDistribuer(tiltakshendelse: Tiltakshendelse) {
-        withTransaction {
-            repository.upsert(tiltakshendelse)
-            outboxService.insertRecord(
-                key = tiltakshendelse.id,
-                value = tiltakshendelse.toDto(),
-                topic = Environment.TILTAKSHENDELSE_TOPIC,
-            )
-        }
+        repository.upsert(tiltakshendelse)
+        outboxService.insertRecord(
+            key = tiltakshendelse.id,
+            value = tiltakshendelse.toDto(),
+            topic = Environment.TILTAKSHENDELSE_TOPIC,
+        )
         log.info("Upsertet tiltakshendelse ${tiltakshendelse.id}")
     }
 
