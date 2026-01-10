@@ -25,7 +25,7 @@ class TiltakshendelseService(
         const val UTKAST_TIL_PAMELDING_TEKST = "Utkast til påmelding"
     }
 
-    suspend fun handleHendelse(hendelse: Hendelse) {
+    fun handleHendelse(hendelse: Hendelse) {
         if (repository.getByHendelseId(hendelse.id).isSuccess) {
             log.info("Tiltakshendelse for hendelse ${hendelse.id} er allerede håndtert.")
             return
@@ -59,7 +59,7 @@ class TiltakshendelseService(
         }
     }
 
-    suspend fun opprettStartHendelse(hendelse: Hendelse) {
+    fun opprettStartHendelse(hendelse: Hendelse) {
         lagreOgDistribuer(hendelse.toTiltakshendelse())
     }
 
@@ -75,7 +75,7 @@ class TiltakshendelseService(
         )
     }
 
-    private suspend fun stoppUtkastHendelse(hendelse: Hendelse) {
+    private fun stoppUtkastHendelse(hendelse: Hendelse) {
         repository.getHendelse(hendelse.deltaker.id, Tiltakshendelse.Type.UTKAST).onSuccess {
             val inaktivertHendelse = it.copy(
                 aktiv = false,
@@ -85,7 +85,7 @@ class TiltakshendelseService(
         }
     }
 
-    suspend fun stoppForslagHendelse(forslagId: UUID) {
+    fun stoppForslagHendelse(forslagId: UUID) {
         repository.getForslagHendelse(forslagId).onSuccess {
             val inaktivertHendelse = it.copy(
                 aktiv = false,
@@ -94,7 +94,7 @@ class TiltakshendelseService(
         }
     }
 
-    private suspend fun lagreOgDistribuer(tiltakshendelse: Tiltakshendelse) {
+    private fun lagreOgDistribuer(tiltakshendelse: Tiltakshendelse) {
         repository.upsert(tiltakshendelse)
         outboxService.insertRecord(
             key = tiltakshendelse.id,
@@ -104,7 +104,7 @@ class TiltakshendelseService(
         log.info("Upsertet tiltakshendelse ${tiltakshendelse.id}")
     }
 
-    suspend fun reproduser(id: UUID) {
+    fun reproduser(id: UUID) {
         val tiltakshendelse = repository.get(id).getOrThrow()
         producer.produce(tiltakshendelse)
         log.info("Reproduserte tiltakshendelse $id")

@@ -6,7 +6,7 @@ import no.nav.amt.distribusjon.utils.DbUtils.toPGObject
 import no.nav.amt.lib.utils.database.Database
 
 object TestRepository {
-    suspend fun cleanDatabase() = Database.query { session ->
+    fun cleanDatabase() = Database.query { session ->
         val tables = listOf(
             "varsel",
             "journalforingstatus",
@@ -22,7 +22,7 @@ object TestRepository {
         }
     }
 
-    suspend fun insert(hendelse: Hendelse) = Database.query {
+    fun insert(hendelse: Hendelse) = Database.query {
         val sql =
             """
             insert into hendelse (id, deltaker_id, deltaker, ansvarlig, payload, distribusjonskanal, manuelloppfolging, created_at)

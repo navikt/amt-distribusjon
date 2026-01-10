@@ -11,7 +11,7 @@ import no.nav.amt.lib.kafka.ManagedKafkaConsumer
 import no.nav.amt.lib.kafka.config.KafkaConfig
 import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
-import no.nav.amt.lib.utils.database.Database.withTransaction
+import no.nav.amt.lib.utils.database.Database.transaction
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -42,13 +42,13 @@ class VarselHendelseConsumer(
         val varselId = UUID.fromString(key)
 
         varselService.get(varselId).onSuccess {
-            withTransaction {
+            transaction {
                 handterVarselHendelse(it, objectMapper.readValue(value))
             }
         }
     }
 
-    private suspend fun handterVarselHendelse(varsel: Varsel, hendelse: VarselHendelseDto) {
+    private fun handterVarselHendelse(varsel: Varsel, hendelse: VarselHendelseDto) {
         when (hendelse) {
             is EksternStatusHendelse -> {
                 log.info("Ekstern varsling for varsel ${varsel.id} er ${hendelse.status}")

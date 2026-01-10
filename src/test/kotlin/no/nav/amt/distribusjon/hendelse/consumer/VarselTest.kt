@@ -322,7 +322,7 @@ class VarselTest {
         oppdatertVarsel.aktivTil!! shouldBeCloseTo varsel.aktivTil
     }
 
-    private suspend fun assertNyBeskjed(
+    private fun assertNyBeskjed(
         app: TestApp,
         hendelse: HendelseDto,
         aktivFra: ZonedDateTime,

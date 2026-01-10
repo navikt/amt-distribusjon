@@ -7,7 +7,7 @@ import no.nav.amt.lib.outbox.OutboxService
 class VarselOutboxHandler(
     private val outboxService: OutboxService,
 ) {
-    suspend fun inaktiver(varsel: Varsel) {
+    fun inaktiver(varsel: Varsel) {
         outboxService.insertRecord(
             key = varsel.id,
             value = varsel.toInaktiverDto(),
@@ -15,7 +15,7 @@ class VarselOutboxHandler(
         )
     }
 
-    suspend fun opprettOppgave(varsel: Varsel) {
+    fun opprettOppgave(varsel: Varsel) {
         require(varsel.type == Varsel.Type.OPPGAVE) {
             "Kan ikke opprette oppgave, feil varseltype ${varsel.type}"
         }
@@ -27,7 +27,7 @@ class VarselOutboxHandler(
         )
     }
 
-    suspend fun opprettBeskjed(varsel: Varsel, visEndringsmodal: Boolean) {
+    fun opprettBeskjed(varsel: Varsel, visEndringsmodal: Boolean) {
         require(varsel.type == Varsel.Type.BESKJED) {
             "Kan ikke opprette beskjed, feil varseltype ${varsel.type}"
         }

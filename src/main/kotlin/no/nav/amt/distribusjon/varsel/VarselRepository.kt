@@ -23,7 +23,7 @@ class VarselRepository {
         revarsles = row.zonedDateTimeOrNull("revarsles"),
     )
 
-    suspend fun upsert(varsel: Varsel) = Database.query {
+    fun upsert(varsel: Varsel) = Database.query {
         val sql =
             """
             insert into varsel (
@@ -85,7 +85,7 @@ class VarselRepository {
         it.update(queryOf(sql, params))
     }
 
-    suspend fun getSisteVarsel(deltakerId: UUID, type: Varsel.Type) = Database.query {
+    fun getSisteVarsel(deltakerId: UUID, type: Varsel.Type) = Database.query {
         val sql =
             """
             select * 
@@ -102,7 +102,7 @@ class VarselRepository {
         } ?: Result.failure(NoSuchElementException("Fant ingen varsel av type $type for deltaker $deltakerId"))
     }
 
-    suspend fun getAktiveEllerVentendeBeskjeder(deltakerId: UUID) = Database.query {
+    fun getAktiveEllerVentendeBeskjeder(deltakerId: UUID) = Database.query {
         val sql =
             """
             select * 
@@ -117,7 +117,7 @@ class VarselRepository {
         it.run(query.map(::rowmapper).asList)
     }
 
-    suspend fun getAktivt(deltakerId: UUID) = Database.query {
+    fun getAktivt(deltakerId: UUID) = Database.query {
         val sql =
             """
             select * 
@@ -129,7 +129,7 @@ class VarselRepository {
             ?: Result.failure(NoSuchElementException())
     }
 
-    suspend fun get(id: UUID) = Database.query {
+    fun get(id: UUID) = Database.query {
         val sql =
             """
             select * 
@@ -144,7 +144,7 @@ class VarselRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke varsel $id"))
     }
 
-    suspend fun getByHendelseId(hendelseId: UUID) = Database.query {
+    fun getByHendelseId(hendelseId: UUID) = Database.query {
         val sql =
             """
             SELECT *
@@ -159,7 +159,7 @@ class VarselRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke varsel for hendelse $hendelseId"))
     }
 
-    suspend fun getVentendeVarsel(deltakerId: UUID) = Database.query {
+    fun getVentendeVarsel(deltakerId: UUID) = Database.query {
         val sql =
             """
             select * 
@@ -175,7 +175,7 @@ class VarselRepository {
         } ?: Result.failure(NoSuchElementException("Fant ikke varsel som ikke var sendt for deltaker $deltakerId"))
     }
 
-    suspend fun getVarslerSomSkalSendes() = Database.query {
+    fun getVarslerSomSkalSendes() = Database.query {
         val sql =
             """
             select * 
@@ -187,7 +187,7 @@ class VarselRepository {
         it.run(queryOf(sql).map(::rowmapper).asList)
     }
 
-    suspend fun getVarslerSomSkalRevarsles() = Database.query {
+    fun getVarslerSomSkalRevarsles() = Database.query {
         val sql =
             """
             select * 
@@ -197,7 +197,7 @@ class VarselRepository {
         it.run(queryOf(sql).map(::rowmapper).asList)
     }
 
-    suspend fun stoppRevarsler(deltakerId: UUID) = Database.query {
+    fun stoppRevarsler(deltakerId: UUID) = Database.query {
         val sql =
             """
             update varsel
