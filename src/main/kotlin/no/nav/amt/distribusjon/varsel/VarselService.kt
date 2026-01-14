@@ -24,10 +24,17 @@ class VarselService(
         if (skalIkkeVarsles(hendelse)) return@transaction
 
         when (hendelse.payload) {
-            is HendelseType.OpprettUtkast -> handleNyttVarsel(Varsel.nyOppgave(hendelse), true)
+            is HendelseType.OpprettUtkast -> {
+                handleNyttVarsel(Varsel.nyOppgave(hendelse), true)
+            }
 
-            is HendelseType.AvbrytUtkast -> inaktiverOppgave(hendelse.deltaker)
-            is HendelseType.InnbyggerGodkjennUtkast -> utforOppgave(hendelse.deltaker)
+            is HendelseType.AvbrytUtkast -> {
+                inaktiverOppgave(hendelse.deltaker)
+            }
+
+            is HendelseType.InnbyggerGodkjennUtkast -> {
+                utforOppgave(hendelse.deltaker)
+            }
 
             is HendelseType.ReaktiverDeltakelse,
             is HendelseType.NavGodkjennUtkast,
@@ -49,7 +56,9 @@ class VarselService(
             is HendelseType.IkkeAktuell,
             is HendelseType.LeggTilOppstartsdato,
             is HendelseType.FjernOppstartsdato,
-            -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)))
+            -> {
+                handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)))
+            }
 
             is HendelseType.EndreUtkast,
             is HendelseType.EndreSluttarsak,
@@ -57,12 +66,16 @@ class VarselService(
                 log.info("Oppretter ikke varsel for hendelse ${hendelse.payload::class} for deltaker ${hendelse.deltaker.id}")
             }
 
-            is HendelseType.DeltakerSistBesokt -> utforBeskjed(hendelse.deltaker, hendelse.payload.sistBesokt)
+            is HendelseType.DeltakerSistBesokt -> {
+                utforBeskjed(hendelse.deltaker, hendelse.payload.sistBesokt)
+            }
 
             is HendelseType.Avslag,
             is HendelseType.SettPaaVenteliste,
             is HendelseType.TildelPlass,
-            -> handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
+            -> {
+                handleNyttVarsel(slaSammenMedVentendeVarsel(Varsel.nyBeskjed(hendelse)), true)
+            }
         }
     }
 
@@ -122,7 +135,7 @@ class VarselService(
     private fun inaktiverTidligereBeskjed(deltakerId: UUID) {
         val varsel = repository.getAktivt(deltakerId).getOrNull()
         require(varsel?.type != Varsel.Type.OPPGAVE) {
-            "Kan ikke inaktivere oppgave ${varsel?.id} som om den var en beskjed"
+            "deltaker-id $deltakerId: Kan ikke deaktivere oppgave ${varsel?.id} som om den var en beskjed"
         }
 
         if (varsel?.erAktiv == true) {
