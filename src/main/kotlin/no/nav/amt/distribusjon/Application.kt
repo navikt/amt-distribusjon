@@ -79,10 +79,7 @@ fun Application.module() {
 
     val environment = Environment()
 
-    Database.init(
-        config = environment.databaseConfig,
-        useHikariSettingsForLegacyTransactions = true,
-    )
+    Database.init(config = environment.databaseConfig)
 
     val httpClient = HttpClient(CIO.create()) {
         install(ContentNegotiation) {

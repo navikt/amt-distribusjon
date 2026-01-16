@@ -28,9 +28,7 @@ class HendelseRepositoryTest {
     }
 
     @BeforeEach
-    fun cleanDatabase() {
-        TestRepository.cleanDatabase()
-    }
+    fun cleanDatabase() = TestRepository.cleanDatabase()
 
     @Test
     fun `getIkkeJournalforteHendelser - hendelse er ikke journalfort - returnerer hendelse`() {
