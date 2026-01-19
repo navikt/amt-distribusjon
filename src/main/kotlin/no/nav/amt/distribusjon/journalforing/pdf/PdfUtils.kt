@@ -17,6 +17,15 @@ import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.models.hendelse.InnholdDto
 import no.nav.amt.lib.models.hendelse.UtkastDto
+import no.nav.amt.lib.models.journalforing.pdf.ArrangorDto
+import no.nav.amt.lib.models.journalforing.pdf.AvsenderDto
+import no.nav.amt.lib.models.journalforing.pdf.EndringDto
+import no.nav.amt.lib.models.journalforing.pdf.EndringsvedtakPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.ForslagDto
+import no.nav.amt.lib.models.journalforing.pdf.HovedvedtakFellesOppstartPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.HovedvedtakPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.InnsokingsbrevPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.VentelistebrevPdfDto
 import no.nav.amt.lib.models.tiltakskoordinator.EndringFraTiltakskoordinator
 import java.time.LocalDate
 
@@ -215,8 +224,11 @@ fun lagEndringsvedtakPdfDto(
 
 private fun HendelseAnsvarlig.getAvsendernavn() = when (this) {
     is HendelseAnsvarlig.NavVeileder -> navn
+
     is HendelseAnsvarlig.NavTiltakskoordinator -> navn
+
     is HendelseAnsvarlig.Arrangor -> null
+
     is HendelseAnsvarlig.System,
     is HendelseAnsvarlig.Deltaker,
     -> throw IllegalArgumentException("Kan ikke journalføre endringsvedtak fra deltaker eller system")
@@ -291,71 +303,93 @@ private fun tilEndringDto(
     is HendelseType.DeltakerSistBesokt,
     is HendelseType.SettPaaVenteliste,
     is HendelseType.TildelPlass,
-    -> throw IllegalArgumentException("Skal ikke journalføre $hendelseType som endringsvedtak")
+    -> {
+        throw IllegalArgumentException("Skal ikke journalføre $hendelseType som endringsvedtak")
+    }
 
-    is HendelseType.AvsluttDeltakelse -> EndringDto.AvsluttDeltakelse(
-        aarsak = hendelseType.aarsak?.visningsnavn(),
-        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-        forslagFraArrangor = hendelseType.endringFraForslag?.let {
-            endringFraForslagToForslagDto(
-                it,
-                hendelseType.begrunnelseFraArrangor,
-            )
-        },
-        tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
-        harDeltatt = if (erFellesOppstart) "Ja" else null,
-        harFullfort = if (erFellesOppstart) "Ja" else null,
-    )
+    is HendelseType.AvsluttDeltakelse -> {
+        EndringDto.AvsluttDeltakelse(
+            aarsak = hendelseType.aarsak?.visningsnavn(),
+            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+            forslagFraArrangor = hendelseType.endringFraForslag?.let {
+                endringFraForslagToForslagDto(
+                    it,
+                    hendelseType.begrunnelseFraArrangor,
+                )
+            },
+            tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
+            harDeltatt = if (erFellesOppstart) "Ja" else null,
+            harFullfort = if (erFellesOppstart) "Ja" else null,
+        )
+    }
 
-    is HendelseType.EndreAvslutning -> EndringDto.EndreAvslutning(
-        aarsak = hendelseType.aarsak?.visningsnavn(),
-        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-        forslagFraArrangor = hendelseType.endringFraForslag?.let {
-            endringFraForslagToForslagDto(
-                it,
-                hendelseType.begrunnelseFraArrangor,
-            )
-        },
-        tittel = "Avslutning endret",
-        harFullfort = when (hendelseType.harFullfort) {
-            true -> "Ja"
-            false -> "Nei"
-            null -> null
-        },
-        sluttdato = if (hendelseType.sluttdato != null) "Sluttdato: ${formatDate(hendelseType.sluttdato!!)}" else null,
-    )
+    is HendelseType.EndreAvslutning -> {
+        EndringDto.EndreAvslutning(
+            aarsak = hendelseType.aarsak?.visningsnavn(),
+            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+            forslagFraArrangor = hendelseType.endringFraForslag?.let {
+                endringFraForslagToForslagDto(
+                    it,
+                    hendelseType.begrunnelseFraArrangor,
+                )
+            },
+            tittel = "Avslutning endret",
+            harFullfort = when (hendelseType.harFullfort) {
+                true -> "Ja"
+                false -> "Nei"
+                null -> null
+            },
+            sluttdato = if (hendelseType.sluttdato != null) "Sluttdato: ${formatDate(hendelseType.sluttdato!!)}" else null,
+        )
+    }
 
-    is HendelseType.AvbrytDeltakelse -> EndringDto.AvbrytDeltakelse(
-        aarsak = hendelseType.aarsak?.visningsnavn(),
-        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-        forslagFraArrangor = hendelseType.endringFraForslag?.let {
-            endringFraForslagToForslagDto(
-                it,
-                hendelseType.begrunnelseFraArrangor,
-            )
-        },
-        tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
-        harDeltatt = if (erFellesOppstart) "Ja" else null,
-        harFullfort = if (erFellesOppstart) "Nei" else null,
-    )
+    is HendelseType.AvbrytDeltakelse -> {
+        EndringDto.AvbrytDeltakelse(
+            aarsak = hendelseType.aarsak?.visningsnavn(),
+            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+            forslagFraArrangor = hendelseType.endringFraForslag?.let {
+                endringFraForslagToForslagDto(
+                    it,
+                    hendelseType.begrunnelseFraArrangor,
+                )
+            },
+            tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
+            harDeltatt = if (erFellesOppstart) "Ja" else null,
+            harFullfort = if (erFellesOppstart) "Nei" else null,
+        )
+    }
 
-    is HendelseType.EndreDeltakelsesmengde -> EndringDto.EndreDeltakelsesmengde(
-        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-        forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
-        tittel = "Deltakelsen er endret til ${
-            deltakelsesmengdeTekst(
-                deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
-                dagerPerUke = hendelseType.dagerPerUke?.toInt(),
-            )
-        }",
-        gyldigFra = hendelseType.gyldigFra,
-    )
+    is HendelseType.EndreDeltakelsesmengde -> {
+        EndringDto.EndreDeltakelsesmengde(
+            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+            forslagFraArrangor = hendelseType.endringFraForslag?.let {
+                endringFraForslagToForslagDto(
+                    it,
+                    hendelseType.begrunnelseFraArrangor,
+                )
+            },
+            tittel = "Deltakelsen er endret til ${
+                deltakelsesmengdeTekst(
+                    deltakelsesprosent = hendelseType.deltakelsesprosent?.toInt(),
+                    dagerPerUke = hendelseType.dagerPerUke?.toInt(),
+                )
+            }",
+            gyldigFra = hendelseType.gyldigFra,
+        )
+    }
 
-    is HendelseType.EndreSluttdato -> EndringDto.EndreSluttdato(
-        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-        forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
-        tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
-    )
+    is HendelseType.EndreSluttdato -> {
+        EndringDto.EndreSluttdato(
+            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+            forslagFraArrangor = hendelseType.endringFraForslag?.let {
+                endringFraForslagToForslagDto(
+                    it,
+                    hendelseType.begrunnelseFraArrangor,
+                )
+            },
+            tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
+        )
+    }
 
     is HendelseType.EndreStartdato -> {
         val tittel =
@@ -389,52 +423,81 @@ private fun tilEndringDto(
         }
     }
 
-    is HendelseType.ForlengDeltakelse -> EndringDto.ForlengDeltakelse(
-        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-        forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
-        tittel = "Deltakelsen er forlenget til ${formatDateWithMonthName(hendelseType.sluttdato)}",
-    )
+    is HendelseType.ForlengDeltakelse -> {
+        EndringDto.ForlengDeltakelse(
+            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+            forslagFraArrangor = hendelseType.endringFraForslag?.let {
+                endringFraForslagToForslagDto(
+                    it,
+                    hendelseType.begrunnelseFraArrangor,
+                )
+            },
+            tittel = "Deltakelsen er forlenget til ${formatDateWithMonthName(hendelseType.sluttdato)}",
+        )
+    }
 
-    is HendelseType.IkkeAktuell -> EndringDto.IkkeAktuell(
-        aarsak = hendelseType.aarsak.visningsnavn(),
-        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-        forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
-    )
+    is HendelseType.IkkeAktuell -> {
+        EndringDto.IkkeAktuell(
+            aarsak = hendelseType.aarsak.visningsnavn(),
+            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+            forslagFraArrangor = hendelseType.endringFraForslag?.let {
+                endringFraForslagToForslagDto(
+                    it,
+                    hendelseType.begrunnelseFraArrangor,
+                )
+            },
+        )
+    }
 
-    is HendelseType.EndreInnhold -> EndringDto.EndreInnhold(
-        innhold = hendelseType.innhold.map { it.visningsnavn() },
-        innholdBeskrivelse = if (tiltakskode == Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET) {
-            hendelseType.innhold.firstOrNull { it.innholdskode == "annet" }?.beskrivelse
-        } else {
-            null
-        },
-    )
+    is HendelseType.EndreInnhold -> {
+        EndringDto.EndreInnhold(
+            innhold = hendelseType.innhold.map { it.visningsnavn() },
+            innholdBeskrivelse = if (tiltakskode == Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET) {
+                hendelseType.innhold.firstOrNull { it.innholdskode == "annet" }?.beskrivelse
+            } else {
+                null
+            },
+        )
+    }
 
-    is HendelseType.EndreBakgrunnsinformasjon -> EndringDto.EndreBakgrunnsinformasjon(
-        bakgrunnsinformasjon = if (hendelseType.bakgrunnsinformasjon.isNullOrEmpty()) {
-            "—"
-        } else {
-            hendelseType.bakgrunnsinformasjon
-        },
-    )
+    is HendelseType.EndreBakgrunnsinformasjon -> {
+        EndringDto.EndreBakgrunnsinformasjon(
+            bakgrunnsinformasjon = if (hendelseType.bakgrunnsinformasjon.isNullOrEmpty()) {
+                "—"
+            } else {
+                hendelseType.bakgrunnsinformasjon
+            },
+        )
+    }
 
-    is HendelseType.LeggTilOppstartsdato -> EndringDto.LeggTilOppstartsdato(
-        sluttdatoFraArrangor = hendelseType.sluttdato,
-        tittel = "Oppstartsdato er ${formatDateWithMonthName(hendelseType.startdato)}",
-    )
+    is HendelseType.LeggTilOppstartsdato -> {
+        EndringDto.LeggTilOppstartsdato(
+            sluttdatoFraArrangor = hendelseType.sluttdato,
+            tittel = "Oppstartsdato er ${formatDateWithMonthName(hendelseType.startdato)}",
+        )
+    }
 
-    is HendelseType.FjernOppstartsdato -> EndringDto.FjernOppstartsdato(
-        begrunnelseFraNav = hendelseType.begrunnelseFraNav,
-        forslagFraArrangor = hendelseType.endringFraForslag?.let { endringFraForslagToForslagDto(it, hendelseType.begrunnelseFraArrangor) },
-    )
+    is HendelseType.FjernOppstartsdato -> {
+        EndringDto.FjernOppstartsdato(
+            begrunnelseFraNav = hendelseType.begrunnelseFraNav,
+            forslagFraArrangor = hendelseType.endringFraForslag?.let {
+                endringFraForslagToForslagDto(
+                    it,
+                    hendelseType.begrunnelseFraArrangor,
+                )
+            },
+        )
+    }
 
-    is HendelseType.Avslag -> EndringDto.Avslag(
-        hendelseType.aarsak.visningsnavn(),
-        hendelseType.begrunnelseFraNav,
-        hendelseType.vurderingFraArrangor?.let {
-            EndringDto.Avslag.Vurdering(it.vurderingstype.visningsnavn(), it.begrunnelse)
-        },
-    )
+    is HendelseType.Avslag -> {
+        EndringDto.Avslag(
+            hendelseType.aarsak.visningsnavn(),
+            hendelseType.begrunnelseFraNav,
+            hendelseType.vurderingFraArrangor?.let {
+                EndringDto.Avslag.Vurdering(it.vurderingstype.visningsnavn(), it.begrunnelse)
+            },
+        )
+    }
 }
 
 private fun deltakelsesmengdeTekst(deltakelsesprosent: Int?, dagerPerUke: Int?): String {
@@ -457,36 +520,46 @@ private fun dagerPerUkeTekst(dagerPerUke: Int?): String? {
 }
 
 private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseFraArrangor: String?): ForslagDto = when (endring) {
-    is Forslag.ForlengDeltakelse -> ForslagDto.ForlengDeltakelse(
-        sluttdato = endring.sluttdato,
-        begrunnelseFraArrangor = begrunnelseFraArrangor,
-    )
+    is Forslag.ForlengDeltakelse -> {
+        ForslagDto.ForlengDeltakelse(
+            sluttdato = endring.sluttdato,
+            begrunnelseFraArrangor = begrunnelseFraArrangor,
+        )
+    }
 
-    is Forslag.AvsluttDeltakelse -> ForslagDto.AvsluttDeltakelse(
-        aarsak = endring.aarsak?.visningsnavn(),
-        sluttdato = endring.sluttdato,
-        harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
-        harFullfort = endring.harFullfort?.let { if (it) "Ja" else "Nei" },
-        begrunnelseFraArrangor = begrunnelseFraArrangor,
-    )
+    is Forslag.AvsluttDeltakelse -> {
+        ForslagDto.AvsluttDeltakelse(
+            aarsak = endring.aarsak?.visningsnavn(),
+            sluttdato = endring.sluttdato,
+            harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
+            harFullfort = endring.harFullfort?.let { if (it) "Ja" else "Nei" },
+            begrunnelseFraArrangor = begrunnelseFraArrangor,
+        )
+    }
 
-    is Forslag.Deltakelsesmengde -> ForslagDto.EndreDeltakelsesmengde(
-        deltakelsesmengdeTekst = deltakelsesmengdeTekst(
-            deltakelsesprosent = endring.deltakelsesprosent,
-            dagerPerUke = endring.dagerPerUke,
-        ),
-        begrunnelseFraArrangor = begrunnelseFraArrangor,
-    )
+    is Forslag.Deltakelsesmengde -> {
+        ForslagDto.EndreDeltakelsesmengde(
+            deltakelsesmengdeTekst = deltakelsesmengdeTekst(
+                deltakelsesprosent = endring.deltakelsesprosent,
+                dagerPerUke = endring.dagerPerUke,
+            ),
+            begrunnelseFraArrangor = begrunnelseFraArrangor,
+        )
+    }
 
-    is Forslag.IkkeAktuell -> ForslagDto.IkkeAktuell(
-        aarsak = endring.aarsak.visningsnavn(),
-        begrunnelseFraArrangor = begrunnelseFraArrangor,
-    )
+    is Forslag.IkkeAktuell -> {
+        ForslagDto.IkkeAktuell(
+            aarsak = endring.aarsak.visningsnavn(),
+            begrunnelseFraArrangor = begrunnelseFraArrangor,
+        )
+    }
 
-    is Forslag.Sluttdato -> ForslagDto.EndreSluttdato(
-        sluttdato = endring.sluttdato,
-        begrunnelseFraArrangor = begrunnelseFraArrangor,
-    )
+    is Forslag.Sluttdato -> {
+        ForslagDto.EndreSluttdato(
+            sluttdato = endring.sluttdato,
+            begrunnelseFraArrangor = begrunnelseFraArrangor,
+        )
+    }
 
     is Forslag.Startdato -> {
         if (endring.sluttdato != null) {
@@ -503,22 +576,28 @@ private fun endringFraForslagToForslagDto(endring: Forslag.Endring, begrunnelseF
         }
     }
 
-    is Forslag.FjernOppstartsdato -> ForslagDto.FjernOppstartsdato(
-        begrunnelseFraArrangor = begrunnelseFraArrangor,
-    )
+    is Forslag.FjernOppstartsdato -> {
+        ForslagDto.FjernOppstartsdato(
+            begrunnelseFraArrangor = begrunnelseFraArrangor,
+        )
+    }
 
-    is Forslag.EndreAvslutning -> ForslagDto.EndreAvslutning(
-        aarsak = endring.aarsak?.visningsnavn(),
-        harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
-        harFullfort = when (endring.harFullfort) {
-            true -> endring.harDeltatt?.let { if (it) "Ja" else null }
-            false -> endring.harDeltatt?.let { if (it) "Nei" else null }
-            null -> null
-        },
-        begrunnelseFraArrangor = begrunnelseFraArrangor,
-    )
+    is Forslag.EndreAvslutning -> {
+        ForslagDto.EndreAvslutning(
+            aarsak = endring.aarsak?.visningsnavn(),
+            harDeltatt = endring.harDeltatt?.let { if (it) "Ja" else "Nei" },
+            harFullfort = when (endring.harFullfort) {
+                true -> endring.harDeltatt?.let { if (it) "Ja" else null }
+                false -> endring.harDeltatt?.let { if (it) "Nei" else null }
+                null -> null
+            },
+            begrunnelseFraArrangor = begrunnelseFraArrangor,
+        )
+    }
 
-    is Forslag.Sluttarsak -> throw IllegalArgumentException("Skal ikke opprette endringsvedtak ved endring av sluttårsak")
+    is Forslag.Sluttarsak -> {
+        throw IllegalArgumentException("Skal ikke opprette endringsvedtak ved endring av sluttårsak")
+    }
 }
 
 private fun EndringAarsak.visningsnavn(): String {
