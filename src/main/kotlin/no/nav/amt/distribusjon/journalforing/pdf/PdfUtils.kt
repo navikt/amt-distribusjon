@@ -247,11 +247,17 @@ fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.tilt
     Tiltakskode.ARBEIDSRETTET_REHABILITERING -> 12
     Tiltakskode.AVKLARING -> 2
     Tiltakskode.DIGITALT_OPPFOLGINGSTILTAK -> 4
-    Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> 7
-    Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> 7
     Tiltakskode.JOBBKLUBB -> 4
     Tiltakskode.OPPFOLGING -> 4
     Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> 14
+    Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
+    Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
+    Tiltakskode.ARBEIDSMARKEDSOPPLAERING,
+    Tiltakskode.NORSKOPPLAERING_GRUNNLEGGENDE_FERDIGHETER_FOV,
+    Tiltakskode.STUDIESPESIALISERING,
+    Tiltakskode.FAG_OG_YRKESOPPLAERING,
+    Tiltakskode.HOYERE_YRKESFAGLIG_UTDANNING,
+    -> 7
     else -> throw IllegalArgumentException("Ukjent tiltakstype: ${this.tiltak.tiltakskode}")
 }
 
