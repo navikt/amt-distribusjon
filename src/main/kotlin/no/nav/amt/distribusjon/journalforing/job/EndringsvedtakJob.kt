@@ -22,7 +22,7 @@ class EndringsvedtakJob(
         period = Duration.of(10, ChronoUnit.MINUTES),
     ) {
         val endringsvedtak = hendelseRepository
-            .getIkkeJournalforteHendelser(LocalDateTime.now().minusMinutes(30))
+            .getIkkeJournalforteHendelser(LocalDateTime.now().minusMinutes(1))
             .filter { it.hendelse.erEndringsVedtakSomSkalJournalfores() }
 
         val endringsvedtakPrDeltaker = endringsvedtak.groupBy { it.hendelse.deltaker.id }
