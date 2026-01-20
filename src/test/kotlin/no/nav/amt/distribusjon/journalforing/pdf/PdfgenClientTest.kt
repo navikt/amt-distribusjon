@@ -12,6 +12,8 @@ import no.nav.amt.distribusjon.utils.data.HendelseTypeData.utkast
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata.ansvarligNavVeileder
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata.deltaker
 import no.nav.amt.distribusjon.utils.data.Persondata
+import no.nav.amt.lib.models.deltaker.Deltakelsesinnhold
+import no.nav.amt.lib.models.deltaker.Innhold
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -216,6 +218,10 @@ class PdfgenClientTest : ClientTestBase() {
             navBruker = Persondata.lagNavBruker(),
             ansvarlig = ansvarlig,
             opprettetDato = LocalDate.now(),
+            deltakelseInnhold = Deltakelsesinnhold(
+                ledetekst = null,
+                innhold = listOf(Innhold("innhold", "innhold", true, beskrivelse = "fritekst")),
+            ),
         )
 
         private val innsokingsbrevPdfDto = lagInnsokingsbrevPdfDto(
@@ -223,6 +229,7 @@ class PdfgenClientTest : ClientTestBase() {
             navBruker = Persondata.lagNavBruker(),
             veileder = ansvarligNavVeileder(),
             opprettetDato = LocalDate.now(),
+            utkast = utkast(),
         )
 
         private val ventelistebrevPdfDto = lagVentelistebrevPdfDto(

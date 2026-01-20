@@ -10,6 +10,7 @@ import no.nav.amt.distribusjon.utils.toTitleCase
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.arrangor.melding.Vurderingstype
+import no.nav.amt.lib.models.deltaker.Deltakelsesinnhold
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
@@ -83,12 +84,14 @@ fun lagHovedopptakFellesOppstart(
     navBruker: NavBruker,
     ansvarlig: HendelseAnsvarlig.NavTiltakskoordinator,
     opprettetDato: LocalDate,
+    deltakelseInnhold: Deltakelsesinnhold?,
 ) = HovedvedtakFellesOppstartPdfDto(
     deltaker = HovedvedtakFellesOppstartPdfDto.DeltakerDto(
         fornavn = navBruker.fornavn,
         mellomnavn = navBruker.mellomnavn,
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
+        innholdBeskrivelse = deltakelseInnhold?.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
     ),
     deltakerliste = HovedvedtakFellesOppstartPdfDto.DeltakerlisteDto(
         tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
@@ -116,12 +119,14 @@ fun lagInnsokingsbrevPdfDto(
     navBruker: NavBruker,
     veileder: HendelseAnsvarlig.NavVeileder,
     opprettetDato: LocalDate,
+    utkast: UtkastDto,
 ) = InnsokingsbrevPdfDto(
     deltaker = InnsokingsbrevPdfDto.DeltakerDto(
         fornavn = navBruker.fornavn,
         mellomnavn = navBruker.mellomnavn,
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
+        innholdBeskrivelse = utkast.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
     ),
     deltakerliste = InnsokingsbrevPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.tittelVisningsnavn(),

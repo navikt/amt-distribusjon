@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.amtdeltaker
 
+import no.nav.amt.lib.models.deltaker.Deltakelsesinnhold
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -14,7 +15,7 @@ data class AmtDeltakerResponse(
     val dagerPerUke: Float?,
     val deltakelsesprosent: Float?,
     val bakgrunnsinformasjon: String?,
-    val deltakelsesinnhold: Any?,
+    val deltakelsesinnhold: Deltakelsesinnhold?,
     val status: Any,
     val vedtaksinformasjon: Any?,
     val sistEndret: LocalDateTime,

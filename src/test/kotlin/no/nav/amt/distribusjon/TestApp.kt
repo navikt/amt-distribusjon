@@ -95,7 +95,7 @@ class TestApp {
         dokarkivClient = mockDokarkivClient(azureAdTokenClient, environment)
         dokdistkanalClient = mockDokdistkanalClient(azureAdTokenClient, environment)
         dokdistfordelingClient = mockDokdistfordelingClient(azureAdTokenClient, environment)
-
+        amtDeltakerClient = mockAmtDeltakerClient(azureAdTokenClient, environment)
         journalforingstatusRepository = JournalforingstatusRepository()
         hendelseRepository = HendelseRepository()
         varselRepository = VarselRepository()
@@ -109,11 +109,11 @@ class TestApp {
             veilarboppfolgingClient,
             dokarkivClient,
             dokdistfordelingClient,
+            amtDeltakerClient,
         )
 
         digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
         tiltakshendelseProducer = TiltakshendelseProducer(kafkaProducer)
-        amtDeltakerClient = mockAmtDeltakerClient(azureAdTokenClient, environment)
         tiltakshendelseRepository = TiltakshendelseRepository()
         tiltakshendelseService = TiltakshendelseService(
             tiltakshendelseRepository,

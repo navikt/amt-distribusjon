@@ -20,7 +20,7 @@ object DeltakerData {
         dagerPerUke = null,
         deltakelsesprosent = null,
         bakgrunnsinformasjon = null,
-        deltakelsesinnhold = "",
+        deltakelsesinnhold = null,
         status = "",
         vedtaksinformasjon = null,
         sistEndret = LocalDateTime.now(),
