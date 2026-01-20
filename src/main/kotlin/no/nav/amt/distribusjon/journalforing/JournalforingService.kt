@@ -1,5 +1,6 @@
 package no.nav.amt.distribusjon.journalforing
 
+import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.digitalbruker.DigitalBrukerService
 import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
@@ -33,6 +34,7 @@ class JournalforingService(
     private val veilarboppfolgingClient: VeilarboppfolgingClient,
     private val dokarkivClient: DokarkivClient,
     private val dokdistfordelingClient: DokdistfordelingClient,
+    private val amtDeltakerClient: AmtDeltakerClient,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -92,7 +94,7 @@ class JournalforingService(
     ) {
         when (val oppstartstype = hendelse.deltaker.deltakerliste.oppstartstype) {
             HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE -> journalforHovedvedtak(hendelse, utkast, journalforingstatus)
-            HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES -> journalforOgSendInnsokingsbrev(hendelse, journalforingstatus)
+            HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES -> journalforOgSendInnsokingsbrev(hendelse, utkast, journalforingstatus)
             else -> throw IllegalStateException("Oppstartstype $oppstartstype er ikke implementert")
         }
     }
@@ -128,6 +130,7 @@ class JournalforingService(
     private suspend fun journalforHovedvedtakForFellesOppstart(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
         val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
         val hendelseAnsvarlig = hendelse.ansvarlig.hentTiltakskoordinator()
+        val deltaker = amtDeltakerClient.getDeltaker(hendelse.deltaker.id)
 
         val pdf: suspend () -> ByteArray = {
             pdfgenClient.genererHovedvedtakFellesOppstart(
@@ -136,6 +139,7 @@ class JournalforingService(
                     navBruker = navBruker,
                     ansvarlig = hendelseAnsvarlig,
                     opprettetDato = hendelse.opprettet.toLocalDate(),
+                    deltakelseInnhold = deltaker.deltakelsesinnhold,
                 ),
             )
         }
@@ -152,7 +156,11 @@ class JournalforingService(
         log.info("Journalførte hovedvedtak for deltaker ${hendelse.deltaker.id}")
     }
 
-    private suspend fun journalforOgSendInnsokingsbrev(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
+    private suspend fun journalforOgSendInnsokingsbrev(
+        hendelse: Hendelse,
+        utkast: UtkastDto,
+        journalforingstatus: Journalforingstatus?,
+    ) {
         val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
         val veileder = hendelse.ansvarlig.hentVeileder()
         val pdf: suspend () -> ByteArray = {
@@ -162,6 +170,7 @@ class JournalforingService(
                     navBruker = navBruker,
                     veileder = hendelse.ansvarlig.hentVeileder(),
                     opprettetDato = hendelse.opprettet.toLocalDate(),
+                    utkast = utkast,
                 ),
             )
         }
