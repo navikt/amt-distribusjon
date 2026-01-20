@@ -463,7 +463,7 @@ private fun tilEndringDto(
     is HendelseType.EndreInnhold -> {
         EndringDto.EndreInnhold(
             innhold = hendelseType.innhold.map { it.visningsnavn() },
-            innholdBeskrivelse = if (tiltakskode == Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET) {
+            innholdBeskrivelse = if (tiltakskode == Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET || tiltakskode.erOpplaeringstiltak()) {
                 hendelseType.innhold.firstOrNull { it.innholdskode == "annet" }?.beskrivelse
             } else {
                 null
