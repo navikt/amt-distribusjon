@@ -5,7 +5,6 @@ import kotliquery.queryOf
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.lib.utils.database.Database
 import java.time.ZoneId
-import java.util.NoSuchElementException
 import java.util.UUID
 
 class VarselRepository {
@@ -179,10 +178,11 @@ class VarselRepository {
     fun getVarslerSomSkalSendes() = Database.query {
         val sql =
             """
-            select * 
-            from varsel
-            where status = 'VENTER_PA_UTSENDELSE' 
-                and aktiv_fra at time zone 'UTC' < current_timestamp at time zone 'UTC'
+            SELECT * 
+            FROM varsel
+            WHERE 
+                status = 'VENTER_PA_UTSENDELSE'
+                AND aktiv_fra < CURRENT_TIMESTAMP
             """.trimIndent()
 
         it.run(queryOf(sql).map(::rowmapper).asList)
