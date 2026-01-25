@@ -4,7 +4,6 @@ version = "1.0-SNAPSHOT"
 
 plugins {
     val kotlinVersion = "2.3.0"
-
     kotlin("jvm") version kotlinVersion
     id("io.ktor.plugin") version "3.3.3"
     id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
