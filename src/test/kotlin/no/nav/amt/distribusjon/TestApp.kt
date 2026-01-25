@@ -45,7 +45,7 @@ import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.outbox.OutboxRecord
 import no.nav.amt.lib.outbox.OutboxService
 import no.nav.amt.lib.testing.SingletonKafkaProvider
-import no.nav.amt.lib.testing.SingletonPostgres16Container
+import no.nav.amt.lib.testing.TestPostgresContainer
 import java.util.UUID
 
 class TestApp {
@@ -77,9 +77,8 @@ class TestApp {
     val environment: Environment = testEnvironment
 
     init {
-        @Suppress("UnusedExpression")
-        SingletonPostgres16Container
-        SingletonKafkaProvider.start()
+        TestPostgresContainer.bootstrap()
+
         val kafakConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
         val kafkaProducer = Producer<String, String>(kafakConfig)
 
