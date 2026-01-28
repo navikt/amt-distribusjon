@@ -1,5 +1,8 @@
 package no.nav.amt.distribusjon.journalforing
 
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.nondeterministic.eventually
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.runBlocking
@@ -16,7 +19,6 @@ import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.distribusjon.utils.produceStringString
-import no.nav.amt.lib.testing.AsyncUtils
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -29,8 +31,11 @@ class JournalforingServiceTest {
 
         produce(hendelseDto)
 
-        AsyncUtils.eventually {
-            app.journalforingstatusRepository.get(hendelseDto.id)!!.journalpostId shouldNotBe null
+        eventually {
+            app.journalforingstatusRepository
+                .get(hendelseDto.id)
+                .shouldNotBeNull()
+                .journalpostId shouldNotBe null
         }
     }
 
@@ -46,11 +51,13 @@ class JournalforingServiceTest {
 
             app.journalforingService.handleHendelse(hendelse)
 
-            val status = app.journalforingstatusRepository.get(hendelse.id)
-            status!!.journalpostId shouldBe journalpostId
-            status.bestillingsId shouldBe null
-            status.kanIkkeDistribueres shouldBe false
-            status.kanIkkeJournalfores shouldBe false
+            val journalforingstatus = app.journalforingstatusRepository.get(hendelse.id)
+            assertSoftly(journalforingstatus.shouldNotBeNull()) {
+                it.journalpostId shouldBe journalpostId
+                bestillingsId shouldBe null
+                kanIkkeDistribueres shouldBe false
+                kanIkkeJournalfores shouldBe false
+            }
         }
 
     @Test
@@ -64,11 +71,12 @@ class JournalforingServiceTest {
 
         app.journalforingService.handleHendelse(hendelse)
 
-        val status = app.journalforingstatusRepository.get(hendelse.id)
-        status!!.journalpostId shouldBe journalpostId
-        status.bestillingsId shouldNotBe null
-        status.kanIkkeDistribueres shouldBe false
-        status.kanIkkeJournalfores shouldBe false
+        assertSoftly(app.journalforingstatusRepository.get(hendelse.id).shouldNotBeNull()) {
+            it.journalpostId shouldBe journalpostId
+            bestillingsId shouldNotBe null
+            kanIkkeDistribueres shouldBe false
+            kanIkkeJournalfores shouldBe false
+        }
     }
 
     @Test
@@ -83,11 +91,12 @@ class JournalforingServiceTest {
 
         app.journalforingService.handleHendelse(hendelse)
 
-        val status = app.journalforingstatusRepository.get(hendelse.id)
-        status!!.journalpostId shouldNotBe null
-        status.bestillingsId shouldNotBe null
-        status.kanIkkeDistribueres shouldBe false
-        status.kanIkkeJournalfores shouldBe false
+        assertSoftly(app.journalforingstatusRepository.get(hendelse.id).shouldNotBeNull()) {
+            journalpostId shouldNotBe null
+            bestillingsId shouldNotBe null
+            kanIkkeDistribueres shouldBe false
+            kanIkkeJournalfores shouldBe false
+        }
     }
 
     @Test
@@ -108,11 +117,12 @@ class JournalforingServiceTest {
 
         app.journalforingService.handleHendelse(hendelse)
 
-        val status = app.journalforingstatusRepository.get(hendelse.id)
-        status!!.journalpostId shouldNotBe null
-        status.bestillingsId shouldBe null
-        status.kanIkkeDistribueres shouldBe true
-        status.kanIkkeJournalfores shouldBe false
+        assertSoftly(app.journalforingstatusRepository.get(hendelse.id).shouldNotBeNull()) {
+            journalpostId shouldNotBe null
+            bestillingsId shouldBe null
+            kanIkkeDistribueres shouldBe true
+            kanIkkeJournalfores shouldBe false
+        }
     }
 
     @Test
@@ -135,8 +145,8 @@ class JournalforingServiceTest {
 
             app.journalforingService.handleHendelse(hendelse)
 
-            val status = app.journalforingstatusRepository.get(hendelse.id)
-            status!!.journalpostId shouldNotBe null
+            val status = app.journalforingstatusRepository.get(hendelse.id).shouldNotBeNull()
+            status.journalpostId shouldNotBe null
             status.kanIkkeJournalfores shouldBe false
         }
 
@@ -150,18 +160,18 @@ class JournalforingServiceTest {
             app.hendelseRepository.insert(hendelse)
             app.journalforingstatusRepository.upsert(
                 Journalforingstatus(
-                    hendelse.id,
-                    journalpostId,
-                    null,
-                    true,
+                    hendelseId = hendelse.id,
+                    journalpostId = journalpostId,
+                    bestillingsId = null,
+                    kanIkkeDistribueres = true,
                     kanIkkeJournalfores = false,
                 ),
             )
 
             app.journalforingService.handleHendelse(hendelse)
 
-            val status = app.journalforingstatusRepository.get(hendelse.id)
-            status!!.journalpostId shouldNotBe null
+            val status = app.journalforingstatusRepository.get(hendelse.id).shouldNotBeNull()
+            status.journalpostId shouldNotBe null
             status.kanIkkeJournalfores shouldBe false
         }
 
@@ -223,13 +233,14 @@ class JournalforingServiceTest {
             ),
         )
 
-        val journalpostDeltakelsesmengde = app.journalforingstatusRepository.get(hendelseDeltakelsesmengde.id)!!
-        val journalpostForleng = app.journalforingstatusRepository.get(hendelseForleng.id)!!
-
-        journalpostDeltakelsesmengde.journalpostId shouldNotBe null
-        journalpostDeltakelsesmengde.journalpostId shouldBe journalpostForleng.journalpostId
-        journalpostDeltakelsesmengde.kanIkkeJournalfores shouldBe false
+        val journalpostForleng = app.journalforingstatusRepository.get(hendelseForleng.id).shouldNotBeNull()
         journalpostForleng.kanIkkeJournalfores shouldBe false
+
+        assertSoftly(app.journalforingstatusRepository.get(hendelseDeltakelsesmengde.id).shouldNotBeNull()) {
+            journalpostId shouldNotBe null
+            journalpostId shouldBe journalpostForleng.journalpostId
+            kanIkkeJournalfores shouldBe false
+        }
     }
 
     @Test
@@ -264,18 +275,22 @@ class JournalforingServiceTest {
                 ),
             )
 
-            val journalpostDeltakelsesmengde = app.journalforingstatusRepository.get(hendelseDeltakelsesmengde.id)!!
-            val journalpostForleng = app.journalforingstatusRepository.get(hendelseForleng.id)!!
+            val journalpostDeltakelsesmengde = app.journalforingstatusRepository.get(hendelseDeltakelsesmengde.id).shouldNotBeNull()
 
-            journalpostDeltakelsesmengde.journalpostId shouldBe journalforingstatusDeltakelsesmengde.journalpostId
-            journalpostDeltakelsesmengde.bestillingsId shouldNotBe null
-            journalpostDeltakelsesmengde.kanIkkeDistribueres shouldBe false
-            journalpostDeltakelsesmengde.kanIkkeJournalfores shouldBe false
-            journalpostForleng.journalpostId shouldNotBe null
-            journalpostForleng.journalpostId shouldNotBe journalpostDeltakelsesmengde.journalpostId
-            journalpostForleng.bestillingsId shouldNotBe null
-            journalpostForleng.kanIkkeDistribueres shouldBe false
-            journalpostForleng.kanIkkeJournalfores shouldBe false
+            assertSoftly(journalpostDeltakelsesmengde) {
+                journalpostId shouldBe journalforingstatusDeltakelsesmengde.journalpostId
+                bestillingsId shouldNotBe null
+                kanIkkeDistribueres shouldBe false
+                kanIkkeJournalfores shouldBe false
+            }
+
+            assertSoftly(app.journalforingstatusRepository.get(hendelseForleng.id).shouldNotBeNull()) {
+                journalpostId shouldNotBe journalpostDeltakelsesmengde.journalpostId
+                bestillingsId shouldNotBe null
+                journalpostId shouldNotBe null
+                kanIkkeDistribueres shouldBe false
+                kanIkkeJournalfores shouldBe false
+            }
         }
 
     @Test
@@ -301,11 +316,12 @@ class JournalforingServiceTest {
                 ),
             )
 
-            val oppdatertJournalforingstatus = app.journalforingstatusRepository.get(avsluttDeltakelseHendelse.id)!!
-
-            oppdatertJournalforingstatus.journalpostId shouldBe null
-            oppdatertJournalforingstatus.bestillingsId shouldBe null
-            oppdatertJournalforingstatus.kanIkkeJournalfores shouldBe true
+            val oppdatertJournalforingstatus = app.journalforingstatusRepository.get(avsluttDeltakelseHendelse.id)
+            assertSoftly(oppdatertJournalforingstatus.shouldNotBeNull()) {
+                journalpostId shouldBe null
+                bestillingsId shouldBe null
+                kanIkkeJournalfores shouldBe true
+            }
         }
 
     @Test

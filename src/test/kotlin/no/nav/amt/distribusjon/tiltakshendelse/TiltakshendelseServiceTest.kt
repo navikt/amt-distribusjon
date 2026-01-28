@@ -1,5 +1,7 @@
 package no.nav.amt.distribusjon.tiltakshendelse
 
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.result.shouldBeSuccess
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
@@ -28,17 +30,18 @@ class TiltakshendelseServiceTest {
 
         app.tiltakshendelseService.handleHendelse(hendelse)
 
-        val tiltakshendelse = app.tiltakshendelseRepository.getByHendelseId(hendelse.id).getOrThrow()
-
-        tiltakshendelse.aktiv shouldBe true
-        tiltakshendelse.deltakerId shouldBe hendelse.deltaker.id
-        tiltakshendelse.forslagId shouldBe null
-        tiltakshendelse.personident shouldBe hendelse.deltaker.personident
-        tiltakshendelse.hendelser shouldBe listOf(hendelse.id)
-        tiltakshendelse.type shouldBe Tiltakshendelse.Type.UTKAST
-        tiltakshendelse.tekst shouldBe TiltakshendelseService.UTKAST_TIL_PAMELDING_TEKST
-        tiltakshendelse.opprettet shouldBeCloseTo hendelse.opprettet
-        tiltakshendelse.tiltakskode shouldBe hendelse.deltaker.deltakerliste.tiltak.tiltakskode
+        val tiltakshendelse = app.tiltakshendelseRepository.getByHendelseId(hendelse.id).shouldBeSuccess()
+        assertSoftly(tiltakshendelse) {
+            aktiv shouldBe true
+            deltakerId shouldBe hendelse.deltaker.id
+            forslagId shouldBe null
+            personident shouldBe hendelse.deltaker.personident
+            hendelser shouldBe listOf(hendelse.id)
+            type shouldBe Tiltakshendelse.Type.UTKAST
+            tekst shouldBe TiltakshendelseService.UTKAST_TIL_PAMELDING_TEKST
+            opprettet shouldBeCloseTo hendelse.opprettet
+            tiltakskode shouldBe hendelse.deltaker.deltakerliste.tiltak.tiltakskode
+        }
 
         app should haveOutboxRecord(tiltakshendelse.id, Environment.TILTAKSHENDELSE_TOPIC)
     }
@@ -65,7 +68,7 @@ class TiltakshendelseServiceTest {
 
         app.tiltakshendelseService.handleHendelse(opprettHendelse)
 
-        val tiltakshendelse = app.tiltakshendelseRepository.getByHendelseId(opprettHendelse.id).getOrThrow()
+        val tiltakshendelse = app.tiltakshendelseRepository.getByHendelseId(opprettHendelse.id).shouldBeSuccess()
 
         tiltakshendelse.aktiv shouldBe false
         app shouldNot haveOutboxRecord(tiltakshendelse.id, Environment.TILTAKSHENDELSE_TOPIC)
@@ -84,25 +87,27 @@ class TiltakshendelseServiceTest {
         )
 
         app.tiltakshendelseService.handleForslag(forslag)
-        val tiltakshendelse = app.tiltakshendelseRepository.getForslagHendelse(forslag.id).getOrThrow()
 
-        tiltakshendelse.hendelser shouldBe emptyList()
-        tiltakshendelse.tekst shouldBe "Forslag: Forleng deltakelse"
-        tiltakshendelse.tiltakskode shouldBe Tiltakskode.ARBEIDSFORBEREDENDE_TRENING
-        tiltakshendelse.aktiv shouldBe true
+        val tiltakshendelse = app.tiltakshendelseRepository.getForslagHendelse(forslag.id).shouldBeSuccess()
+        assertSoftly(tiltakshendelse) {
+            hendelser shouldBe emptyList()
+            tekst shouldBe "Forslag: Forleng deltakelse"
+            tiltakskode shouldBe Tiltakskode.ARBEIDSFORBEREDENDE_TRENING
+            aktiv shouldBe true
+        }
     }
 
     @Test
     fun `handleHendelse - ny ForlengDeltakelse godkjennes - oppretter ny tiltakshendelsee`() = integrationTest { app, _ ->
         val deltaker = DeltakerData.lagDeltaker()
         val forslag = Forslag(
-            UUID.randomUUID(),
-            deltaker.id,
-            UUID.randomUUID(),
-            LocalDateTime.now(),
-            "begrunnelse",
-            Forslag.ForlengDeltakelse(LocalDate.now()),
-            Forslag.Status.VenterPaSvar,
+            id = UUID.randomUUID(),
+            deltakerId = deltaker.id,
+            opprettetAvArrangorAnsattId = UUID.randomUUID(),
+            opprettet = LocalDateTime.now(),
+            begrunnelse = "begrunnelse",
+            endring = Forslag.ForlengDeltakelse(LocalDate.now()),
+            status = Forslag.Status.VenterPaSvar,
         )
 
         MockResponseHandler.addDeltakerResponse(deltaker)
@@ -115,7 +120,7 @@ class TiltakshendelseServiceTest {
 
         app.tiltakshendelseService.handleForslag(godkjentForslag)
 
-        val tiltakhendelseFerdig = app.tiltakshendelseRepository.getForslagHendelse(forslag.id).getOrThrow()
+        val tiltakhendelseFerdig = app.tiltakshendelseRepository.getForslagHendelse(forslag.id).shouldBeSuccess()
 
         tiltakhendelseFerdig.aktiv shouldBe false
     }
@@ -124,23 +129,23 @@ class TiltakshendelseServiceTest {
     fun `handleHendelse - Flere hendelser på samme bruker - oppretter nye tiltakshendelsee`() = integrationTest { app, _ ->
         val deltaker = DeltakerData.lagDeltaker()
         val forslag1 = Forslag(
-            UUID.randomUUID(),
-            deltaker.id,
-            UUID.randomUUID(),
-            LocalDateTime.now(),
-            "begrunnelse",
-            Forslag.ForlengDeltakelse(LocalDate.now()),
-            Forslag.Status.VenterPaSvar,
+            id = UUID.randomUUID(),
+            deltakerId = deltaker.id,
+            opprettetAvArrangorAnsattId = UUID.randomUUID(),
+            opprettet = LocalDateTime.now(),
+            begrunnelse = "begrunnelse",
+            endring = Forslag.ForlengDeltakelse(LocalDate.now()),
+            status = Forslag.Status.VenterPaSvar,
         )
 
         val forslag2 = Forslag(
-            UUID.randomUUID(),
-            deltaker.id,
-            UUID.randomUUID(),
-            LocalDateTime.now(),
-            "begrunnelse",
-            Forslag.AvsluttDeltakelse(LocalDate.now(), EndringAarsak.FattJobb, null, null),
-            Forslag.Status.VenterPaSvar,
+            id = UUID.randomUUID(),
+            deltakerId = deltaker.id,
+            opprettetAvArrangorAnsattId = UUID.randomUUID(),
+            opprettet = LocalDateTime.now(),
+            begrunnelse = "begrunnelse",
+            endring = Forslag.AvsluttDeltakelse(LocalDate.now(), EndringAarsak.FattJobb, null, null),
+            status = Forslag.Status.VenterPaSvar,
         )
 
         MockResponseHandler.addDeltakerResponse(deltaker)
@@ -148,8 +153,8 @@ class TiltakshendelseServiceTest {
         app.tiltakshendelseService.handleForslag(forslag1)
         app.tiltakshendelseService.handleForslag(forslag2)
 
-        val tiltakshendelse1 = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).getOrThrow()
-        val tiltakshendelse2 = app.tiltakshendelseRepository.getForslagHendelse(forslag2.id).getOrThrow()
+        val tiltakshendelse1 = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).shouldBeSuccess()
+        val tiltakshendelse2 = app.tiltakshendelseRepository.getForslagHendelse(forslag2.id).shouldBeSuccess()
 
         tiltakshendelse1.forslagId shouldBe forslag1.id
         tiltakshendelse2.forslagId shouldBe forslag2.id
@@ -159,10 +164,10 @@ class TiltakshendelseServiceTest {
         )
         app.tiltakshendelseService.handleForslag(forslag1Godkjent)
 
-        val tiltakshendelse1Godkjent = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).getOrThrow()
-        val tiltakshendelse2IkkeGodkjent = app.tiltakshendelseRepository.getForslagHendelse(forslag2.id).getOrThrow()
-
+        val tiltakshendelse1Godkjent = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).shouldBeSuccess()
         tiltakshendelse1Godkjent.aktiv shouldBe false
+
+        val tiltakshendelse2IkkeGodkjent = app.tiltakshendelseRepository.getForslagHendelse(forslag2.id).shouldBeSuccess()
         tiltakshendelse2IkkeGodkjent.aktiv shouldBe true
     }
 
@@ -173,7 +178,7 @@ class TiltakshendelseServiceTest {
         val godkjennHendelse = Hendelsesdata.hendelse(hendelseType, deltaker = opprettHendelse.deltaker)
         app.tiltakshendelseService.handleHendelse(godkjennHendelse)
 
-        val tiltakshendelse = app.tiltakshendelseRepository.getByHendelseId(godkjennHendelse.id).getOrThrow()
+        val tiltakshendelse = app.tiltakshendelseRepository.getByHendelseId(godkjennHendelse.id).shouldBeSuccess()
 
         tiltakshendelse.aktiv shouldBe false
         app should haveOutboxRecord(tiltakshendelse.id, Environment.TILTAKSHENDELSE_TOPIC)

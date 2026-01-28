@@ -33,11 +33,16 @@ class TiltakshendelseService(
         }
 
         when (hendelse.payload) {
-            is HendelseType.OpprettUtkast -> opprettStartHendelse(hendelse)
+            is HendelseType.OpprettUtkast -> {
+                opprettStartHendelse(hendelse)
+            }
+
             is HendelseType.AvbrytUtkast,
             is HendelseType.InnbyggerGodkjennUtkast,
             is HendelseType.NavGodkjennUtkast,
-            -> stoppUtkastHendelse(hendelse)
+            -> {
+                stoppUtkastHendelse(hendelse)
+            }
 
             else -> {}
         }
@@ -46,6 +51,7 @@ class TiltakshendelseService(
     suspend fun handleForslag(forslag: Forslag) {
         when (forslag.status) {
             is Forslag.Status.VenterPaSvar -> opprettStartHendelse(forslag)
+
             is Forslag.Status.Godkjent,
             is Forslag.Status.Avvist,
             is Forslag.Status.Tilbakekalt,

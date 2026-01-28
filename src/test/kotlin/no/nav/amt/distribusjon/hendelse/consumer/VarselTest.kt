@@ -1,5 +1,9 @@
 package no.nav.amt.distribusjon.hendelse.consumer
 
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.nondeterministic.eventually
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.result.shouldBeSuccess
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNot
@@ -22,11 +26,9 @@ import no.nav.amt.distribusjon.varsel.model.oppgaveTekst
 import no.nav.amt.distribusjon.varsel.nowUTC
 import no.nav.amt.distribusjon.varsel.skalVarslesEksternt
 import no.nav.amt.lib.models.hendelse.HendelseType
-import no.nav.amt.lib.testing.AsyncUtils
 import no.nav.amt.lib.testing.shouldBeCloseTo
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Test
-import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -37,15 +39,21 @@ class VarselTest {
 
         produce(hendelse)
 
-        AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
+        eventually {
+            val varsel = app.varselRepository
+                .getSisteVarsel(
+                    deltakerId = hendelse.deltaker.id,
+                    type = Varsel.Type.OPPGAVE,
+                ).shouldBeSuccess()
 
-            varsel.aktivTil shouldBe null
-            varsel.tekst shouldBe oppgaveTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV, false))
-            varsel.aktivFra shouldBeCloseTo nowUTC()
-            varsel.deltakerId shouldBe hendelse.deltaker.id
-            varsel.personident shouldBe hendelse.deltaker.personident
-            varsel.erEksterntVarsel shouldBe hendelse.skalVarslesEksternt()
+            assertSoftly(varsel) {
+                aktivTil shouldBe null
+                tekst shouldBe oppgaveTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV, false))
+                aktivFra shouldBeCloseTo nowUTC()
+                deltakerId shouldBe hendelse.deltaker.id
+                personident shouldBe hendelse.deltaker.personident
+                erEksterntVarsel shouldBe hendelse.skalVarslesEksternt()
+            }
 
             app.assertProducedOppgave(varsel.id)
         }
@@ -65,8 +73,13 @@ class VarselTest {
 
         produce(hendelse)
 
-        AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
+        eventually {
+            val varsel = app.varselRepository
+                .getSisteVarsel(
+                    deltakerId = hendelse.deltaker.id,
+                    type = Varsel.Type.OPPGAVE,
+                ).shouldBeSuccess()
+
             varsel.erAktiv shouldBe false
             app.assertNotProduced(varsel.id)
         }
@@ -74,11 +87,19 @@ class VarselTest {
 
     @Test
     fun `navGodkjennUtkast - innbyggers distribusjonskanal er ikke digital - oppretter ikke varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelse(HendelseTypeData.navGodkjennUtkast(), distribusjonskanal = Distribusjonskanal.PRINT)
+        val hendelse = Hendelsesdata.hendelse(
+            payload = HendelseTypeData.navGodkjennUtkast(),
+            distribusjonskanal = Distribusjonskanal.PRINT,
+        )
 
         app.varselService.handleHendelse(hendelse)
 
-        val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrNull()
+        val varsel = app.varselRepository
+            .getSisteVarsel(
+                deltakerId = hendelse.deltaker.id,
+                type = Varsel.Type.BESKJED,
+            ).getOrNull()
+
         varsel shouldBe null
     }
 
@@ -92,7 +113,12 @@ class VarselTest {
 
         app.varselService.handleHendelse(hendelse)
 
-        val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrNull()
+        val varsel = app.varselRepository
+            .getSisteVarsel(
+                deltakerId = hendelse.deltaker.id,
+                type = Varsel.Type.BESKJED,
+            ).getOrNull()
+
         varsel shouldBe null
     }
 
@@ -108,11 +134,19 @@ class VarselTest {
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
 
-        AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
+        eventually {
+            val varsel = app.varselRepository
+                .getSisteVarsel(
+                    deltakerId = hendelse.deltaker.id,
+                    type = Varsel.Type.OPPGAVE,
+                ).shouldBeSuccess()
 
-            varsel.id shouldBe forrigeVarsel.id
-            varsel.aktivTil!! shouldBeCloseTo nowUTC()
+            assertSoftly(varsel) {
+                id shouldBe forrigeVarsel.id
+
+                aktivTil.shouldNotBeNull()
+                aktivTil shouldBeCloseTo nowUTC()
+            }
 
             app.assertProducedInaktiver(varsel.id)
         }
@@ -130,11 +164,19 @@ class VarselTest {
         app.varselRepository.upsert(forrigeVarsel)
         produce(hendelse)
 
-        AsyncUtils.eventually {
-            val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.OPPGAVE).getOrThrow()
+        eventually {
+            val varsel = app.varselRepository
+                .getSisteVarsel(
+                    deltakerId = hendelse.deltaker.id,
+                    type = Varsel.Type.OPPGAVE,
+                ).shouldBeSuccess()
 
-            varsel.id shouldBe forrigeVarsel.id
-            varsel.aktivTil!! shouldBeCloseTo nowUTC()
+            assertSoftly(varsel) {
+                id shouldBe forrigeVarsel.id
+
+                aktivTil.shouldNotBeNull()
+                aktivTil shouldBeCloseTo nowUTC()
+            }
 
             app.assertProducedInaktiver(varsel.id)
         }
@@ -143,8 +185,10 @@ class VarselTest {
     @Test
     fun `navGodkjennUtkast - ingen tidligere varsel - oppretter beskjed`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.navGodkjennUtkast())
+
         produce(hendelse)
-        AsyncUtils.eventually {
+
+        eventually {
             assertNyBeskjed(app, hendelse, nowUTC())
         }
     }
@@ -154,19 +198,22 @@ class VarselTest {
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.navGodkjennUtkast())
 
         val forrigeVarsel = Varselsdata.varsel(
-            Varsel.Type.OPPGAVE,
-            Varsel.Status.AKTIV,
+            type = Varsel.Type.OPPGAVE,
+            status = Varsel.Status.AKTIV,
             aktivFra = nowUTC().minusDays(1),
             deltakerId = hendelse.deltaker.id,
         )
         app.varselRepository.upsert(forrigeVarsel)
+
         produce(hendelse)
 
-        AsyncUtils.eventually {
+        eventually {
             assertNyBeskjed(app, hendelse, nowUTC())
 
-            val inaktivertVarsel = app.varselRepository.get(forrigeVarsel.id).getOrThrow()
-            inaktivertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+            val inaktivertVarsel = app.varselRepository.get(forrigeVarsel.id).shouldBeSuccess()
+
+            inaktivertVarsel.aktivTil.shouldNotBeNull()
+            inaktivertVarsel.aktivTil shouldBeCloseTo nowUTC()
 
             app.assertProducedInaktiver(forrigeVarsel.id)
         }
@@ -179,7 +226,7 @@ class VarselTest {
             val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse(), deltaker = Hendelsesdata.deltaker(deltakerId))
 
             val forrigeVarsel = Varselsdata.beskjed(
-                Varsel.Status.INAKTIVERT,
+                status = Varsel.Status.INAKTIVERT,
                 deltakerId = deltakerId,
                 aktivFra = nowUTC().minusDays(6),
                 aktivTil = nowUTC().plusDays(3),
@@ -191,30 +238,38 @@ class VarselTest {
 
             app.varselRepository
                 .get(forrigeVarsel.id)
-                .getOrThrow()
+                .shouldBeSuccess()
                 .revarsles shouldBe null
         }
 
     @Test
     fun `endreSluttdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreSluttdato())
+
         produce(hendelse)
-        AsyncUtils.eventually { assertNyBeskjed(app, hendelse, Varsel.nesteUtsendingstidspunkt()) }
+
+        eventually {
+            assertNyBeskjed(app, hendelse, Varsel.nesteUtsendingstidspunkt())
+        }
     }
 
     @Test
     fun `endreStartdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreStartdato())
+
         produce(hendelse)
-        AsyncUtils.eventually { assertNyBeskjed(app, hendelse, Varsel.nesteUtsendingstidspunkt()) }
+
+        eventually {
+            assertNyBeskjed(app, hendelse, Varsel.nesteUtsendingstidspunkt())
+        }
     }
 
     @Test
     fun `deltakerSistBesokt - aktiv beskjed - inaktiverer`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
         val varsel = Varselsdata.varsel(
-            Varsel.Type.BESKJED,
-            Varsel.Status.AKTIV,
+            type = Varsel.Type.BESKJED,
+            status = Varsel.Status.AKTIV,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC().minusMinutes(1),
         )
@@ -222,10 +277,13 @@ class VarselTest {
         app.varselRepository.upsert(varsel)
         produce(hendelse)
 
-        AsyncUtils.eventually {
-            val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
-            oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+        eventually {
+            val oppdatertVarsel = app.varselRepository.get(varsel.id).shouldBeSuccess()
+
+            oppdatertVarsel.aktivTil.shouldNotBeNull()
+            oppdatertVarsel.aktivTil shouldBeCloseTo nowUTC()
         }
+
         app.assertProducedInaktiver(varsel.id)
     }
 
@@ -233,8 +291,8 @@ class VarselTest {
     fun `deltakerSistBesokt - beskjed venter på å bli sendt - inaktiverer`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
         val varsel = Varselsdata.varsel(
-            Varsel.Type.BESKJED,
-            Varsel.Status.VENTER_PA_UTSENDELSE,
+            type = Varsel.Type.BESKJED,
+            status = Varsel.Status.VENTER_PA_UTSENDELSE,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC().plusMinutes(10),
         )
@@ -242,11 +300,16 @@ class VarselTest {
         app.varselRepository.upsert(varsel)
         produce(hendelse)
 
-        AsyncUtils.eventually(Duration.ofSeconds(10)) {
-            val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
-            oppdatertVarsel.status shouldBe Varsel.Status.UTFORT
-            oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
-            oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+        eventually {
+            val oppdatertVarsel = app.varselRepository.get(varsel.id).shouldBeSuccess()
+
+            assertSoftly(oppdatertVarsel) {
+                status shouldBe Varsel.Status.UTFORT
+                aktivFra shouldBeCloseTo nowUTC()
+
+                aktivTil.shouldNotBeNull()
+                aktivTil shouldBeCloseTo nowUTC()
+            }
         }
     }
 
@@ -254,14 +317,14 @@ class VarselTest {
     fun `deltakerSistBesokt - to beskjeder, en aktiv og en venter - inaktiverer begge`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
         val aktivtVarsel = Varselsdata.varsel(
-            Varsel.Type.BESKJED,
-            Varsel.Status.AKTIV,
+            type = Varsel.Type.BESKJED,
+            status = Varsel.Status.AKTIV,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC().minusMinutes(1),
         )
         val ventendeVarsel = Varselsdata.varsel(
-            Varsel.Type.BESKJED,
-            Varsel.Status.VENTER_PA_UTSENDELSE,
+            type = Varsel.Type.BESKJED,
+            status = Varsel.Status.VENTER_PA_UTSENDELSE,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC().plusMinutes(10),
         )
@@ -270,16 +333,22 @@ class VarselTest {
 
         produce(hendelse)
 
-        AsyncUtils.eventually {
-            val oppdatertAktivtVarsel = app.varselRepository.get(aktivtVarsel.id).getOrThrow()
-            oppdatertAktivtVarsel.status shouldBe Varsel.Status.UTFORT
-            oppdatertAktivtVarsel.aktivFra shouldBeCloseTo aktivtVarsel.aktivFra
-            oppdatertAktivtVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+        eventually {
+            assertSoftly(app.varselRepository.get(aktivtVarsel.id).shouldBeSuccess()) {
+                status shouldBe Varsel.Status.UTFORT
+                aktivFra shouldBeCloseTo aktivtVarsel.aktivFra
 
-            val oppdatertVentendeVarsel = app.varselRepository.get(ventendeVarsel.id).getOrThrow()
-            oppdatertVentendeVarsel.status shouldBe Varsel.Status.UTFORT
-            oppdatertVentendeVarsel.aktivFra shouldBeCloseTo nowUTC()
-            oppdatertVentendeVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+                aktivTil.shouldNotBeNull()
+                aktivTil shouldBeCloseTo nowUTC()
+            }
+
+            assertSoftly(app.varselRepository.get(ventendeVarsel.id).shouldBeSuccess()) {
+                status shouldBe Varsel.Status.UTFORT
+                aktivFra shouldBeCloseTo nowUTC()
+
+                aktivTil.shouldNotBeNull()
+                aktivTil shouldBeCloseTo nowUTC()
+            }
         }
         app.assertProducedInaktiver(aktivtVarsel.id)
     }
@@ -288,8 +357,8 @@ class VarselTest {
     fun `deltakerSistBesokt - siste besøk er før beskjed var sendt - inaktiverer ikke`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.sistBesokt(sistBesokt = ZonedDateTime.now().minusMinutes(10)))
         val varsel = Varselsdata.varsel(
-            Varsel.Type.BESKJED,
-            Varsel.Status.AKTIV,
+            type = Varsel.Type.BESKJED,
+            status = Varsel.Status.AKTIV,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC(),
             aktivTil = nowUTC().plus(Varsel.beskjedAktivLengde),
@@ -298,18 +367,22 @@ class VarselTest {
         app.varselRepository.upsert(varsel)
         app.varselService.handleHendelse(hendelse)
 
-        val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
-        oppdatertVarsel.status shouldBe Varsel.Status.AKTIV
-        oppdatertVarsel.aktivFra shouldBeCloseTo varsel.aktivFra
-        oppdatertVarsel.aktivTil!! shouldBeCloseTo varsel.aktivTil
+        assertSoftly(app.varselRepository.get(varsel.id).shouldBeSuccess()) {
+            status shouldBe Varsel.Status.AKTIV
+            aktivFra shouldBeCloseTo varsel.aktivFra
+
+            aktivTil.shouldNotBeNull()
+            aktivTil shouldBeCloseTo varsel.aktivTil
+        }
     }
 
     @Test
     fun `deltakerSistBesokt - siste besøk er før beskjed - inaktiverer ikke`() = integrationTest { app, _ ->
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.sistBesokt(sistBesokt = ZonedDateTime.now().minusMinutes(10)))
+
         val varsel = Varselsdata.varsel(
-            Varsel.Type.BESKJED,
-            Varsel.Status.VENTER_PA_UTSENDELSE,
+            type = Varsel.Type.BESKJED,
+            status = Varsel.Status.VENTER_PA_UTSENDELSE,
             deltakerId = hendelse.deltaker.id,
             aktivFra = nowUTC().plusMinutes(30),
             aktivTil = nowUTC().plus(Varsel.beskjedAktivLengde),
@@ -318,9 +391,11 @@ class VarselTest {
         app.varselRepository.upsert(varsel)
         app.varselService.handleHendelse(hendelse)
 
-        val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
-        oppdatertVarsel.aktivFra shouldBeCloseTo varsel.aktivFra
-        oppdatertVarsel.aktivTil!! shouldBeCloseTo varsel.aktivTil
+        assertSoftly(app.varselRepository.get(varsel.id).shouldBeSuccess()) {
+            aktivFra shouldBeCloseTo varsel.aktivFra
+            aktivTil.shouldNotBeNull()
+            aktivTil shouldBeCloseTo varsel.aktivTil
+        }
     }
 
     private fun assertNyBeskjed(
@@ -328,19 +403,27 @@ class VarselTest {
         hendelse: HendelseDto,
         aktivFra: ZonedDateTime,
     ) {
-        val varsel = app.varselRepository.getSisteVarsel(hendelse.deltaker.id, Varsel.Type.BESKJED).getOrThrow()
+        val varsel = app.varselRepository
+            .getSisteVarsel(
+                deltakerId = hendelse.deltaker.id,
+                type = Varsel.Type.BESKJED,
+            ).shouldBeSuccess()
 
-        varsel.aktivTil!! shouldBeCloseTo Varsel.nesteUtsendingstidspunkt().plus(Varsel.beskjedAktivLengde)
-        varsel.tekst shouldBe beskjedTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV, false))
-        varsel.aktivFra shouldBeCloseTo aktivFra
-        varsel.deltakerId shouldBe hendelse.deltaker.id
-        varsel.personident shouldBe hendelse.deltaker.personident
+        assertSoftly(varsel) {
+            aktivTil.shouldNotBeNull()
+            aktivTil shouldBeCloseTo Varsel.nesteUtsendingstidspunkt().plus(Varsel.beskjedAktivLengde)
 
-        varsel.erEksterntVarsel shouldBe hendelse.skalVarslesEksternt()
+            tekst shouldBe beskjedTekst(hendelse.toModel(Distribusjonskanal.DITT_NAV, false))
+            it.aktivFra shouldBeCloseTo aktivFra
+            deltakerId shouldBe hendelse.deltaker.id
+            personident shouldBe hendelse.deltaker.personident
 
-        if (varsel.erAktiv) {
-            val forventetUrl = innbyggerDeltakerUrl(varsel.deltakerId, hendelse.payload !is HendelseType.NavGodkjennUtkast)
-            app.assertProducedBeskjed(varsel.id, forventetUrl)
+            erEksterntVarsel shouldBe hendelse.skalVarslesEksternt()
+
+            if (erAktiv) {
+                val forventetUrl = innbyggerDeltakerUrl(varsel.deltakerId, hendelse.payload !is HendelseType.NavGodkjennUtkast)
+                app.assertProducedBeskjed(varsel.id, forventetUrl)
+            }
         }
     }
 }
