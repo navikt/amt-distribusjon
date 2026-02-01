@@ -40,7 +40,7 @@ class JournalforingstatusRepository {
             "kan_ikke_journalfores" to journalforingstatus.kanIkkeJournalfores,
         )
 
-        return Database.query { session -> session.update(queryOf(sql, params)) }
+        Database.query { session -> session.update(queryOf(sql, params)) }
     }
 
     fun get(hendelseId: UUID): Journalforingstatus? {

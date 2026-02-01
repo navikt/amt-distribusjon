@@ -53,7 +53,7 @@ class TiltakshendelseRepository {
             "tiltakskode" to tiltakshendelse.tiltakskode.name,
         )
 
-        return Database.query { session -> session.update(queryOf(sql, params)) }
+        Database.query { session -> session.update(queryOf(sql, params)) }
     }
 
     fun get(id: UUID): Result<Tiltakshendelse> = runCatching {
