@@ -46,7 +46,7 @@ class HendelseRepositoryTest {
                 opprettet = LocalDateTime.now().minusHours(1),
             )
 
-            TestRepository.insert(hendelse)
+            TestRepository.insertHendelse(hendelse)
 
             journalforingstatusRepository.upsert(
                 Journalforingstatus(
@@ -67,7 +67,7 @@ class HendelseRepositoryTest {
         @Test
         fun `getIkkeJournalforteHendelser - hendelse kan ikke journalfores - returnerer tom liste`() {
             val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
-            TestRepository.insert(hendelse)
+            TestRepository.insertHendelse(hendelse)
             journalforingstatusRepository.upsert(
                 Journalforingstatus(
                     hendelseId = hendelse.id,
@@ -86,7 +86,7 @@ class HendelseRepositoryTest {
         @Test
         fun `getIkkeJournalforteHendelser - hendelse er ikke journalfort, tidspunkt ikke passert - returnerer tom liste`() {
             val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now())
-            TestRepository.insert(hendelse)
+            TestRepository.insertHendelse(hendelse)
             journalforingstatusRepository.upsert(
                 Journalforingstatus(
                     hendelseId = hendelse.id,
@@ -105,7 +105,7 @@ class HendelseRepositoryTest {
         @Test
         fun `getIkkeJournalforteHendelser - hendelse er journalfort og skal ikke sendes brev - returnerer tom liste`() {
             val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
-            TestRepository.insert(hendelse)
+            TestRepository.insertHendelse(hendelse)
             journalforingstatusRepository.upsert(
                 Journalforingstatus(
                     hendelseId = hendelse.id,
@@ -128,7 +128,7 @@ class HendelseRepositoryTest {
                 opprettet = LocalDateTime.now().minusHours(1),
                 distribusjonskanal = Distribusjonskanal.PRINT,
             )
-            TestRepository.insert(hendelse)
+            TestRepository.insertHendelse(hendelse)
             journalforingstatusRepository.upsert(
                 Journalforingstatus(
                     hendelseId = hendelse.id,
@@ -151,7 +151,7 @@ class HendelseRepositoryTest {
                 opprettet = LocalDateTime.now().minusHours(1),
                 distribusjonskanal = Distribusjonskanal.PRINT,
             )
-            TestRepository.insert(hendelse)
+            TestRepository.insertHendelse(hendelse)
             journalforingstatusRepository.upsert(
                 Journalforingstatus(
                     hendelseId = hendelse.id,
@@ -171,7 +171,7 @@ class HendelseRepositoryTest {
         @Test
         fun `getIkkeJournalforteHendelser - hendelse er journalfort og brev er sendt - returnerer tom liste`() {
             val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
-            TestRepository.insert(hendelse)
+            TestRepository.insertHendelse(hendelse)
             journalforingstatusRepository.upsert(
                 Journalforingstatus(
                     hendelseId = hendelse.id,
@@ -190,7 +190,7 @@ class HendelseRepositoryTest {
         @Test
         fun `getIkkeJournalforteHendelser - journalforingstatus finnes ikke - returnerer tom liste`() {
             val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
-            TestRepository.insert(hendelse)
+            TestRepository.insertHendelse(hendelse)
 
             val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
 
@@ -201,7 +201,7 @@ class HendelseRepositoryTest {
     @Test
     fun `getHendelser - skal returnere hendelser`() {
         val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
-        TestRepository.insert(hendelse)
+        TestRepository.insertHendelse(hendelse)
 
         val hendelser = hendelseRepository.getHendelser(listOf(hendelse.id))
 

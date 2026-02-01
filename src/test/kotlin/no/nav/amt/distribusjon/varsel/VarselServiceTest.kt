@@ -4,8 +4,6 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.result.shouldBeSuccess
 import io.kotest.matchers.shouldBe
-import no.nav.amt.distribusjon.hendelse.consumer.assertProducedBeskjed
-import no.nav.amt.distribusjon.hendelse.consumer.assertProducedInaktiver
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata

@@ -8,7 +8,7 @@ import java.time.ZoneId
 import java.util.UUID
 
 class VarselRepository {
-    fun upsert(varsel: Varsel): Varsel {
+    fun upsert(varsel: Varsel) {
         val sql =
             """
             INSERT INTO varsel (
@@ -50,7 +50,6 @@ class VarselRepository {
                 revarsel_for_varsel = :revarsel_for_varsel,
                 revarsles = :revarsles,
                 modified_at = CURRENT_TIMESTAMP
-            RETURNING *
             """.trimIndent()
 
         val params = mapOf(
@@ -68,10 +67,7 @@ class VarselRepository {
             "revarsel_for_varsel" to varsel.revarselForVarsel,
         )
 
-        return Database.query { session ->
-            session.run(queryOf(sql, params).map(::rowMapper).asSingle)
-                ?: throw IllegalStateException("Upsert for varsel feilet: varselId: ${varsel.id}")
-        }
+        Database.query { session -> session.update(queryOf(sql, params)) }
     }
 
     fun getSisteVarsel(deltakerId: UUID, type: Varsel.Type): Result<Varsel> = runCatching {

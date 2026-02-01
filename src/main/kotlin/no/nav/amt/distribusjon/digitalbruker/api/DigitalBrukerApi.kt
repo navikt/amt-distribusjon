@@ -15,11 +15,3 @@ fun Routing.registerDigitalBrukerApi(digitalBrukerService: DigitalBrukerService)
         }
     }
 }
-
-data class DigitalBrukerRequest(
-    val personident: String,
-)
-
-data class DigitalBrukerResponse(
-    val erDigital: Boolean,
-)

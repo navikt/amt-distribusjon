@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 class TiltakshendelseService(
-    private val repository: TiltakshendelseRepository,
+    private val tiltakshendelseRepository: TiltakshendelseRepository,
     private val producer: TiltakshendelseProducer,
     private val amtDeltakerClient: AmtDeltakerClient,
     private val outboxService: OutboxService,
@@ -27,7 +27,7 @@ class TiltakshendelseService(
     }
 
     suspend fun handleHendelse(hendelse: Hendelse) {
-        if (repository.getByHendelseId(hendelse.id).isSuccess) {
+        if (tiltakshendelseRepository.getByHendelseId(hendelse.id).isSuccess) {
             log.info("Tiltakshendelse for hendelse ${hendelse.id} er allerede håndtert.")
             return
         }
@@ -77,7 +77,7 @@ class TiltakshendelseService(
     }
 
     private suspend fun stoppUtkastHendelse(hendelse: Hendelse) {
-        repository.getHendelse(hendelse.deltaker.id, Tiltakshendelse.Type.UTKAST).onSuccess {
+        tiltakshendelseRepository.getHendelse(hendelse.deltaker.id, Tiltakshendelse.Type.UTKAST).onSuccess {
             val inaktivertHendelse = it.copy(
                 aktiv = false,
                 hendelser = it.hendelser.plus(hendelse.id),
@@ -87,7 +87,7 @@ class TiltakshendelseService(
     }
 
     suspend fun stoppForslagHendelse(forslagId: UUID) {
-        repository.getForslagHendelse(forslagId).onSuccess {
+        tiltakshendelseRepository.getForslagHendelse(forslagId).onSuccess {
             val inaktivertHendelse = it.copy(
                 aktiv = false,
             )
@@ -97,7 +97,7 @@ class TiltakshendelseService(
 
     private suspend fun lagreOgDistribuer(tiltakshendelse: Tiltakshendelse) {
         Database.transaction {
-            repository.upsert(tiltakshendelse)
+            tiltakshendelseRepository.upsert(tiltakshendelse)
             outboxService.insertRecord(
                 key = tiltakshendelse.id,
                 value = tiltakshendelse.toDto(),
@@ -108,7 +108,7 @@ class TiltakshendelseService(
     }
 
     fun reproduser(id: UUID) {
-        val tiltakshendelse = repository.get(id).getOrThrow()
+        val tiltakshendelse = tiltakshendelseRepository.get(id).getOrThrow()
         producer.produce(tiltakshendelse)
         log.info("Reproduserte tiltakshendelse $id")
     }

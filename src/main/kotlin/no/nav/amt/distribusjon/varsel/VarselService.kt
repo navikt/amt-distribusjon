@@ -14,7 +14,7 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 class VarselService(
-    private val repository: VarselRepository,
+    private val varselRepository: VarselRepository,
     private val outboxHandler: VarselOutboxHandler,
     private val hendelseRepository: HendelseRepository,
 ) {
@@ -79,7 +79,7 @@ class VarselService(
         }
     }
 
-    private fun skalIkkeVarsles(hendelse: Hendelse): Boolean = if (repository.getByHendelseId(hendelse.id).isSuccess) {
+    private fun skalIkkeVarsles(hendelse: Hendelse): Boolean = if (varselRepository.getByHendelseId(hendelse.id).isSuccess) {
         log.info("Varsel for hendelse ${hendelse.id} er allerede opprettet. Oppretter ikke nytt varsel.")
         true
     } else {
@@ -87,7 +87,7 @@ class VarselService(
     }
 
     private fun slaSammenMedVentendeVarsel(nyttVarsel: Varsel): Varsel {
-        val varsel = repository.getVentendeVarsel(nyttVarsel.deltakerId).fold(
+        val varsel = varselRepository.getVentendeVarsel(nyttVarsel.deltakerId).fold(
             onSuccess = { it.merge(nyttVarsel) },
             onFailure = { nyttVarsel },
         )
@@ -97,13 +97,13 @@ class VarselService(
 
     private fun handleNyttVarsel(varsel: Varsel, sendUmiddelbart: Boolean = false) {
         if (varsel.kanRevarsles || varsel.erRevarsel) {
-            repository.stoppRevarsler(varsel.deltakerId)
+            varselRepository.stoppRevarsler(varsel.deltakerId)
         }
 
         if (sendUmiddelbart) {
             sendVarsel(varsel)
         } else {
-            repository.upsert(varsel)
+            varselRepository.upsert(varsel)
             log.info("Legger varsel ${varsel.id} klar til utsending ${varsel.aktivFra}")
         }
     }
@@ -112,10 +112,14 @@ class VarselService(
         inaktiverTidligereBeskjed(varsel.deltakerId)
 
         val oppdatertVarsel = varsel.copy(aktivFra = nowUTC(), status = Varsel.Status.AKTIV)
-        repository.upsert(oppdatertVarsel)
+        varselRepository.upsert(oppdatertVarsel)
 
         when (varsel.type) {
-            Varsel.Type.BESKJED -> outboxHandler.opprettBeskjed(oppdatertVarsel, skalViseHistorikkModal(oppdatertVarsel.hendelser))
+            Varsel.Type.BESKJED -> outboxHandler.opprettBeskjed(
+                varsel = oppdatertVarsel,
+                visEndringsmodal = skalViseHistorikkModal(oppdatertVarsel.hendelser),
+            )
+
             Varsel.Type.OPPGAVE -> outboxHandler.opprettOppgave(oppdatertVarsel)
         }
 
@@ -126,14 +130,14 @@ class VarselService(
         if (varsel.erAktiv) {
             val revarsles = if (nyStatus == Varsel.Status.UTFORT) null else varsel.revarsles
 
-            repository.upsert(varsel.copy(aktivTil = nowUTC(), status = nyStatus, revarsles = revarsles))
+            varselRepository.upsert(varsel.copy(aktivTil = nowUTC(), status = nyStatus, revarsles = revarsles))
             outboxHandler.inaktiver(varsel)
             log.info("Endret status på varsel ${varsel.id} til $nyStatus for deltaker ${varsel.deltakerId}")
         }
     }
 
     private fun inaktiverTidligereBeskjed(deltakerId: UUID) {
-        val varsel = repository.getAktivt(deltakerId).getOrNull()
+        val varsel = varselRepository.getAktivt(deltakerId).getOrNull()
         require(varsel?.type != Varsel.Type.OPPGAVE) {
             "deltaker-id $deltakerId: Kan ikke deaktivere oppgave ${varsel?.id} som om den var en beskjed"
         }
@@ -144,19 +148,19 @@ class VarselService(
     }
 
     private fun inaktiverOppgave(deltaker: HendelseDeltaker) {
-        repository.getSisteVarsel(deltaker.id, Varsel.Type.OPPGAVE).onSuccess { varsel ->
+        varselRepository.getSisteVarsel(deltaker.id, Varsel.Type.OPPGAVE).onSuccess { varsel ->
             ferdigstillSendtVarsel(varsel, Varsel.Status.INAKTIVERT)
         }
     }
 
     private fun utforOppgave(deltaker: HendelseDeltaker) {
-        repository.getSisteVarsel(deltaker.id, Varsel.Type.OPPGAVE).onSuccess { varsel ->
+        varselRepository.getSisteVarsel(deltaker.id, Varsel.Type.OPPGAVE).onSuccess { varsel ->
             ferdigstillSendtVarsel(varsel, Varsel.Status.UTFORT)
         }
     }
 
     private fun utforBeskjed(deltaker: HendelseDeltaker, sistBesokt: ZonedDateTime) {
-        val beskjeder = repository.getAktiveEllerVentendeBeskjeder(deltaker.id)
+        val beskjeder = varselRepository.getAktiveEllerVentendeBeskjeder(deltaker.id)
         if (beskjeder.isEmpty()) {
             return
         }
@@ -168,7 +172,7 @@ class VarselService(
             when (it.status) {
                 Varsel.Status.VENTER_PA_UTSENDELSE -> {
                     val now = nowUTC()
-                    repository.upsert(
+                    varselRepository.upsert(
                         it.copy(
                             aktivFra = now,
                             aktivTil = now,
@@ -186,7 +190,7 @@ class VarselService(
             }
         }
 
-        repository.stoppRevarsler(deltaker.id)
+        varselRepository.stoppRevarsler(deltaker.id)
     }
 
     fun utlopBeskjed(varsel: Varsel) {
@@ -198,7 +202,7 @@ class VarselService(
             "Beskjed sin aktivTil må være passert for å kunne utløpe, Varsel: ${varsel.id}"
         }
 
-        repository.upsert(varsel.copy(status = Varsel.Status.UTLOPT))
+        varselRepository.upsert(varsel.copy(status = Varsel.Status.UTLOPT))
 
         log.info("Varsel ${varsel.id} sin aktiv periode er utløpt")
     }
@@ -213,10 +217,10 @@ class VarselService(
         return besokForSendt || besokForIkkeSendt
     }
 
-    fun get(varselId: UUID) = repository.get(varselId)
+    fun get(varselId: UUID) = varselRepository.get(varselId)
 
     fun sendVentendeVarsler() {
-        val varsler = repository.getVarslerSomSkalSendes()
+        val varsler = varselRepository.getVarslerSomSkalSendes()
         require(varsler.size == varsler.distinctBy { it.deltakerId }.size) {
             "Det finnes flere enn et ventende varsel for en eller flere deltakere"
         }
@@ -226,7 +230,7 @@ class VarselService(
     }
 
     fun sendRevarsler() {
-        val varsler = repository.getVarslerSomSkalRevarsles()
+        val varsler = varselRepository.getVarslerSomSkalRevarsles()
         val revarsler = varsler.map { slaSammenMedVentendeVarsel(Varsel.revarsel(it)) }
 
         revarsler.forEach { handleNyttVarsel(it, true) }

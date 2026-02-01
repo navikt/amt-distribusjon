@@ -8,7 +8,7 @@ import no.nav.amt.lib.utils.database.Database
 import java.util.UUID
 
 class TiltakshendelseRepository {
-    fun upsert(tiltakshendelse: Tiltakshendelse): Tiltakshendelse {
+    fun upsert(tiltakshendelse: Tiltakshendelse) {
         val sql =
             """
             INSERT INTO tiltakshendelse (
@@ -39,7 +39,6 @@ class TiltakshendelseRepository {
                 aktiv = :aktiv,
                 tekst = :tekst,
                 modified_at = CURRENT_TIMESTAMP                
-            RETURNING *
             """.trimIndent()
 
         val params = mapOf(
@@ -54,12 +53,7 @@ class TiltakshendelseRepository {
             "tiltakskode" to tiltakshendelse.tiltakskode.name,
         )
 
-        val query = queryOf(sql, params)
-
-        return Database.query { session ->
-            session.run(query.map(::rowMapper).asSingle)
-                ?: throw IllegalStateException("Upsert for tiltakshendelse feilet: tiltakshendelseId: ${tiltakshendelse.id}")
-        }
+        return Database.query { session -> session.update(queryOf(sql, params)) }
     }
 
     fun get(id: UUID): Result<Tiltakshendelse> = runCatching {

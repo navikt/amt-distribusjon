@@ -7,7 +7,7 @@ import no.nav.amt.lib.utils.database.Database
 import java.util.UUID
 
 class JournalforingstatusRepository {
-    fun upsert(journalforingstatus: Journalforingstatus): Journalforingstatus {
+    fun upsert(journalforingstatus: Journalforingstatus) {
         val sql =
             """
             INSERT INTO journalforingstatus (
@@ -30,7 +30,6 @@ class JournalforingstatusRepository {
                 kan_ikke_distribueres = :kan_ikke_distribueres,
                 kan_ikke_journalfores = :kan_ikke_journalfores,
                 modified_at = CURRENT_TIMESTAMP
-            RETURNING *
             """.trimIndent()
 
         val params = mapOf(
@@ -41,10 +40,7 @@ class JournalforingstatusRepository {
             "kan_ikke_journalfores" to journalforingstatus.kanIkkeJournalfores,
         )
 
-        return Database.query { session ->
-            session.run(queryOf(sql, params).map(::rowMapper).asSingle)
-                ?: throw IllegalStateException("Upsert for journalforingstatus feilet: hendelseId: $journalforingstatus.hendelseId")
-        }
+        return Database.query { session -> session.update(queryOf(sql, params)) }
     }
 
     fun get(hendelseId: UUID): Journalforingstatus? {
