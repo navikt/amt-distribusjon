@@ -18,9 +18,7 @@ fun Routing.registerInternalApi(tiltakshendelseService: TiltakshendelseService) 
         if (isInternal(call.request.local.remoteAddress)) {
             val forslagId = UUID.fromString(call.parameters["forslagId"])
 
-            Database.transaction {
-                tiltakshendelseService.stoppForslagHendelse(forslagId)
-            }
+            tiltakshendelseService.stoppForslagHendelse(forslagId)
 
             log.info("Ferdigstilt tiltakshendelse for forslag med id $forslagId")
             call.respond(HttpStatusCode.OK)

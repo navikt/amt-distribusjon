@@ -92,9 +92,7 @@ class TiltakshendelseServiceTest {
                 Forslag.Status.VenterPaSvar,
             )
 
-            Database.transaction {
-                app.tiltakshendelseService.handleForslag(forslag)
-            }
+            app.tiltakshendelseService.handleForslag(forslag)
 
             val tiltakshendelse = app.tiltakshendelseRepository.getForslagHendelse(forslag.id).shouldBeSuccess()
             assertSoftly(tiltakshendelse) {
@@ -106,7 +104,7 @@ class TiltakshendelseServiceTest {
         }
 
         @Test
-        fun `handleHendelse - ny ForlengDeltakelse godkjennes - oppretter ny tiltakshendelsee`() = integrationTest { app, _ ->
+        fun `handleHendelse - ny ForlengDeltakelse godkjennes - oppretter ny tiltakshendelse'`() = integrationTest { app, _ ->
             val deltaker = DeltakerData.lagDeltaker()
             val forslag = Forslag(
                 id = UUID.randomUUID(),
@@ -120,17 +118,13 @@ class TiltakshendelseServiceTest {
 
             MockResponseHandler.addDeltakerResponse(deltaker)
 
-            Database.transaction {
-                app.tiltakshendelseService.handleForslag(forslag)
-            }
+            app.tiltakshendelseService.handleForslag(forslag)
 
             val godkjentForslag = forslag.copy(
                 status = Forslag.Status.Godkjent(Forslag.NavAnsatt(UUID.randomUUID(), UUID.randomUUID()), LocalDateTime.now()),
             )
 
-            Database.transaction {
-                app.tiltakshendelseService.handleForslag(godkjentForslag)
-            }
+            app.tiltakshendelseService.handleForslag(godkjentForslag)
 
             val tiltakhendelseFerdig = app.tiltakshendelseRepository.getForslagHendelse(forslag.id).shouldBeSuccess()
 
@@ -138,7 +132,7 @@ class TiltakshendelseServiceTest {
         }
 
         @Test
-        fun `handleHendelse - Flere hendelser på samme bruker - oppretter nye tiltakshendelsee`() = integrationTest { app, _ ->
+        fun `handleHendelse - Flere hendelser på samme bruker - oppretter nye tiltakshendelse`() = integrationTest { app, _ ->
             val deltaker = DeltakerData.lagDeltaker()
             val forslag1 = Forslag(
                 id = UUID.randomUUID(),
@@ -162,10 +156,8 @@ class TiltakshendelseServiceTest {
 
             MockResponseHandler.addDeltakerResponse(deltaker)
 
-            Database.transaction {
-                app.tiltakshendelseService.handleForslag(forslag1)
-                app.tiltakshendelseService.handleForslag(forslag2)
-            }
+            app.tiltakshendelseService.handleForslag(forslag1)
+            app.tiltakshendelseService.handleForslag(forslag2)
 
             val tiltakshendelse1 = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).shouldBeSuccess()
             val tiltakshendelse2 = app.tiltakshendelseRepository.getForslagHendelse(forslag2.id).shouldBeSuccess()
@@ -177,9 +169,7 @@ class TiltakshendelseServiceTest {
                 status = Forslag.Status.Godkjent(Forslag.NavAnsatt(UUID.randomUUID(), UUID.randomUUID()), LocalDateTime.now()),
             )
 
-            Database.transaction {
-                app.tiltakshendelseService.handleForslag(forslag1Godkjent)
-            }
+            app.tiltakshendelseService.handleForslag(forslag1Godkjent)
 
             val tiltakshendelse1Godkjent = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).shouldBeSuccess()
             tiltakshendelse1Godkjent.aktiv shouldBe false

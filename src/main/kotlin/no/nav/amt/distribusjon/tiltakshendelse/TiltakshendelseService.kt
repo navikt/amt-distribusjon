@@ -7,6 +7,7 @@ import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseType
+import no.nav.amt.lib.utils.database.Database
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -55,12 +56,14 @@ class TiltakshendelseService(
         }
     }
 
-    fun stoppForslagHendelse(forslagId: UUID) {
+    suspend fun stoppForslagHendelse(forslagId: UUID) {
         tiltakshendelseRepository.getForslagHendelse(forslagId).onSuccess {
             val inaktivertHendelse = it.copy(
                 aktiv = false,
             )
-            lagreOgDistribuer(inaktivertHendelse)
+            Database.transaction {
+                lagreOgDistribuer(inaktivertHendelse)
+            }
         }
     }
 
@@ -77,13 +80,15 @@ class TiltakshendelseService(
     private suspend fun opprettStartHendelse(forslag: Forslag) {
         val deltaker = amtDeltakerClient.getDeltaker(forslag.deltakerId)
 
-        lagreOgDistribuer(
-            forslag.toHendelse(
-                personIdent = deltaker.navBruker.personident,
-                tiltakskode = deltaker.deltakerliste.tiltakstype.tiltakskode,
-                aktiv = true,
-            ),
-        )
+        Database.transaction {
+            lagreOgDistribuer(
+                forslag.toHendelse(
+                    personIdent = deltaker.navBruker.personident,
+                    tiltakskode = deltaker.deltakerliste.tiltakstype.tiltakskode,
+                    aktiv = true,
+                ),
+            )
+        }
     }
 
     private fun stoppUtkastHendelse(hendelse: Hendelse) {
