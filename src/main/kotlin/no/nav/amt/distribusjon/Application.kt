@@ -119,8 +119,14 @@ fun Application.module() {
     val outboxProcessor = OutboxProcessor(outboxService, jobManager, kafkaProducer)
 
     val hendelseRepository = HendelseRepository()
+    val varselRepository = VarselRepository()
 
-    val varselService = VarselService(VarselRepository(), VarselOutboxHandler(outboxService), hendelseRepository)
+    val varselService = VarselService(
+        varselRepository = VarselRepository(),
+        hendelseRepository = hendelseRepository,
+        outboxHandler = VarselOutboxHandler(outboxService),
+    )
+
     val journalforingService = JournalforingService(
         JournalforingstatusRepository(),
         amtPersonClient,
@@ -132,7 +138,11 @@ fun Application.module() {
     )
 
     val tiltakshendelseService =
-        TiltakshendelseService(TiltakshendelseRepository(), TiltakshendelseProducer(kafkaProducer), amtDeltakerClient, outboxService)
+        TiltakshendelseService(
+            tiltakshendelseRepository = TiltakshendelseRepository(),
+            amtDeltakerClient = amtDeltakerClient,
+            tiltakshendelseProducer = TiltakshendelseProducer(outboxService),
+        )
 
     val consumers = listOf(
         HendelseConsumer(
@@ -143,7 +153,7 @@ fun Application.module() {
             dokdistkanalClient,
             veilarboppfolgingClient,
         ),
-        VarselHendelseConsumer(varselService),
+        VarselHendelseConsumer(varselRepository, varselService),
         ArrangorMeldingConsumer(tiltakshendelseService),
     )
     consumers.forEach { it.start() }

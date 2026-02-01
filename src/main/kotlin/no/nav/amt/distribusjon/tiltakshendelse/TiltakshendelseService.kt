@@ -1,23 +1,19 @@
 package no.nav.amt.distribusjon.tiltakshendelse
 
-import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.amtdeltaker.AmtDeltakerClient
 import no.nav.amt.distribusjon.hendelse.model.Hendelse
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService.Companion.UTKAST_TIL_PAMELDING_TEKST
 import no.nav.amt.distribusjon.tiltakshendelse.model.Tiltakshendelse
-import no.nav.amt.distribusjon.tiltakshendelse.model.toDto
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseType
-import no.nav.amt.lib.outbox.OutboxService
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
 class TiltakshendelseService(
-    private val repository: TiltakshendelseRepository,
-    private val producer: TiltakshendelseProducer,
+    private val tiltakshendelseRepository: TiltakshendelseRepository,
     private val amtDeltakerClient: AmtDeltakerClient,
-    private val outboxService: OutboxService,
+    private val tiltakshendelseProducer: TiltakshendelseProducer,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -26,7 +22,7 @@ class TiltakshendelseService(
     }
 
     fun handleHendelse(hendelse: Hendelse) {
-        if (repository.getByHendelseId(hendelse.id).isSuccess) {
+        if (tiltakshendelseRepository.getByHendelseId(hendelse.id).isSuccess) {
             log.info("Tiltakshendelse for hendelse ${hendelse.id} er allerede håndtert.")
             return
         }
@@ -59,11 +55,26 @@ class TiltakshendelseService(
         }
     }
 
-    fun opprettStartHendelse(hendelse: Hendelse) {
+    fun stoppForslagHendelse(forslagId: UUID) {
+        tiltakshendelseRepository.getForslagHendelse(forslagId).onSuccess {
+            val inaktivertHendelse = it.copy(
+                aktiv = false,
+            )
+            lagreOgDistribuer(inaktivertHendelse)
+        }
+    }
+
+    fun reproduser(id: UUID) {
+        val tiltakshendelse = tiltakshendelseRepository.get(id).getOrThrow()
+        tiltakshendelseProducer.produce(tiltakshendelse)
+        log.info("Reproduserte tiltakshendelse $id")
+    }
+
+    private fun opprettStartHendelse(hendelse: Hendelse) {
         lagreOgDistribuer(hendelse.toTiltakshendelse())
     }
 
-    suspend fun opprettStartHendelse(forslag: Forslag) {
+    private suspend fun opprettStartHendelse(forslag: Forslag) {
         val deltaker = amtDeltakerClient.getDeltaker(forslag.deltakerId)
 
         lagreOgDistribuer(
@@ -76,7 +87,7 @@ class TiltakshendelseService(
     }
 
     private fun stoppUtkastHendelse(hendelse: Hendelse) {
-        repository.getHendelse(hendelse.deltaker.id, Tiltakshendelse.Type.UTKAST).onSuccess {
+        tiltakshendelseRepository.getHendelse(hendelse.deltaker.id, Tiltakshendelse.Type.UTKAST).onSuccess {
             val inaktivertHendelse = it.copy(
                 aktiv = false,
                 hendelser = it.hendelser.plus(hendelse.id),
@@ -85,29 +96,10 @@ class TiltakshendelseService(
         }
     }
 
-    fun stoppForslagHendelse(forslagId: UUID) {
-        repository.getForslagHendelse(forslagId).onSuccess {
-            val inaktivertHendelse = it.copy(
-                aktiv = false,
-            )
-            lagreOgDistribuer(inaktivertHendelse)
-        }
-    }
-
     private fun lagreOgDistribuer(tiltakshendelse: Tiltakshendelse) {
-        repository.upsert(tiltakshendelse)
-        outboxService.insertRecord(
-            key = tiltakshendelse.id,
-            value = tiltakshendelse.toDto(),
-            topic = Environment.TILTAKSHENDELSE_TOPIC,
-        )
+        tiltakshendelseRepository.upsert(tiltakshendelse)
+        tiltakshendelseProducer.produce(tiltakshendelse)
         log.info("Upsertet tiltakshendelse ${tiltakshendelse.id}")
-    }
-
-    fun reproduser(id: UUID) {
-        val tiltakshendelse = repository.get(id).getOrThrow()
-        producer.produce(tiltakshendelse)
-        log.info("Reproduserte tiltakshendelse $id")
     }
 }
 

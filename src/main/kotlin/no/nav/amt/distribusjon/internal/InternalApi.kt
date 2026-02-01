@@ -6,6 +6,7 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.routing.post
 import no.nav.amt.distribusjon.application.plugins.AuthorizationException
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
+import no.nav.amt.lib.utils.database.Database
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -16,7 +17,11 @@ fun Routing.registerInternalApi(tiltakshendelseService: TiltakshendelseService) 
     post("/internal/forslag/ferdigstill/{forslagId}") {
         if (isInternal(call.request.local.remoteAddress)) {
             val forslagId = UUID.fromString(call.parameters["forslagId"])
-            tiltakshendelseService.stoppForslagHendelse(forslagId)
+
+            Database.transaction {
+                tiltakshendelseService.stoppForslagHendelse(forslagId)
+            }
+
             log.info("Ferdigstilt tiltakshendelse for forslag med id $forslagId")
             call.respond(HttpStatusCode.OK)
         } else {
@@ -29,7 +34,9 @@ fun Routing.registerInternalApi(tiltakshendelseService: TiltakshendelseService) 
             throw AuthorizationException("Ikke tilgang til api")
         }
         val id = UUID.fromString(call.parameters["id"])
-        tiltakshendelseService.reproduser(id)
+        Database.transaction {
+            tiltakshendelseService.reproduser(id)
+        }
         call.respond(HttpStatusCode.OK)
     }
 }

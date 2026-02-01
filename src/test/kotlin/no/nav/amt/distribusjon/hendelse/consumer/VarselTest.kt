@@ -81,7 +81,7 @@ class VarselTest {
                     ).shouldBeSuccess()
 
                 varsel.erAktiv shouldBe false
-                app.assertNotProduced(varsel.id)
+                app.assertNotProducedHendelse(varsel.id)
             }
         }
     }

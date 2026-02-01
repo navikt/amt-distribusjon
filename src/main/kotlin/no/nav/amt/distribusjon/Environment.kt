@@ -54,11 +54,14 @@ data class Environment(
         const val HTTP_CONNECT_TIMEOUT_MILLIS = 5_000L
         const val HTTP_SOCKET_TIMEOUT_MILLIS = 15_000L
 
+        // consumer topics
         const val DELTAKER_HENDELSE_TOPIC = "amt.deltaker-hendelse-v1"
-        const val MINSIDE_VARSEL_TOPIC = "min-side.aapen-brukervarsel-v1"
         const val MINSIDE_VARSEL_HENDELSE_TOPIC = "min-side.aapen-varsel-hendelse-v1"
-        const val TILTAKSHENDELSE_TOPIC = "obo.tiltakshendelse-v1"
         const val ARRANGOR_MELDING_TOPIC = "amt.arrangor-melding-v1"
+
+        // producer topics
+        const val MINSIDE_VARSEL_TOPIC = "min-side.aapen-brukervarsel-v1"
+        const val TILTAKSHENDELSE_TOPIC = "obo.tiltakshendelse-v1"
 
         val cluster: String = getEnvVar("NAIS_CLUSTER_NAME", "lokal")
         val appName: String = getEnvVar("NAIS_APP_NAME", "amt-distribusjon")
