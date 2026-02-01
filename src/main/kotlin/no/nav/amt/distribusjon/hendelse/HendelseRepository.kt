@@ -91,10 +91,7 @@ class HendelseRepository {
             WHERE id IN (${hendelseIder.joinToString { "?" }})
             """.trimIndent()
 
-        val query = queryOf(
-            sql,
-            *hendelseIder.toTypedArray(),
-        )
+        val query = queryOf(sql, *hendelseIder.toTypedArray())
 
         return Database.query { session -> session.run(query.map(::hendelseRowMapper).asList) }
     }

@@ -15,12 +15,7 @@ object TestRepository {
 
         Database.query { session ->
             tables.forEach {
-                session.update(
-                    queryOf(
-                        statement = "DELETE FROM $it",
-                        paramMap = emptyMap(),
-                    ),
-                )
+                session.update(queryOf(statement = "DELETE FROM $it"))
             }
         }
     }

@@ -157,7 +157,7 @@ class VarselRepository {
         }
     }
 
-    fun getVarslerSomSkalSendes() = Database.query {
+    fun getVarslerSomSkalSendes(): List<Varsel> {
         val sql =
             """
             SELECT * 
@@ -167,17 +167,15 @@ class VarselRepository {
                 AND aktiv_fra < CURRENT_TIMESTAMP
             """.trimIndent()
 
-        it.run(queryOf(sql).map(::rowMapper).asList)
+        return Database.query { session -> session.run(queryOf(sql).map(::rowMapper).asList) }
     }
 
-    fun getVarslerSomSkalRevarsles() = Database.query {
-        val sql =
-            """
-            select * 
-            from varsel
-            where revarsles < CURRENT_TIMESTAMP
-            """.trimIndent()
-        it.run(queryOf(sql).map(::rowMapper).asList)
+    fun getVarslerSomSkalRevarsles(): List<Varsel> = Database.query { session ->
+        session.run(
+            queryOf("SELECT * FROM varsel WHERE revarsles < CURRENT_TIMESTAMP")
+                .map(::rowMapper)
+                .asList,
+        )
     }
 
     fun stoppRevarsler(deltakerId: UUID) {
