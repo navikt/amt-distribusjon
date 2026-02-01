@@ -2,6 +2,8 @@ package no.nav.amt.distribusjon
 
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
+import io.kotest.matchers.should
+import io.kotest.matchers.shouldNot
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
@@ -45,7 +47,7 @@ import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.outbox.OutboxRecord
 import no.nav.amt.lib.outbox.OutboxService
 import no.nav.amt.lib.testing.SingletonKafkaProvider
-import no.nav.amt.lib.testing.SingletonPostgres16Container
+import no.nav.amt.lib.testing.TestPostgresContainer
 import java.util.UUID
 
 class TestApp {
@@ -77,9 +79,8 @@ class TestApp {
     val environment: Environment = testEnvironment
 
     init {
-        @Suppress("UnusedExpression")
-        SingletonPostgres16Container
-        SingletonKafkaProvider.start()
+        TestPostgresContainer.bootstrap()
+
         val kafakConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
         val kafkaProducer = Producer<String, String>(kafakConfig)
 
@@ -95,7 +96,7 @@ class TestApp {
         dokarkivClient = mockDokarkivClient(azureAdTokenClient, environment)
         dokdistkanalClient = mockDokdistkanalClient(azureAdTokenClient, environment)
         dokdistfordelingClient = mockDokdistfordelingClient(azureAdTokenClient, environment)
-
+        amtDeltakerClient = mockAmtDeltakerClient(azureAdTokenClient, environment)
         journalforingstatusRepository = JournalforingstatusRepository()
         hendelseRepository = HendelseRepository()
         varselRepository = VarselRepository()
@@ -109,11 +110,11 @@ class TestApp {
             veilarboppfolgingClient,
             dokarkivClient,
             dokdistfordelingClient,
+            amtDeltakerClient,
         )
 
         digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
         tiltakshendelseProducer = TiltakshendelseProducer(kafkaProducer)
-        amtDeltakerClient = mockAmtDeltakerClient(azureAdTokenClient, environment)
         tiltakshendelseRepository = TiltakshendelseRepository()
         tiltakshendelseService = TiltakshendelseService(
             tiltakshendelseRepository,
@@ -140,6 +141,38 @@ class TestApp {
         )
 
         consumers.forEach { it.start() }
+    }
+
+    fun assertProducedInaktiver(id: UUID) {
+        this should haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC) {
+            val json = it.value
+            json["varselId"].asText() == id.toString() &&
+                json["@event_name"].asText() == "inaktiver"
+        }
+    }
+
+    fun assertProducedOppgave(id: UUID) {
+        this should haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC) { record ->
+            val json = record.value
+
+            json["varselId"].asText() == id.toString() &&
+                json["@event_name"].asText() == "opprett" &&
+                json["type"].asText() == "oppgave"
+        }
+    }
+
+    fun assertProducedBeskjed(id: UUID, forventetUrl: String) {
+        this should haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC) { record ->
+            val json = record.value
+            json["varselId"].asText() == id.toString() &&
+                json["@event_name"].asText() == "opprett" &&
+                json["type"].asText() == "beskjed" &&
+                json["link"].asText() == forventetUrl
+        }
+    }
+
+    fun assertNotProduced(id: UUID) {
+        this shouldNot haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC)
     }
 }
 

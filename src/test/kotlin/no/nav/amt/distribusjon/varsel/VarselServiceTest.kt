@@ -1,9 +1,9 @@
 package no.nav.amt.distribusjon.varsel
 
-import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.result.shouldBeSuccess
 import io.kotest.matchers.shouldBe
-import no.nav.amt.distribusjon.hendelse.consumer.assertProducedBeskjed
-import no.nav.amt.distribusjon.hendelse.consumer.assertProducedInaktiver
 import no.nav.amt.distribusjon.integrationTest
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata
@@ -11,6 +11,7 @@ import no.nav.amt.distribusjon.utils.data.Varselsdata
 import no.nav.amt.distribusjon.varsel.model.Varsel
 import no.nav.amt.distribusjon.varsel.model.innbyggerDeltakerUrl
 import no.nav.amt.lib.testing.shouldBeCloseTo
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -18,8 +19,8 @@ class VarselServiceTest {
     @Test
     fun `sendVentendeVarsler - varsler er klare for sending - sender`() = integrationTest { app, _ ->
         val varsel = Varselsdata.varsel(
-            Varsel.Type.BESKJED,
-            Varsel.Status.VENTER_PA_UTSENDELSE,
+            type = Varsel.Type.BESKJED,
+            status = Varsel.Status.VENTER_PA_UTSENDELSE,
             aktivFra = nowUTC().minusMinutes(5),
         )
         app.varselRepository.upsert(varsel)
@@ -33,7 +34,8 @@ class VarselServiceTest {
         app.varselService.sendVentendeVarsler()
 
         app.assertProducedBeskjed(varsel.id, forventetUrl)
-        val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
+
+        val oppdatertVarsel = app.varselRepository.get(varsel.id).shouldBeSuccess()
         oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
     }
 
@@ -48,7 +50,7 @@ class VarselServiceTest {
 
         app.varselService.sendVentendeVarsler()
 
-        val oppdatertVarsel = app.varselRepository.get(varsel.id).getOrThrow()
+        val oppdatertVarsel = app.varselRepository.get(varsel.id).shouldBeSuccess()
         oppdatertVarsel.aktivFra shouldBeCloseTo varsel.aktivFra
     }
 
@@ -57,16 +59,16 @@ class VarselServiceTest {
         integrationTest { app, _ ->
             val deltakerId = UUID.randomUUID()
             val aktivtVarsel = Varselsdata.varsel(
-                Varsel.Type.BESKJED,
-                Varsel.Status.AKTIV,
+                type = Varsel.Type.BESKJED,
+                status = Varsel.Status.AKTIV,
                 deltakerId = deltakerId,
                 aktivFra = nowUTC().minusMinutes(35),
             )
             app.varselRepository.upsert(aktivtVarsel)
 
             val nyttVarsel = Varselsdata.varsel(
-                Varsel.Type.BESKJED,
-                Varsel.Status.VENTER_PA_UTSENDELSE,
+                type = Varsel.Type.BESKJED,
+                status = Varsel.Status.VENTER_PA_UTSENDELSE,
                 deltakerId = deltakerId,
                 aktivFra = nowUTC().minusMinutes(5),
             )
@@ -82,10 +84,10 @@ class VarselServiceTest {
 
             app.varselRepository
                 .get(aktivtVarsel.id)
-                .getOrThrow()
+                .shouldBeSuccess()
                 .erAktiv shouldBe false
 
-            val oppdatertVarsel = app.varselRepository.get(nyttVarsel.id).getOrThrow()
+            val oppdatertVarsel = app.varselRepository.get(nyttVarsel.id).shouldBeSuccess()
             oppdatertVarsel.aktivFra shouldBeCloseTo nowUTC()
 
             app.assertProducedInaktiver(aktivtVarsel.id)
@@ -95,7 +97,7 @@ class VarselServiceTest {
     @Test
     fun `sendRevarsler - inaktivert beskjed skal revarsles - oppretter og sender revarsel`() = integrationTest { app, _ ->
         val skalRevarsles = Varselsdata.beskjed(
-            Varsel.Status.INAKTIVERT,
+            status = Varsel.Status.INAKTIVERT,
             aktivFra = nowUTC().minusDays(7).plusMinutes(1),
             revarsles = nowUTC().minusMinutes(1),
         )
@@ -111,15 +113,17 @@ class VarselServiceTest {
 
         app.varselRepository
             .get(skalRevarsles.id)
-            .getOrThrow()
+            .shouldBeSuccess()
             .revarsles shouldBe null
 
-        val revarsel = app.varselRepository.getAktivt(skalRevarsles.deltakerId).getOrThrow()
-        revarsel.erRevarsel shouldBe true
-        revarsel.kanRevarsles shouldBe false
-        revarsel.aktivFra shouldBeCloseTo nowUTC()
-        revarsel.aktivTil!! shouldBeCloseTo nowUTC().plus(Varsel.beskjedAktivLengde)
-        revarsel.revarselForVarsel shouldBe skalRevarsles.id
+        val revarsel = app.varselRepository.getAktivt(skalRevarsles.deltakerId).shouldBeSuccess()
+        assertSoftly(revarsel) {
+            erRevarsel shouldBe true
+            kanRevarsles shouldBe false
+            aktivFra shouldBeCloseTo nowUTC()
+            aktivTil.shouldNotBeNull() shouldBeCloseTo nowUTC().plus(Varsel.beskjedAktivLengde)
+            revarselForVarsel shouldBe skalRevarsles.id
+        }
 
         app.assertProducedBeskjed(revarsel.id, forventetUrl)
     }
@@ -127,7 +131,7 @@ class VarselServiceTest {
     @Test
     fun `sendRevarsler - aktiv beskjed skal revarsles - inaktiverer beskjed, oppretter og sender revarsel`() = integrationTest { app, _ ->
         val skalRevarsles = Varselsdata.beskjed(
-            Varsel.Status.AKTIV,
+            status = Varsel.Status.AKTIV,
             aktivFra = nowUTC().minusDays(7).plusMinutes(1),
             revarsles = nowUTC().minusMinutes(1),
         )
@@ -142,19 +146,23 @@ class VarselServiceTest {
 
         app.varselService.sendRevarsler()
 
-        val oppdatertVarsel = app.varselRepository.get(skalRevarsles.id).getOrThrow()
-        oppdatertVarsel.revarsles shouldBe null
-        oppdatertVarsel.status shouldBe Varsel.Status.INAKTIVERT
-        oppdatertVarsel.aktivTil!! shouldBeCloseTo nowUTC()
+        val oppdatertVarsel = app.varselRepository.get(skalRevarsles.id).shouldBeSuccess()
+        assertSoftly(oppdatertVarsel) {
+            revarsles shouldBe null
+            status shouldBe Varsel.Status.INAKTIVERT
+            aktivTil.shouldNotBeNull() shouldBeCloseTo nowUTC()
+        }
 
         app.assertProducedInaktiver(oppdatertVarsel.id)
 
-        val revarsel = app.varselRepository.getAktivt(skalRevarsles.deltakerId).getOrThrow()
-        revarsel.erRevarsel shouldBe true
-        revarsel.kanRevarsles shouldBe false
-        revarsel.aktivFra shouldBeCloseTo nowUTC()
-        revarsel.aktivTil!! shouldBeCloseTo nowUTC().plus(Varsel.beskjedAktivLengde)
-        revarsel.revarselForVarsel shouldBe skalRevarsles.id
+        val revarsel = app.varselRepository.getAktivt(skalRevarsles.deltakerId).shouldBeSuccess()
+        assertSoftly(revarsel) {
+            erRevarsel shouldBe true
+            kanRevarsles shouldBe false
+            aktivFra shouldBeCloseTo nowUTC()
+            aktivTil.shouldNotBeNull() shouldBeCloseTo nowUTC().plus(Varsel.beskjedAktivLengde)
+            revarselForVarsel shouldBe skalRevarsles.id
+        }
 
         app.assertProducedBeskjed(revarsel.id, forventetUrl)
     }
@@ -171,10 +179,12 @@ class VarselServiceTest {
 
         app.varselService.sendRevarsler()
 
-        val ikkeOppdatertVarsel = app.varselRepository.get(skalIkkeRevarsles.id).getOrThrow()
-        ikkeOppdatertVarsel.revarsles!! shouldBeCloseTo skalIkkeRevarsles.revarsles!!
-        ikkeOppdatertVarsel.status shouldBe skalIkkeRevarsles.status
-        ikkeOppdatertVarsel.aktivTil!! shouldBeCloseTo skalIkkeRevarsles.aktivTil
+        val ikkeOppdatertVarsel = app.varselRepository.get(skalIkkeRevarsles.id).shouldBeSuccess()
+        assertSoftly(ikkeOppdatertVarsel) {
+            revarsles.shouldNotBeNull() shouldBeCloseTo skalIkkeRevarsles.revarsles.shouldNotBeNull()
+            status shouldBe skalIkkeRevarsles.status
+            aktivTil.shouldNotBeNull() shouldBeCloseTo skalIkkeRevarsles.aktivTil
+        }
     }
 
     @Test
@@ -186,7 +196,7 @@ class VarselServiceTest {
         )
 
         ugyldigeVarsler.forEach {
-            shouldThrow<IllegalArgumentException> {
+            assertThrows(IllegalArgumentException::class.java) {
                 app.varselService.utlopBeskjed(it)
             }
         }
@@ -204,7 +214,7 @@ class VarselServiceTest {
 
         app.varselRepository
             .get(utloptBeskjed.id)
-            .getOrThrow()
+            .shouldBeSuccess()
             .status shouldBe Varsel.Status.UTLOPT
     }
 }

@@ -10,6 +10,11 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
+import no.nav.amt.lib.models.journalforing.pdf.EndringsvedtakPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.HovedvedtakFellesOppstartPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.HovedvedtakPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.InnsokingsbrevPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.VentelistebrevPdfDto
 
 class PdfgenClient(
     private val httpClient: HttpClient,

@@ -90,7 +90,7 @@ class DokdistfordelingClientTest : ClientTestBase() {
         private val bestillingsId: UUID = UUID.randomUUID()
         private val expectedResponse = DistribuerJournalpostResponse(bestillingsId)
 
-        private fun DokdistfordelingClient.runDistribuerJournalpostWithTestParams() = runBlocking {
+        private fun DokdistfordelingClient.runDistribuerJournalpostWithTestParams(): UUID? = runBlocking {
             distribuerJournalpost(
                 journalpostId = JOURNAL_POST_ID,
                 distribusjonstype = DistribuerJournalpostRequest.Distribusjonstype.VEDTAK,

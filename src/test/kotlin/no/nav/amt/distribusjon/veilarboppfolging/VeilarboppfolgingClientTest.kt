@@ -10,104 +10,111 @@ import no.nav.amt.distribusjon.testEnvironment
 import no.nav.amt.distribusjon.utils.ClientTestBase
 import no.nav.amt.distribusjon.utils.CountingCache
 import no.nav.amt.distribusjon.utils.createMockHttpClient
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
 class VeilarboppfolgingClientTest : ClientTestBase() {
-    @Test
-    fun `skal returnere sak nar opprettEllerHentSak kalles med gyldig respons`() {
-        val expectedSak = Sak(oppfolgingsperiodeId, sakId = 42, fagsaksystem = "~fagsaksystem~")
+    @Nested
+    inner class OpprettEllerHentSakTests {
+        @Test
+        fun `skal returnere sak nar opprettEllerHentSak kalles med gyldig respons`() {
+            val expectedSak = Sak(oppfolgingsperiodeId, sakId = 42, fagsaksystem = "~fagsaksystem~")
 
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = opprettEllerHentSakUrl,
-            responseBody = expectedSak,
-        )
+            val sut = createVeilarboppfolgingClient(
+                expectedUrl = opprettEllerHentSakUrl,
+                responseBody = expectedSak,
+            )
 
-        val actualSak = runBlocking {
-            sut.opprettEllerHentSak(oppfolgingsperiodeId)
-        }
-
-        actualSak shouldBe expectedSak
-    }
-
-    @Test
-    fun `skal kaste feil nar opprettEllerHentSak returnerer feilkode`() {
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = opprettEllerHentSakUrl,
-            statusCode = HttpStatusCode.BadRequest,
-            responseBody = null,
-        )
-
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
+            val actualSak = runBlocking {
                 sut.opprettEllerHentSak(oppfolgingsperiodeId)
             }
+
+            actualSak shouldBe expectedSak
         }
 
-        thrown.message shouldStartWith "Kunne ikke hente sak fra veilarboppfolging for oppfolgingsperiode $oppfolgingsperiodeId"
-    }
+        @Test
+        fun `skal kaste feil nar opprettEllerHentSak returnerer feilkode`() {
+            val sut = createVeilarboppfolgingClient(
+                expectedUrl = opprettEllerHentSakUrl,
+                statusCode = HttpStatusCode.BadRequest,
+                responseBody = null,
+            )
 
-    @Test
-    fun `skal returnere true nar bruker er under manuell oppfolging`() {
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
-            responseBody = ManuellV2Response(true),
-        )
+            val thrown = runBlocking {
+                shouldThrow<IllegalStateException> {
+                    sut.opprettEllerHentSak(oppfolgingsperiodeId)
+                }
+            }
 
-        val result = runBlocking {
-            sut.erUnderManuellOppfolging("~personident~")
+            thrown.message shouldStartWith "Kunne ikke hente sak fra veilarboppfolging for oppfolgingsperiode $oppfolgingsperiodeId"
         }
-
-        result shouldBe true
     }
 
-    @Test
-    fun `skal returnere false nar bruker ikke er under manuell oppfolging`() {
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
-            responseBody = ManuellV2Response(false),
-        )
+    @Nested
+    inner class ErUnderManuellOppfolgingTests {
+        @Test
+        fun `skal returnere true nar bruker er under manuell oppfolging`() {
+            val sut = createVeilarboppfolgingClient(
+                expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
+                responseBody = ManuellV2Response(true),
+            )
 
-        val result = runBlocking {
-            sut.erUnderManuellOppfolging("~personident~")
-        }
-
-        result shouldBe false
-    }
-
-    @Test
-    fun `skal bruke cache ved andre kall til erUnderManuellOppfolging`() {
-        val countingCache = CountingCache<String, Boolean>()
-
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
-            responseBody = ManuellV2Response(false),
-            cache = countingCache,
-        )
-
-        runBlocking {
-            sut.erUnderManuellOppfolging("~personident~")
-            sut.erUnderManuellOppfolging("~personident~")
-        }
-
-        countingCache.putCount shouldBe 1
-    }
-
-    @Test
-    fun `skal kaste feil nar erUnderManuellOppfolging returnerer feilkode`() {
-        val sut = createVeilarboppfolgingClient(
-            expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
-            responseBody = null,
-            statusCode = HttpStatusCode.BadRequest,
-        )
-
-        val thrown = runBlocking {
-            shouldThrow<IllegalStateException> {
+            val result = runBlocking {
                 sut.erUnderManuellOppfolging("~personident~")
             }
+
+            result shouldBe true
         }
 
-        thrown.message shouldStartWith "Kunne ikke hente manuell oppfølging fra veilarboppfolging"
+        @Test
+        fun `skal returnere false nar bruker ikke er under manuell oppfolging`() {
+            val sut = createVeilarboppfolgingClient(
+                expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
+                responseBody = ManuellV2Response(false),
+            )
+
+            val result = runBlocking {
+                sut.erUnderManuellOppfolging("~personident~")
+            }
+
+            result shouldBe false
+        }
+
+        @Test
+        fun `skal bruke cache ved andre kall til erUnderManuellOppfolging`() {
+            val countingCache = CountingCache<String, Boolean>()
+
+            val sut = createVeilarboppfolgingClient(
+                expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
+                responseBody = ManuellV2Response(false),
+                cache = countingCache,
+            )
+
+            runBlocking {
+                sut.erUnderManuellOppfolging("~personident~")
+                sut.erUnderManuellOppfolging("~personident~")
+            }
+
+            countingCache.putCount shouldBe 1
+        }
+
+        @Test
+        fun `skal kaste feil nar erUnderManuellOppfolging returnerer feilkode`() {
+            val sut = createVeilarboppfolgingClient(
+                expectedUrl = ER_UNDER_MANUELL_OPPFOLGING_URL,
+                responseBody = null,
+                statusCode = HttpStatusCode.BadRequest,
+            )
+
+            val thrown = runBlocking {
+                shouldThrow<IllegalStateException> {
+                    sut.erUnderManuellOppfolging("~personident~")
+                }
+            }
+
+            thrown.message shouldStartWith "Kunne ikke hente manuell oppfølging fra veilarboppfolging"
+        }
     }
 
     private fun <T> createVeilarboppfolgingClient(

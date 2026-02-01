@@ -14,33 +14,28 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 class HendelseRepository {
-    private fun hendelseRowMapper(row: Row) = Hendelse(
-        id = row.uuid("id"),
-        deltaker = objectMapper.readValue(row.string("deltaker")),
-        ansvarlig = objectMapper.readValue(row.string("ansvarlig")),
-        payload = objectMapper.readValue(row.string("payload")),
-        opprettet = row.localDateTime("created_at"),
-        distribusjonskanal = row.string("distribusjonskanal").let { Distribusjonskanal.valueOf(it) },
-        manuellOppfolging = row.boolean("manuelloppfolging"),
-    )
-
-    private fun hendelseMedJournalforingstatusRowMapper(row: Row) = HendelseMedJournalforingstatus(
-        hendelse = hendelseRowMapper(row),
-        journalforingstatus = Journalforingstatus(
-            hendelseId = row.uuid("id"),
-            journalpostId = row.stringOrNull("journalpost_id"),
-            bestillingsId = row.uuidOrNull("bestillingsid"),
-            kanIkkeDistribueres = row.boolean("kan_ikke_distribueres"),
-            kanIkkeJournalfores = row.boolean("kan_ikke_journalfores"),
-        ),
-    )
-
-    fun insert(hendelse: Hendelse) = Database.query {
+    fun insert(hendelse: Hendelse) {
         val sql =
             """
-            insert into hendelse (id, deltaker_id, deltaker, ansvarlig, payload, distribusjonskanal, manuelloppfolging)
-            values(:id, :deltaker_id, :deltaker, :ansvarlig, :payload, :distribusjonskanal, :manuelloppfolging)
-            on conflict (id) do nothing
+            INSERT INTO hendelse (
+                id, 
+                deltaker_id, 
+                deltaker, 
+                ansvarlig, 
+                payload, 
+                distribusjonskanal, 
+                manuelloppfolging
+            )
+            VALUES (
+                :id, 
+                :deltaker_id, 
+                :deltaker, 
+                :ansvarlig, 
+                :payload, 
+                :distribusjonskanal, 
+                :manuelloppfolging
+            )
+            ON CONFLICT (id) DO NOTHING
             """.trimIndent()
 
         val params = mapOf(
@@ -53,29 +48,10 @@ class HendelseRepository {
             "manuelloppfolging" to hendelse.manuellOppfolging,
         )
 
-        it.update(queryOf(sql, params))
+        Database.query { session -> session.update(queryOf(sql, params)) }
     }
 
-    private val ikkeJournalforteHendelserBaseSql =
-        """
-        SELECT
-            h.id,
-            h.deltaker,
-            h.ansvarlig,
-            h.payload,
-            h.created_at,
-            h.distribusjonskanal,
-            h.manuelloppfolging,
-            js.journalpost_id,
-            js.bestillingsid,
-            js.kan_ikke_distribueres,
-            js.kan_ikke_journalfores
-        FROM 
-            hendelse h
-            JOIN journalforingstatus js ON h.id = js.hendelse_id            
-        """.trimIndent()
-
-    fun getIkkeJournalforteHendelser(opprettet: LocalDateTime) = Database.query {
+    fun getIkkeJournalforteHendelser(opprettet: LocalDateTime): List<HendelseMedJournalforingstatus> {
         val sql =
             """
             $ikkeJournalforteHendelserBaseSql                
@@ -88,7 +64,7 @@ class HendelseRepository {
             
             $ikkeJournalforteHendelserBaseSql                
             WHERE
-                 js.bestillingsid IS NULL
+                js.bestillingsid IS NULL
                 AND js.kan_ikke_distribueres IS NOT TRUE
                 AND h.distribusjonskanal NOT IN ('DITT_NAV','SDP')
                 AND h.created_at < :opprettet
@@ -101,24 +77,64 @@ class HendelseRepository {
 
         val query = queryOf(sql, mapOf("opprettet" to opprettet))
 
-        it.run(query.map(::hendelseMedJournalforingstatusRowMapper).asList)
+        return Database.query { session ->
+            session.run(query.map(::hendelseMedJournalforingstatusRowMapper).asList)
+        }
     }
 
-    fun getHendelser(hendelseIder: List<UUID>) = Database.query {
-        if (hendelseIder.isEmpty()) {
-            return@query emptyList()
-        }
+    fun getHendelser(hendelseIder: List<UUID>): List<Hendelse> {
+        if (hendelseIder.isEmpty()) return emptyList()
+
         val sql =
             """
-            select * from hendelse
-            where id in (${hendelseIder.joinToString { "?" }})
+            SELECT * FROM hendelse
+            WHERE id IN (${hendelseIder.joinToString { "?" }})
             """.trimIndent()
 
-        val query = queryOf(
-            sql,
-            *hendelseIder.toTypedArray(),
-        ).map(::hendelseRowMapper).asList
+        val query = queryOf(sql, *hendelseIder.toTypedArray())
 
-        it.run(query)
+        return Database.query { session -> session.run(query.map(::hendelseRowMapper).asList) }
+    }
+
+    companion object {
+        private val ikkeJournalforteHendelserBaseSql =
+            """
+            SELECT
+                h.id,
+                h.deltaker,
+                h.ansvarlig,
+                h.payload,
+                h.created_at,
+                h.distribusjonskanal,
+                h.manuelloppfolging,
+                js.journalpost_id,
+                js.bestillingsid,
+                js.kan_ikke_distribueres,
+                js.kan_ikke_journalfores
+            FROM 
+                hendelse h
+                JOIN journalforingstatus js ON h.id = js.hendelse_id            
+            """.trimIndent()
+
+        private fun hendelseRowMapper(row: Row) = Hendelse(
+            id = row.uuid("id"),
+            deltaker = objectMapper.readValue(row.string("deltaker")),
+            ansvarlig = objectMapper.readValue(row.string("ansvarlig")),
+            payload = objectMapper.readValue(row.string("payload")),
+            opprettet = row.localDateTime("created_at"),
+            distribusjonskanal = row.string("distribusjonskanal").let { Distribusjonskanal.valueOf(it) },
+            manuellOppfolging = row.boolean("manuelloppfolging"),
+        )
+
+        private fun hendelseMedJournalforingstatusRowMapper(row: Row) = HendelseMedJournalforingstatus(
+            hendelse = hendelseRowMapper(row),
+            journalforingstatus = Journalforingstatus(
+                hendelseId = row.uuid("id"),
+                journalpostId = row.stringOrNull("journalpost_id"),
+                bestillingsId = row.uuidOrNull("bestillingsid"),
+                kanIkkeDistribueres = row.boolean("kan_ikke_distribueres"),
+                kanIkkeJournalfores = row.boolean("kan_ikke_journalfores"),
+            ),
+        )
     }
 }

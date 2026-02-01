@@ -128,6 +128,7 @@ fun Application.module() {
         veilarboppfolgingClient,
         dokarkivClient,
         dokdistfordelingClient,
+        amtDeltakerClient,
     )
 
     val tiltakshendelseService =
