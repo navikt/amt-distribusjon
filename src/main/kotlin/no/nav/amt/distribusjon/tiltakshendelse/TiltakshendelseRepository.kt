@@ -8,23 +8,10 @@ import no.nav.amt.lib.utils.database.Database
 import java.util.UUID
 
 class TiltakshendelseRepository {
-    fun rowmapper(row: Row) = Tiltakshendelse(
-        id = row.uuid("id"),
-        type = row.string("type").let { Tiltakshendelse.Type.valueOf(it) },
-        deltakerId = row.uuid("deltaker_id"),
-        forslagId = row.uuidOrNull("forslag_id"),
-        hendelser = row.array<UUID>("hendelser").toList(),
-        personident = row.string("personident"),
-        aktiv = row.boolean("aktiv"),
-        tekst = row.string("tekst"),
-        tiltakskode = row.string("tiltakskode").let { Tiltakskode.valueOf(it) },
-        opprettet = row.localDateTime("created_at"),
-    )
-
-    fun upsert(tiltakshendelse: Tiltakshendelse) = Database.query {
+    fun upsert(tiltakshendelse: Tiltakshendelse) {
         val sql =
             """
-            insert into tiltakshendelse (
+            INSERT INTO tiltakshendelse (
                 id, 
                 type, 
                 deltaker_id, 
@@ -35,7 +22,7 @@ class TiltakshendelseRepository {
                 tekst, 
                 tiltakskode
             )
-            values (
+            VALUES (
                 :id, 
                 :type, 
                 :deltaker_id, 
@@ -46,12 +33,12 @@ class TiltakshendelseRepository {
                 :tekst, 
                 :tiltakskode
             )
-            on conflict (id) do update set
+            ON CONFLICT (id) DO UPDATE SET
                 hendelser = :hendelser,
                 personident = :personident,
                 aktiv = :aktiv,
                 tekst = :tekst,
-                modified_at = current_timestamp
+                modified_at = CURRENT_TIMESTAMP                
             """.trimIndent()
 
         val params = mapOf(
@@ -66,30 +53,33 @@ class TiltakshendelseRepository {
             "tiltakskode" to tiltakshendelse.tiltakskode.name,
         )
 
-        it.update(queryOf(sql, params))
+        Database.query { session -> session.update(queryOf(sql, params)) }
     }
 
-    fun get(id: UUID): Result<Tiltakshendelse> = Database.query {
+    fun get(id: UUID): Result<Tiltakshendelse> = runCatching {
         val sql =
             """
-            select * 
-            from tiltakshendelse
-            where id = :id
+            SELECT * 
+            FROM tiltakshendelse
+            WHERE id = :id
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("id" to id))
 
-        it.run(query.map(::rowmapper).asSingle)?.let { tiltakshendelse ->
-            Result.success(tiltakshendelse)
-        } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse $id"))
+        Database.query { session ->
+            session.run(query.map(::rowMapper).asSingle)
+                ?: throw NoSuchElementException("Fant ikke tiltakshendelse $id")
+        }
     }
 
-    fun getHendelse(deltakerId: UUID, hendelseType: Tiltakshendelse.Type) = Database.query {
+    fun getHendelse(deltakerId: UUID, hendelseType: Tiltakshendelse.Type): Result<Tiltakshendelse> = runCatching {
         val sql =
             """
-            select * 
-            from tiltakshendelse
-            where deltaker_id = :deltaker_id and type = :type
+            SELECT * 
+            FROM tiltakshendelse
+            WHERE 
+                deltaker_id = :deltaker_id 
+                AND type = :type
             """.trimIndent()
 
         val params = mapOf(
@@ -97,27 +87,32 @@ class TiltakshendelseRepository {
             "type" to hendelseType.name,
         )
 
-        it.run(queryOf(sql, params).map(::rowmapper).asSingle)?.let { tiltakshendelse ->
-            Result.success(tiltakshendelse)
-        } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse for deltaker $deltakerId"))
+        val query = queryOf(sql, params)
+
+        Database.query { session ->
+            session.run(
+                query.map(::rowMapper).asSingle,
+            ) ?: throw NoSuchElementException("Fant ikke tiltakshendelse for deltaker $deltakerId og type $hendelseType")
+        }
     }
 
-    fun getForslagHendelse(forslagId: UUID) = Database.query {
+    fun getForslagHendelse(forslagId: UUID): Result<Tiltakshendelse> = runCatching {
         val sql =
             """
-            select * 
-            from tiltakshendelse
-            where forslag_id = :forslag_id
+            SELECT * 
+            FROM tiltakshendelse
+            WHERE forslag_id = :forslag_id
             """.trimIndent()
 
-        val params = mapOf("forslag_id" to forslagId)
+        val query = queryOf(sql, mapOf("forslag_id" to forslagId))
 
-        it.run(queryOf(sql, params).map(::rowmapper).asSingle)?.let { tiltakshendelse ->
-            Result.success(tiltakshendelse)
-        } ?: Result.failure(NoSuchElementException("Fant ikke tiltakshendelse for med forslagId $forslagId"))
+        Database.query { session ->
+            session.run(query.map(::rowMapper).asSingle)
+                ?: throw NoSuchElementException("Fant ikke tiltakshendelse for med forslagId $forslagId")
+        }
     }
 
-    fun getByHendelseId(hendelseId: UUID) = Database.query {
+    fun getByHendelseId(hendelseId: UUID): Result<Tiltakshendelse> = runCatching {
         val sql =
             """
             SELECT * 
@@ -127,8 +122,24 @@ class TiltakshendelseRepository {
 
         val query = queryOf(sql, mapOf("hendelse_id" to hendelseId))
 
-        it.run(query.map(::rowmapper).asSingle)?.let { varsel ->
-            Result.success(varsel)
-        } ?: Result.failure(java.util.NoSuchElementException("Fant ikke tiltakshendelse for hendelse $hendelseId"))
+        Database.query { session ->
+            session.run(query.map(::rowMapper).asSingle)
+                ?: throw NoSuchElementException("Fant ikke tiltakshendelse for hendelse $hendelseId")
+        }
+    }
+
+    companion object {
+        private fun rowMapper(row: Row) = Tiltakshendelse(
+            id = row.uuid("id"),
+            type = row.string("type").let { Tiltakshendelse.Type.valueOf(it) },
+            deltakerId = row.uuid("deltaker_id"),
+            forslagId = row.uuidOrNull("forslag_id"),
+            hendelser = row.array<UUID>("hendelser").toList(),
+            personident = row.string("personident"),
+            aktiv = row.boolean("aktiv"),
+            tekst = row.string("tekst"),
+            tiltakskode = row.string("tiltakskode").let { Tiltakskode.valueOf(it) },
+            opprettet = row.localDateTime("created_at"),
+        )
     }
 }

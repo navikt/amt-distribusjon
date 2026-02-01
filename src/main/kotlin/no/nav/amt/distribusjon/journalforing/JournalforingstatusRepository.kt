@@ -7,25 +7,29 @@ import no.nav.amt.lib.utils.database.Database
 import java.util.UUID
 
 class JournalforingstatusRepository {
-    private fun rowmapper(row: Row) = Journalforingstatus(
-        hendelseId = row.uuid("hendelse_id"),
-        journalpostId = row.stringOrNull("journalpost_id"),
-        bestillingsId = row.uuidOrNull("bestillingsid"),
-        kanIkkeDistribueres = row.boolean("kan_ikke_distribueres"),
-        kanIkkeJournalfores = row.boolean("kan_ikke_journalfores"),
-    )
-
-    fun upsert(journalforingstatus: Journalforingstatus) = Database.query {
+    fun upsert(journalforingstatus: Journalforingstatus) {
         val sql =
             """
-            insert into journalforingstatus (hendelse_id, journalpost_id, bestillingsid, kan_ikke_distribueres, kan_ikke_journalfores)
-            values(:hendelse_id, :journalpost_id, :bestillingsid, :kan_ikke_distribueres, :kan_ikke_journalfores)
-            on conflict (hendelse_id) do update set
+            INSERT INTO journalforingstatus (
+                hendelse_id, 
+                journalpost_id, 
+                bestillingsid, 
+                kan_ikke_distribueres, 
+                kan_ikke_journalfores
+            )
+            VALUES (
+                :hendelse_id, 
+                :journalpost_id, 
+                :bestillingsid, 
+                :kan_ikke_distribueres, 
+                :kan_ikke_journalfores
+            )
+            ON CONFLICT (hendelse_id) DO UPDATE SET
                 journalpost_id = :journalpost_id,
                 bestillingsid = :bestillingsid,
                 kan_ikke_distribueres = :kan_ikke_distribueres,
                 kan_ikke_journalfores = :kan_ikke_journalfores,
-                modified_at = current_timestamp
+                modified_at = CURRENT_TIMESTAMP
             """.trimIndent()
 
         val params = mapOf(
@@ -36,19 +40,29 @@ class JournalforingstatusRepository {
             "kan_ikke_journalfores" to journalforingstatus.kanIkkeJournalfores,
         )
 
-        it.update(queryOf(sql, params))
+        Database.query { session -> session.update(queryOf(sql, params)) }
     }
 
-    fun get(hendelseId: UUID) = Database.query {
+    fun get(hendelseId: UUID): Journalforingstatus? {
         val sql =
             """
-            select * 
-            from journalforingstatus
-            where hendelse_id = :hendelse_id
+            SELECT * 
+            FROM journalforingstatus
+            WHERE hendelse_id = :hendelse_id
             """.trimIndent()
 
         val query = queryOf(sql, mapOf("hendelse_id" to hendelseId))
 
-        it.run(query.map(::rowmapper).asSingle)
+        return Database.query { session -> session.run(query.map(::rowMapper).asSingle) }
+    }
+
+    companion object {
+        private fun rowMapper(row: Row) = Journalforingstatus(
+            hendelseId = row.uuid("hendelse_id"),
+            journalpostId = row.stringOrNull("journalpost_id"),
+            bestillingsId = row.uuidOrNull("bestillingsid"),
+            kanIkkeDistribueres = row.boolean("kan_ikke_distribueres"),
+            kanIkkeJournalfores = row.boolean("kan_ikke_journalfores"),
+        )
     }
 }

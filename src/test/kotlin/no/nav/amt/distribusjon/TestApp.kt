@@ -2,6 +2,8 @@ package no.nav.amt.distribusjon
 
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
+import io.kotest.matchers.should
+import io.kotest.matchers.shouldNot
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
@@ -139,6 +141,38 @@ class TestApp {
         )
 
         consumers.forEach { it.start() }
+    }
+
+    fun assertProducedInaktiver(id: UUID) {
+        this should haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC) {
+            val json = it.value
+            json["varselId"].asText() == id.toString() &&
+                json["@event_name"].asText() == "inaktiver"
+        }
+    }
+
+    fun assertProducedOppgave(id: UUID) {
+        this should haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC) { record ->
+            val json = record.value
+
+            json["varselId"].asText() == id.toString() &&
+                json["@event_name"].asText() == "opprett" &&
+                json["type"].asText() == "oppgave"
+        }
+    }
+
+    fun assertProducedBeskjed(id: UUID, forventetUrl: String) {
+        this should haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC) { record ->
+            val json = record.value
+            json["varselId"].asText() == id.toString() &&
+                json["@event_name"].asText() == "opprett" &&
+                json["type"].asText() == "beskjed" &&
+                json["link"].asText() == forventetUrl
+        }
+    }
+
+    fun assertNotProduced(id: UUID) {
+        this shouldNot haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC)
     }
 }
 

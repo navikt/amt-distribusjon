@@ -36,7 +36,13 @@ class PdfUtilsTest {
             ),
         )
 
-        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser, LocalDate.now())
+        val pdfDto = lagEndringsvedtakPdfDto(
+            deltaker = deltaker,
+            navBruker = navBruker,
+            ansvarlig = ansvarligNavVeileder,
+            hendelser = hendelser,
+            opprettetDato = LocalDate.now(),
+        )
 
         pdfDto.endringer.size shouldBe 1
         (pdfDto.endringer.first() as EndringDto.ForlengDeltakelse).tittel shouldBe "Deltakelsen er forlenget til ${
@@ -61,7 +67,13 @@ class PdfUtilsTest {
             ),
         )
 
-        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser, LocalDate.now())
+        val pdfDto = lagEndringsvedtakPdfDto(
+            deltaker = deltaker,
+            navBruker = navBruker,
+            ansvarlig = ansvarligNavVeileder,
+            hendelser = hendelser,
+            opprettetDato = LocalDate.now(),
+        )
 
         pdfDto.endringer.size shouldBe 1
         (pdfDto.endringer.first() as EndringDto.IkkeAktuell).aarsak shouldBe arsak.visningsnavn()
@@ -86,7 +98,13 @@ class PdfUtilsTest {
             ),
         )
 
-        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser, LocalDate.now())
+        val pdfDto = lagEndringsvedtakPdfDto(
+            deltaker = deltaker,
+            navBruker = navBruker,
+            ansvarlig = ansvarligNavVeileder,
+            hendelser = hendelser,
+            opprettetDato = LocalDate.now(),
+        )
 
         pdfDto.endringer.size shouldBe 1
         (pdfDto.endringer.first() as EndringDto.EndreInnhold).innhold shouldBe listOf("tekst 1", "tekst 2", "beskrivelse")
@@ -115,7 +133,13 @@ class PdfUtilsTest {
             ),
         )
 
-        val pdfDto = lagEndringsvedtakPdfDto(deltaker, navBruker, ansvarligNavVeileder, hendelser, LocalDate.now())
+        val pdfDto = lagEndringsvedtakPdfDto(
+            deltaker = deltaker,
+            navBruker = navBruker,
+            ansvarlig = ansvarligNavVeileder,
+            hendelser = hendelser,
+            opprettetDato = LocalDate.now(),
+        )
 
         pdfDto.endringer.size shouldBe 1
         (pdfDto.endringer.first() as EndringDto.EndreInnhold).innhold shouldBe listOf("beskrivelse")
