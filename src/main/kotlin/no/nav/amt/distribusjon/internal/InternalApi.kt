@@ -6,7 +6,6 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.routing.post
 import no.nav.amt.distribusjon.application.plugins.AuthorizationException
 import no.nav.amt.distribusjon.tiltakshendelse.TiltakshendelseService
-import no.nav.amt.lib.utils.database.Database
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -32,9 +31,7 @@ fun Routing.registerInternalApi(tiltakshendelseService: TiltakshendelseService) 
             throw AuthorizationException("Ikke tilgang til api")
         }
         val id = UUID.fromString(call.parameters["id"])
-        Database.transaction {
-            tiltakshendelseService.reproduser(id)
-        }
+        tiltakshendelseService.reproduser(id)
         call.respond(HttpStatusCode.OK)
     }
 }
