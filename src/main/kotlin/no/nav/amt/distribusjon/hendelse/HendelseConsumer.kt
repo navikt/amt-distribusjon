@@ -15,6 +15,7 @@ import no.nav.amt.lib.kafka.ManagedKafkaConsumer
 import no.nav.amt.lib.kafka.config.KafkaConfig
 import no.nav.amt.lib.kafka.config.KafkaConfigImpl
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
+import no.nav.amt.lib.utils.database.Database.transaction
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.slf4j.LoggerFactory
@@ -50,11 +51,12 @@ class HendelseConsumer(
         val erUnderManuellOppfolging = veilarboppfolgingClient.erUnderManuellOppfolging(hendelseDto.deltaker.personident)
         val hendelse = hendelseDto.toModel(distribusjonskanal, erUnderManuellOppfolging)
 
-        hendelseRepository.insert(hendelse)
-
-        varselService.handleHendelse(hendelse)
-        journalforingService.handleHendelse(hendelse)
-        tiltakshendelseService.handleHendelse(hendelse)
+        transaction {
+            hendelseRepository.insert(hendelse)
+            varselService.handleHendelse(hendelse)
+            journalforingService.handleHendelse(hendelse)
+            tiltakshendelseService.handleHendelse(hendelse)
+        }
     }
 
     override fun start() = consumer.start()

@@ -15,13 +15,13 @@ import java.util.UUID
 
 class VarselService(
     private val varselRepository: VarselRepository,
-    private val outboxHandler: VarselOutboxHandler,
     private val hendelseRepository: HendelseRepository,
+    private val outboxHandler: VarselOutboxHandler,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    suspend fun handleHendelse(hendelse: Hendelse) = Database.transaction {
-        if (skalIkkeVarsles(hendelse)) return@transaction
+    fun handleHendelse(hendelse: Hendelse) {
+        if (skalIkkeVarsles(hendelse)) return
 
         when (hendelse.payload) {
             is HendelseType.OpprettUtkast -> {
@@ -139,7 +139,7 @@ class VarselService(
     private fun inaktiverTidligereBeskjed(deltakerId: UUID) {
         val varsel = varselRepository.getAktivt(deltakerId).getOrNull()
         require(varsel?.type != Varsel.Type.OPPGAVE) {
-            "deltaker-id $deltakerId: Kan ikke deaktivere oppgave ${varsel?.id} som om den var en beskjed"
+            "deltaker-id $deltakerId: Kan ikke inaktivere oppgave ${varsel?.id} som om den var en beskjed"
         }
 
         if (varsel?.erAktiv == true) {
@@ -217,23 +217,24 @@ class VarselService(
         return besokForSendt || besokForIkkeSendt
     }
 
-    fun get(varselId: UUID) = varselRepository.get(varselId)
-
-    fun sendVentendeVarsler() {
+    suspend fun sendVentendeVarsler() {
         val varsler = varselRepository.getVarslerSomSkalSendes()
         require(varsler.size == varsler.distinctBy { it.deltakerId }.size) {
             "Det finnes flere enn et ventende varsel for en eller flere deltakere"
         }
-        varsler.forEach {
-            sendVarsel(it)
+
+        Database.transaction {
+            varsler.forEach { sendVarsel(it) }
         }
     }
 
-    fun sendRevarsler() {
+    suspend fun sendRevarsler() {
         val varsler = varselRepository.getVarslerSomSkalRevarsles()
         val revarsler = varsler.map { slaSammenMedVentendeVarsel(Varsel.revarsel(it)) }
 
-        revarsler.forEach { handleNyttVarsel(it, true) }
+        Database.transaction {
+            revarsler.forEach { handleNyttVarsel(it, true) }
+        }
     }
 
     private fun skalViseHistorikkModal(hendelseIder: List<UUID>): Boolean {

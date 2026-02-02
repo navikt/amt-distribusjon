@@ -42,7 +42,6 @@ import no.nav.amt.distribusjon.varsel.VarselRepository
 import no.nav.amt.distribusjon.varsel.VarselService
 import no.nav.amt.distribusjon.varsel.hendelse.VarselHendelseConsumer
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
-import no.nav.amt.lib.kafka.Producer
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.outbox.OutboxRecord
 import no.nav.amt.lib.outbox.OutboxService
@@ -81,9 +80,6 @@ class TestApp {
     init {
         TestPostgresContainer.bootstrap()
 
-        val kafakConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
-        val kafkaProducer = Producer<String, String>(kafakConfig)
-
         outboxService = OutboxService()
 
         azureAdTokenClient = mockAzureAdClient(environment)
@@ -101,7 +97,11 @@ class TestApp {
         hendelseRepository = HendelseRepository()
         varselRepository = VarselRepository()
 
-        varselService = VarselService(varselRepository, VarselOutboxHandler(outboxService), hendelseRepository)
+        varselService = VarselService(
+            varselRepository = varselRepository,
+            hendelseRepository = hendelseRepository,
+            outboxHandler = VarselOutboxHandler(outboxService),
+        )
 
         journalforingService = JournalforingService(
             journalforingstatusRepository,
@@ -114,13 +114,12 @@ class TestApp {
         )
 
         digitalBrukerService = DigitalBrukerService(dokdistkanalClient, veilarboppfolgingClient)
-        tiltakshendelseProducer = TiltakshendelseProducer(kafkaProducer)
+        tiltakshendelseProducer = TiltakshendelseProducer(outboxService)
         tiltakshendelseRepository = TiltakshendelseRepository()
         tiltakshendelseService = TiltakshendelseService(
-            tiltakshendelseRepository,
-            tiltakshendelseProducer,
-            amtDeltakerClient,
-            outboxService,
+            tiltakshendelseRepository = tiltakshendelseRepository,
+            amtDeltakerClient = amtDeltakerClient,
+            tiltakshendelseProducer = tiltakshendelseProducer,
         )
 
         val consumerId = UUID.randomUUID().toString()
@@ -136,7 +135,12 @@ class TestApp {
                 consumerId,
                 kafkaConfig,
             ),
-            VarselHendelseConsumer(varselService, consumerId, kafkaConfig),
+            VarselHendelseConsumer(
+                varselRepository = varselRepository,
+                varselService = varselService,
+                groupId = consumerId,
+                kafkaConfig = kafkaConfig,
+            ),
             ArrangorMeldingConsumer(tiltakshendelseService),
         )
 
@@ -171,7 +175,7 @@ class TestApp {
         }
     }
 
-    fun assertNotProduced(id: UUID) {
+    fun assertNotProducedHendelse(id: UUID) {
         this shouldNot haveOutboxRecord(id, Environment.MINSIDE_VARSEL_TOPIC)
     }
 }

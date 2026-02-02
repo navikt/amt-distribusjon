@@ -18,6 +18,7 @@ import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseType
 import no.nav.amt.lib.testing.shouldBeCloseTo
+import no.nav.amt.lib.utils.database.Database
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -31,7 +32,9 @@ class TiltakshendelseServiceTest {
         fun `handleHendelse - nytt utkast - oppretter aktiv tiltakshendelse`() = integrationTest { app, _ ->
             val hendelse = Hendelsesdata.hendelse(HendelseTypeData.opprettUtkast())
 
-            app.tiltakshendelseService.handleHendelse(hendelse)
+            Database.transaction {
+                app.tiltakshendelseService.handleHendelse(hendelse)
+            }
 
             val tiltakshendelse = app.tiltakshendelseRepository.getByHendelseId(hendelse.id).shouldBeSuccess()
             assertSoftly(tiltakshendelse) {
@@ -101,7 +104,7 @@ class TiltakshendelseServiceTest {
         }
 
         @Test
-        fun `handleHendelse - ny ForlengDeltakelse godkjennes - oppretter ny tiltakshendelsee`() = integrationTest { app, _ ->
+        fun `handleHendelse - ny ForlengDeltakelse godkjennes - oppretter ny tiltakshendelse'`() = integrationTest { app, _ ->
             val deltaker = DeltakerData.lagDeltaker()
             val forslag = Forslag(
                 id = UUID.randomUUID(),
@@ -129,7 +132,7 @@ class TiltakshendelseServiceTest {
         }
 
         @Test
-        fun `handleHendelse - Flere hendelser på samme bruker - oppretter nye tiltakshendelsee`() = integrationTest { app, _ ->
+        fun `handleHendelse - Flere hendelser på samme bruker - oppretter nye tiltakshendelse`() = integrationTest { app, _ ->
             val deltaker = DeltakerData.lagDeltaker()
             val forslag1 = Forslag(
                 id = UUID.randomUUID(),
@@ -165,6 +168,7 @@ class TiltakshendelseServiceTest {
             val forslag1Godkjent = forslag1.copy(
                 status = Forslag.Status.Godkjent(Forslag.NavAnsatt(UUID.randomUUID(), UUID.randomUUID()), LocalDateTime.now()),
             )
+
             app.tiltakshendelseService.handleForslag(forslag1Godkjent)
 
             val tiltakshendelse1Godkjent = app.tiltakshendelseRepository.getForslagHendelse(forslag1.id).shouldBeSuccess()
@@ -181,7 +185,10 @@ class TiltakshendelseServiceTest {
             app.tiltakshendelseRepository.upsert(opprettHendelse.toTiltakshendelse())
 
             val godkjennHendelse = Hendelsesdata.hendelse(hendelseType, deltaker = opprettHendelse.deltaker)
-            app.tiltakshendelseService.handleHendelse(godkjennHendelse)
+
+            Database.transaction {
+                app.tiltakshendelseService.handleHendelse(godkjennHendelse)
+            }
 
             val tiltakshendelse = app.tiltakshendelseRepository.getByHendelseId(godkjennHendelse.id).shouldBeSuccess()
 

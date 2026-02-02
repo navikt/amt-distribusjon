@@ -5,11 +5,11 @@ import no.nav.amt.distribusjon.distribusjonskanal.Distribusjonskanal
 typealias HendelseDto = no.nav.amt.lib.models.hendelse.Hendelse
 
 fun HendelseDto.toModel(distribusjonskanal: Distribusjonskanal, manuellOppfolging: Boolean) = Hendelse(
-    id,
-    opprettet,
-    deltaker,
-    ansvarlig,
-    payload,
-    distribusjonskanal,
-    manuellOppfolging,
+    id = id,
+    opprettet = opprettet,
+    deltaker = deltaker,
+    ansvarlig = ansvarlig,
+    payload = payload,
+    distribusjonskanal = distribusjonskanal,
+    manuellOppfolging = manuellOppfolging,
 )

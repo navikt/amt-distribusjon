@@ -3,7 +3,8 @@ group = "no.nav.amt-distribusjon"
 version = "1.0-SNAPSHOT"
 
 plugins {
-    val kotlinVersion = "2.3.0"
+    val kotlinVersion = "2.2.21"
+
     kotlin("jvm") version kotlinVersion
     id("io.ktor.plugin") version "3.3.3"
     id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
@@ -32,7 +33,7 @@ val postgresVersion = "42.7.9"
 val caffeineVersion = "3.2.3"
 val unleashVersion = "11.2.1"
 val nimbusVersion = "10.7"
-val amtLibVersion = "1.2026.01.24_13.41-1e2b7ee8db55"
+val amtLibVersion = "1.2026.02.01_09.45-d68624f62ecf"
 
 // fjernes ved neste release av org.apache.kafka:kafka-clients
 configurations.configureEach {
