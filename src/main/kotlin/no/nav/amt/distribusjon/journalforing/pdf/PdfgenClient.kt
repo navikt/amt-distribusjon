@@ -11,8 +11,8 @@ import io.ktor.http.isSuccess
 import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.lib.models.journalforing.pdf.EndringsvedtakPdfDto
-import no.nav.amt.lib.models.journalforing.pdf.HovedvedtakFellesOppstartPdfDto
 import no.nav.amt.lib.models.journalforing.pdf.HovedvedtakPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.HovedvedtakVedTildeltPlassPdfDto
 import no.nav.amt.lib.models.journalforing.pdf.InnsokingsbrevPdfDto
 import no.nav.amt.lib.models.journalforing.pdf.VentelistebrevPdfDto
 
@@ -22,7 +22,12 @@ class PdfgenClient(
 ) {
     private val url = environment.amtPdfgenUrl + "/api/v1/genpdf/amt"
 
-    suspend fun genererHovedvedtak(hovedvedtakPdfDto: HovedvedtakPdfDto): ByteArray {
+    /*
+        Genererer hovedvedtak for direktegodkjente tiltak som i praksis vil gjelde:
+        - Individuelle tiltak som AFT, Oppfølging
+        - Gruppebaserte(ofte kalt "kurs") med løpende oppstart som i praksis gjør de til "individuelle"
+     */
+    suspend fun genererHovedvedtakForIndividuelleTiltak(hovedvedtakPdfDto: HovedvedtakPdfDto): ByteArray {
         val response = httpClient.post("$url/hovedvedtak") {
             contentType(ContentType.Application.Json)
             setBody(objectMapper.writeValueAsString(hovedvedtakPdfDto))
@@ -33,8 +38,19 @@ class PdfgenClient(
         return response.body()
     }
 
-    suspend fun genererHovedvedtakFellesOppstart(hovedvedtakPdfDto: HovedvedtakFellesOppstartPdfDto): ByteArray {
-        val response = httpClient.post("$url/hovedvedtak-felles-oppstart") {
+    suspend fun genererHovedvedtakTildeltPlassFellesOppstart(hovedvedtakPdfDto: HovedvedtakVedTildeltPlassPdfDto): ByteArray {
+        val response = httpClient.post("$url/hovedvedtak-tildelt-plass-felles-oppstart") {
+            contentType(ContentType.Application.Json)
+            setBody(objectMapper.writeValueAsString(hovedvedtakPdfDto))
+        }
+        if (!response.status.isSuccess()) {
+            error("Kunne ikke hente opprette hovedvedtak-pdf i amt-pdfgen. Status=${response.status.value} error=${response.bodyAsText()}")
+        }
+        return response.body()
+    }
+
+    suspend fun genererHovedvedtakTildeltPlassLoependeOppstart(hovedvedtakPdfDto: HovedvedtakVedTildeltPlassPdfDto): ByteArray {
+        val response = httpClient.post("$url/hovedvedtak-tildelt-plass-loepende-oppstart") {
             contentType(ContentType.Application.Json)
             setBody(objectMapper.writeValueAsString(hovedvedtakPdfDto))
         }

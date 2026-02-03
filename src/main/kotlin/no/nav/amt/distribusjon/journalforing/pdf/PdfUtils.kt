@@ -12,6 +12,7 @@ import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.arrangor.melding.Vurderingstype
 import no.nav.amt.lib.models.deltaker.Deltakelsesinnhold
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
+import no.nav.amt.lib.models.deltaker.Innhold
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
@@ -23,8 +24,9 @@ import no.nav.amt.lib.models.journalforing.pdf.AvsenderDto
 import no.nav.amt.lib.models.journalforing.pdf.EndringDto
 import no.nav.amt.lib.models.journalforing.pdf.EndringsvedtakPdfDto
 import no.nav.amt.lib.models.journalforing.pdf.ForslagDto
-import no.nav.amt.lib.models.journalforing.pdf.HovedvedtakFellesOppstartPdfDto
 import no.nav.amt.lib.models.journalforing.pdf.HovedvedtakPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.HovedvedtakVedTildeltPlassPdfDto
+import no.nav.amt.lib.models.journalforing.pdf.InnholdPdfDto
 import no.nav.amt.lib.models.journalforing.pdf.InnsokingsbrevPdfDto
 import no.nav.amt.lib.models.journalforing.pdf.VentelistebrevPdfDto
 import no.nav.amt.lib.models.tiltakskoordinator.EndringFraTiltakskoordinator
@@ -43,8 +45,8 @@ fun lagHovedvedtakPdfDto(
         mellomnavn = navBruker.mellomnavn,
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
-        innhold = utkast.innhold?.toVisingstekst() ?: emptyList(),
-        innholdBeskrivelse = utkast.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
+        innhold = utkast.innhold?.map { it.toInnhold() }?.toVisingstekster() ?: emptyList(), // skal fases ut for innholdV2
+        innholdBeskrivelse = utkast.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse, // skal fases ut for innholdV2
         bakgrunnsinformasjon = utkast.bakgrunnsinformasjon,
         deltakelsesmengdeTekst = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak)) {
             utkast.deltakelsesprosent?.let {
@@ -56,12 +58,13 @@ fun lagHovedvedtakPdfDto(
         } else {
             null
         },
+        innholdV2 = utkast.innhold?.map { it.toInnhold() }?.toInnholdPdfDto(deltaker.deltakerliste.tiltak.ledetekst),
         adresseDelesMedArrangor = adresseDelesMedArrangor(deltaker, navBruker),
     ),
     deltakerliste = HovedvedtakPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.tittelVisningsnavn(),
         tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
-        ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "",
+        ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "", // skal fases ut for innholdV2
         arrangor = HovedvedtakPdfDto.ArrangorDto(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
@@ -79,23 +82,24 @@ fun lagHovedvedtakPdfDto(
     opprettetDato = vedtaksdato,
 )
 
-fun lagHovedopptakFellesOppstart(
+fun lagHovedopptakForTildeltPlass(
     deltaker: HendelseDeltaker,
     navBruker: NavBruker,
     ansvarlig: HendelseAnsvarlig.NavTiltakskoordinator,
     opprettetDato: LocalDate,
     deltakelseInnhold: Deltakelsesinnhold?,
-) = HovedvedtakFellesOppstartPdfDto(
-    deltaker = HovedvedtakFellesOppstartPdfDto.DeltakerDto(
+) = HovedvedtakVedTildeltPlassPdfDto(
+    deltaker = HovedvedtakVedTildeltPlassPdfDto.DeltakerDto(
         fornavn = navBruker.fornavn,
         mellomnavn = navBruker.mellomnavn,
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
-        innholdBeskrivelse = deltakelseInnhold?.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
+        innhold = deltakelseInnhold?.innhold?.toInnholdPdfDto(deltaker.deltakerliste.tiltak.ledetekst),
+        innholdBeskrivelse = deltakelseInnhold?.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse, // skal fjernes
     ),
-    deltakerliste = HovedvedtakFellesOppstartPdfDto.DeltakerlisteDto(
+    deltakerliste = HovedvedtakVedTildeltPlassPdfDto.DeltakerlisteDto(
         tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
-        ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "",
+        ledetekst = deltaker.deltakerliste.tiltak.ledetekst ?: "", // skal fjernes
         tittelNavn = deltaker.deltakerliste.tittelVisningsnavn(),
         ingressNavn = deltaker.deltakerliste.ingressVisningsnavn(),
         startdato = deltaker.deltakerliste.startdato,
@@ -106,8 +110,12 @@ fun lagHovedopptakFellesOppstart(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
         oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
+        harKlagerett = deltaker.deltakerliste.tiltak.tiltakskode !in setOf(
+            Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
+            Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
+        ),
     ),
-    avsender = HovedvedtakFellesOppstartPdfDto.AvsenderDto(
+    avsender = HovedvedtakVedTildeltPlassPdfDto.AvsenderDto(
         navn = ansvarlig.navn,
         enhet = ansvarlig.enhet.navn,
     ),
@@ -268,7 +276,7 @@ fun HendelseDeltaker.Deltakerliste.forskriftskapittel() = when (this.tiltak.tilt
 
 fun HendelseDeltaker.Deltakerliste.tittelVisningsnavn() = when (this.tiltak.tiltakskode) {
     Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET -> "Varig tilrettelagt arbeid hos ${this.arrangor.visningsnavn()}"
-    Tiltakskode.JOBBKLUBB -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
+    Tiltakskode.JOBBKLUBB -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}" // TODO: Denne kan nå bruke tiltaknavn??
     Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> "Arbeidsmarkedsopplæring hos ${this.arrangor.visningsnavn()}"
     Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> "Fag- og yrkesopplæring hos ${this.arrangor.visningsnavn()}"
     else -> "${this.tiltak.navn} hos ${arrangor.visningsnavn()}"
@@ -292,10 +300,30 @@ fun HendelseDeltaker.Deltakerliste.Arrangor.visningsnavn(): String = with(overor
     return toTitleCase(visningsnavn)
 }
 
+private fun InnholdDto.toInnhold() = Innhold(
+    tekst = tekst,
+    innholdskode = innholdskode,
+    valgt = true,
+    beskrivelse = beskrivelse,
+)
+
+fun List<Innhold>.toInnholdPdfDto(ledetekst: String?) = InnholdPdfDto(
+    valgteInnholdselementer = if (this.none {
+            it.innholdskode != "annet"
+        }
+    ) {
+        emptyList()
+    } else {
+        this.toVisingstekster()
+    }, // i noen tilfeller skal annet beskrivelsen vises i lista
+    fritekstBeskrivelse = this.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
+    ledetekst = ledetekst ?: "",
+)
+
 private fun adresseDelesMedArrangor(deltaker: HendelseDeltaker, navBruker: NavBruker): Boolean =
     navBruker.adressebeskyttelse == null && deltaker.deltakerliste.deltakerAdresseDeles()
 
-private fun List<InnholdDto>.toVisingstekst() = this.map { innhold ->
+private fun List<Innhold>.toVisingstekster() = this.map { innhold ->
     "${innhold.tekst}${innhold.beskrivelse?.let { ": $it" } ?: ""}"
 }
 

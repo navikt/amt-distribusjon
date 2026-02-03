@@ -24,8 +24,8 @@ class VarselTeksterTest {
     fun `oppgaveTekst - bruker felles oppstart-tekst, tiltaksnavn og arrangornavn når felles oppstart`() {
         val hendelse = Hendelsesdata.hendelse(
             HendelseTypeData.opprettUtkast(),
-            deltaker = Hendelsesdata.deltaker(
-                deltakerliste = Hendelsesdata.deltakerliste(
+            deltaker = Hendelsesdata.lagDeltaker(
+                deltakerliste = Hendelsesdata.lagDeltakerliste(
                     oppstartstype = HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES,
                 ),
             ),
@@ -55,8 +55,8 @@ class VarselTeksterTest {
     fun `beskjedTekst - bruker tekst for søkt inn på hendelse godkjent utkast på felles oppstart`() {
         val hendelse = Hendelsesdata.hendelse(
             HendelseTypeData.navGodkjennUtkast(),
-            deltaker = Hendelsesdata.deltaker(
-                deltakerliste = Hendelsesdata.deltakerliste(
+            deltaker = Hendelsesdata.lagDeltaker(
+                deltakerliste = Hendelsesdata.lagDeltakerliste(
                     oppstartstype = HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES,
                 ),
             ),
@@ -81,8 +81,8 @@ class VarselTeksterTest {
     fun `beskjedTekst - bruker tekst endring på hendelse endret deltakelsesmengde`() {
         val hendelse = Hendelsesdata.hendelse(
             HendelseTypeData.endreDeltakelsesmengde(),
-            deltaker = Hendelsesdata.deltaker(
-                deltakerliste = Hendelsesdata.deltakerliste(
+            deltaker = Hendelsesdata.lagDeltaker(
+                deltakerliste = Hendelsesdata.lagDeltakerliste(
                     oppstartstype = HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE,
                 ),
             ),
@@ -90,8 +90,8 @@ class VarselTeksterTest {
 
         val hendelse2 = Hendelsesdata.hendelse(
             HendelseTypeData.endreDeltakelsesmengde(),
-            deltaker = Hendelsesdata.deltaker(
-                deltakerliste = Hendelsesdata.deltakerliste(
+            deltaker = Hendelsesdata.lagDeltaker(
+                deltakerliste = Hendelsesdata.lagDeltakerliste(
                     oppstartstype = HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES,
                 ),
             ),
@@ -116,8 +116,8 @@ class VarselTeksterTest {
     fun `beskjedTekst - bruker tekst for meldt på direkte på hendelse endret deltakelsesmengde på løpende oppstart`() {
         val hendelse = Hendelsesdata.hendelse(
             HendelseTypeData.navGodkjennUtkast(),
-            deltaker = Hendelsesdata.deltaker(
-                deltakerliste = Hendelsesdata.deltakerliste(
+            deltaker = Hendelsesdata.lagDeltaker(
+                deltakerliste = Hendelsesdata.lagDeltakerliste(
                     oppstartstype = HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE,
                 ),
             ),
