@@ -307,18 +307,20 @@ private fun InnholdDto.toInnhold() = Innhold(
     beskrivelse = beskrivelse,
 )
 
-fun List<Innhold>.toInnholdPdfDto(ledetekst: String?) = InnholdPdfDto(
-    valgteInnholdselementer = if (this.none {
-            it.innholdskode != "annet"
+fun List<Innhold>.toInnholdPdfDto(ledetekst: String?): InnholdPdfDto {
+    val innholdselementer =
+        if (this.none { it.innholdskode != "annet" }) {
+            emptyList() // hvis det bare er annet innholdselement så skal den ikke vises
+        } else {
+            this.toVisingstekster()
         }
-    ) {
-        emptyList()
-    } else {
-        this.toVisingstekster()
-    }, // i noen tilfeller skal annet beskrivelsen vises i lista
-    fritekstBeskrivelse = this.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
-    ledetekst = ledetekst ?: "",
-)
+    val skalViseLedetekst = innholdselementer.isNotEmpty()
+    return InnholdPdfDto(
+        valgteInnholdselementer = innholdselementer,
+        fritekstBeskrivelse = this.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
+        ledetekst = if (skalViseLedetekst) ledetekst else null,
+    )
+}
 
 private fun adresseDelesMedArrangor(deltaker: HendelseDeltaker, navBruker: NavBruker): Boolean =
     navBruker.adressebeskyttelse == null && deltaker.deltakerliste.deltakerAdresseDeles()
