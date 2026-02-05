@@ -32,7 +32,7 @@ class VarselTeksterTest {
         )
 
         oppgaveTekst(hendelse) shouldBe String.format(
-            OPPGAVE_FELLES_OPPSTART_TEKST,
+            OPPGAVE_TRENGER_GODKJENNING,
             hendelse.deltaker.deltakerliste.tiltak.navn,
             hendelse.deltaker.deltakerliste.arrangor
                 .visningsnavn(),

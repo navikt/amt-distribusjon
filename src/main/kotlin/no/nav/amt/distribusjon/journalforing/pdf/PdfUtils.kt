@@ -110,10 +110,7 @@ fun lagHovedopptakForTildeltPlass(
             navn = deltaker.deltakerliste.arrangor.visningsnavn(),
         ),
         oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
-        harKlagerett = deltaker.deltakerliste.tiltak.tiltakskode !in setOf(
-            Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
-            Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
-        ),
+        harKlagerett = deltaker.deltakerliste.harKlagerett(),
     ),
     avsender = HovedvedtakVedTildeltPlassPdfDto.AvsenderDto(
         navn = ansvarlig.navn,
@@ -211,10 +208,7 @@ fun lagEndringsvedtakPdfDto(
             ),
             forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
             oppstart = deltaker.deltakerliste.oppstartstype,
-            klagerett = !(
-                deltaker.deltakerliste.tiltak.tiltakskode == Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING &&
-                    deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES
-            ),
+            klagerett = deltaker.deltakerliste.harKlagerett(),
         ),
         endringer = endringer.map {
             tilEndringDto(
@@ -300,6 +294,11 @@ fun HendelseDeltaker.Deltakerliste.Arrangor.visningsnavn(): String = with(overor
     return toTitleCase(visningsnavn)
 }
 
+private fun HendelseDeltaker.Deltakerliste.harKlagerett() = !(
+    this.tiltak.tiltakskode in setOf(Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING, Tiltakskode.ARBEIDSMARKEDSOPPLAERING) &&
+        this.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES
+)
+
 private fun InnholdDto.toInnhold() = Innhold(
     tekst = tekst,
     innholdskode = innholdskode,
@@ -307,18 +306,24 @@ private fun InnholdDto.toInnhold() = Innhold(
     beskrivelse = beskrivelse,
 )
 
+/*
+    Jobbklubb: Ikke fritekst og ikke innholdselementer
+    Individuelle tiltak: innholdselementer med annet fritekst
+    Opplæringstiltak: fritekst(som er inneholdt i annet checkboks)
+ */
 fun List<Innhold>.toInnholdPdfDto(ledetekst: String?): InnholdPdfDto {
+    val fritekstbeskrivelse = this.firstOrNull { it.innholdskode == "annet" }?.beskrivelse
     val innholdselementer =
         if (this.none { it.innholdskode != "annet" }) {
             emptyList() // hvis det bare er annet innholdselement så skal den ikke vises
         } else {
             this.toVisingstekster()
         }
-    val skalViseLedetekst = innholdselementer.isNotEmpty()
+
     return InnholdPdfDto(
         valgteInnholdselementer = innholdselementer,
-        fritekstBeskrivelse = this.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
-        ledetekst = if (skalViseLedetekst) ledetekst else null,
+        fritekstBeskrivelse = fritekstbeskrivelse,
+        ledetekst = ledetekst,
     )
 }
 
