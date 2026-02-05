@@ -45,8 +45,7 @@ fun lagHovedvedtakPdfDto(
         mellomnavn = navBruker.mellomnavn,
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
-        innhold = utkast.innhold?.map { it.toInnhold() }?.toVisingstekster() ?: emptyList(), // skal fases ut for innholdV2
-        innholdBeskrivelse = utkast.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse, // skal fases ut for innholdV2
+        innhold = utkast.innhold?.map { it.toInnhold() }?.toInnholdPdfDto(deltaker.deltakerliste.tiltak.ledetekst),
         bakgrunnsinformasjon = utkast.bakgrunnsinformasjon,
         deltakelsesmengdeTekst = if (skalViseDeltakelsesmengde(deltaker.deltakerliste.tiltak)) {
             utkast.deltakelsesprosent?.let {
@@ -58,7 +57,6 @@ fun lagHovedvedtakPdfDto(
         } else {
             null
         },
-        innholdV2 = utkast.innhold?.map { it.toInnhold() }?.toInnholdPdfDto(deltaker.deltakerliste.tiltak.ledetekst),
         adresseDelesMedArrangor = adresseDelesMedArrangor(deltaker, navBruker),
     ),
     deltakerliste = HovedvedtakPdfDto.DeltakerlisteDto(
@@ -95,7 +93,6 @@ fun lagHovedopptakForTildeltPlass(
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
         innhold = deltakelseInnhold?.innhold?.toInnholdPdfDto(deltaker.deltakerliste.tiltak.ledetekst),
-        innholdBeskrivelse = deltakelseInnhold?.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse, // skal fjernes
     ),
     deltakerliste = HovedvedtakVedTildeltPlassPdfDto.DeltakerlisteDto(
         tiltakskode = deltaker.deltakerliste.tiltak.tiltakskode,
@@ -131,7 +128,7 @@ fun lagInnsokingsbrevPdfDto(
         mellomnavn = navBruker.mellomnavn,
         etternavn = navBruker.etternavn,
         personident = deltaker.personident,
-        innholdBeskrivelse = utkast.innhold?.firstOrNull { it.innholdskode == "annet" }?.beskrivelse,
+        innhold = utkast.innhold?.map { it.toInnhold() }?.toInnholdPdfDto(deltaker.deltakerliste.tiltak.ledetekst),
     ),
     deltakerliste = InnsokingsbrevPdfDto.DeltakerlisteDto(
         navn = deltaker.deltakerliste.tittelVisningsnavn(),
