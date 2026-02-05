@@ -18,7 +18,7 @@ import java.time.LocalDateTime
 class PdfUtilsTest {
     @Test
     fun `lagEndringsvedtakPdfDto - to endringer av samme type - bruker nyeste endring`() {
-        val deltaker = Hendelsesdata.deltaker()
+        val deltaker = Hendelsesdata.lagDeltaker()
         val navBruker = Persondata.lagNavBruker()
         val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()
         val hendelser: List<Hendelse> = listOf(
@@ -54,7 +54,7 @@ class PdfUtilsTest {
 
     @Test
     fun `lagEndringsvedtakPdfDto - IkkeAktuell - inneholder arsak som string`() {
-        val deltaker = Hendelsesdata.deltaker()
+        val deltaker = Hendelsesdata.lagDeltaker()
         val navBruker = Persondata.lagNavBruker()
         val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()
         val arsak = DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.IKKE_MOTT)
@@ -81,7 +81,7 @@ class PdfUtilsTest {
 
     @Test
     fun `lagEndringsvedtakPdfDto - EndreInnhold - inneholder innhold som string`() {
-        val deltaker = Hendelsesdata.deltaker()
+        val deltaker = Hendelsesdata.lagDeltaker()
         val navBruker = Persondata.lagNavBruker()
         val ansvarligNavVeileder = Hendelsesdata.ansvarligNavVeileder()
         val innhold = listOf(
@@ -114,8 +114,8 @@ class PdfUtilsTest {
     @Test
     fun `lagEndringsvedtakPdfDto - EndreInnhold, VTA - inneholder innholdsbeskrivelse`() {
         val deltaker =
-            Hendelsesdata.deltaker(
-                deltakerliste = Hendelsesdata.deltakerliste(
+            Hendelsesdata.lagDeltaker(
+                deltakerliste = Hendelsesdata.lagDeltakerliste(
                     tiltak = Hendelsesdata.tiltak(tiltakskode = Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET),
                 ),
             )

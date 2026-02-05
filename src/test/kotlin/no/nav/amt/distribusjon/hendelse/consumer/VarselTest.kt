@@ -35,7 +35,7 @@ class VarselTest {
     inner class OpprettUtkastTests {
         @Test
         fun `opprettUtkast - oppretter nytt varsel og produserer`() = integrationTest { app, _ ->
-            val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.opprettUtkast())
+            val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.opprettUtkast())
 
             produce(hendelse)
 
@@ -61,7 +61,7 @@ class VarselTest {
 
         @Test
         fun `opprettUtkast - hendelsen er håndtert tidligere - sender ikke nytt varsel`() = integrationTest { app, _ ->
-            val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.opprettUtkast())
+            val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.opprettUtkast())
             val forrigeVarsel = Varselsdata.varsel(
                 Varsel.Type.OPPGAVE,
                 hendelser = listOf(hendelse.id),
@@ -127,7 +127,7 @@ class VarselTest {
 
         @Test
         fun `navGodkjennUtkast - ingen tidligere varsel - oppretter beskjed`() = integrationTest { app, _ ->
-            val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.navGodkjennUtkast())
+            val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.navGodkjennUtkast())
 
             produce(hendelse)
 
@@ -138,7 +138,7 @@ class VarselTest {
 
         @Test
         fun `navGodkjennUtkast - tidligere varsel - inaktiverer varsel og oppretter beskjed`() = integrationTest { app, _ ->
-            val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.navGodkjennUtkast())
+            val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.navGodkjennUtkast())
 
             val forrigeVarsel = Varselsdata.varsel(
                 type = Varsel.Type.OPPGAVE,
@@ -165,7 +165,7 @@ class VarselTest {
 
     @Test
     fun `avbrytUtkast - varsel er aktivt - inaktiverer varsel og produserer`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.avbrytUtkast())
+        val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.avbrytUtkast())
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
             Varsel.Status.AKTIV,
@@ -195,7 +195,7 @@ class VarselTest {
 
     @Test
     fun `innbyggerGodkjennerUtkast - inaktiverer varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
+        val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
         val forrigeVarsel = Varselsdata.varsel(
             Varsel.Type.OPPGAVE,
             Varsel.Status.AKTIV,
@@ -227,7 +227,7 @@ class VarselTest {
     fun `avsluttDeltakelse - nytt varsel med ekstern varsling, tidligere varsel skal revarsles - stopper revarsling av tidligere varsel`() =
         integrationTest { app, _ ->
             val deltakerId = UUID.randomUUID()
-            val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse(), deltaker = Hendelsesdata.deltaker(deltakerId))
+            val hendelse = Hendelsesdata.hendelse(HendelseTypeData.avsluttDeltakelse(), deltaker = Hendelsesdata.lagDeltaker(deltakerId))
 
             val forrigeVarsel = Varselsdata.beskjed(
                 status = Varsel.Status.INAKTIVERT,
@@ -248,7 +248,7 @@ class VarselTest {
 
     @Test
     fun `endreSluttdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreSluttdato())
+        val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.endreSluttdato())
 
         produce(hendelse)
 
@@ -259,7 +259,7 @@ class VarselTest {
 
     @Test
     fun `endreStartdato - ingen tidligere varsel - oppretter forsinket varsel`() = integrationTest { app, _ ->
-        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.endreStartdato())
+        val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.endreStartdato())
 
         produce(hendelse)
 
@@ -272,7 +272,7 @@ class VarselTest {
     inner class DeltakerSistBesoktTests {
         @Test
         fun `deltakerSistBesokt - aktiv beskjed - inaktiverer`() = integrationTest { app, _ ->
-            val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
+            val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.sistBesokt())
             val varsel = Varselsdata.varsel(
                 type = Varsel.Type.BESKJED,
                 status = Varsel.Status.AKTIV,
@@ -295,7 +295,7 @@ class VarselTest {
 
         @Test
         fun `deltakerSistBesokt - beskjed venter på å bli sendt - inaktiverer`() = integrationTest { app, _ ->
-            val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
+            val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.sistBesokt())
             val varsel = Varselsdata.varsel(
                 type = Varsel.Type.BESKJED,
                 status = Varsel.Status.VENTER_PA_UTSENDELSE,
@@ -321,7 +321,7 @@ class VarselTest {
 
         @Test
         fun `deltakerSistBesokt - to beskjeder, en aktiv og en venter - inaktiverer begge`() = integrationTest { app, _ ->
-            val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.sistBesokt())
+            val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.sistBesokt())
             val aktivtVarsel = Varselsdata.varsel(
                 type = Varsel.Type.BESKJED,
                 status = Varsel.Status.AKTIV,

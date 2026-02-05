@@ -10,7 +10,7 @@ import no.nav.amt.distribusjon.utils.ClientTestBase
 import no.nav.amt.distribusjon.utils.createMockHttpClient
 import no.nav.amt.distribusjon.utils.data.HendelseTypeData.utkast
 import no.nav.amt.distribusjon.utils.data.Hendelsesdata.ansvarligNavVeileder
-import no.nav.amt.distribusjon.utils.data.Hendelsesdata.deltaker
+import no.nav.amt.distribusjon.utils.data.Hendelsesdata.lagDeltaker
 import no.nav.amt.distribusjon.utils.data.Persondata
 import no.nav.amt.lib.models.deltaker.Deltakelsesinnhold
 import no.nav.amt.lib.models.deltaker.Innhold
@@ -28,7 +28,7 @@ class PdfgenClientTest : ClientTestBase() {
         )
 
         val actualResponse = runBlocking {
-            sut.genererHovedvedtak(hovedVedtakPdfDto)
+            sut.genererHovedvedtakForIndividuelleTiltak(hovedVedtakPdfDto)
         }
 
         actualResponse shouldBe expectedResponse
@@ -43,7 +43,7 @@ class PdfgenClientTest : ClientTestBase() {
 
         val thrown = runBlocking {
             shouldThrow<IllegalStateException> {
-                sut.genererHovedvedtak(hovedVedtakPdfDto)
+                sut.genererHovedvedtakForIndividuelleTiltak(hovedVedtakPdfDto)
             }
         }
 
@@ -53,12 +53,12 @@ class PdfgenClientTest : ClientTestBase() {
     @Test
     fun `skal returnere ByteArray nar genererHovedvedtakFellesOppstart kalles med gyldig respons`() {
         val sut = createPdfgenClient(
-            expectedUrl = GENERER_HOVEDVEDTAK_FELLES_OPPSTART_URL,
+            expectedUrl = GENERER_HOVEDVEDTAK_TILDEL_LOEPENDE_OPPSTART_URL,
             responseBody = expectedResponse,
         )
 
         val actualResponse = runBlocking {
-            sut.genererHovedvedtakFellesOppstart(hovedopptakFellesOppstart)
+            sut.genererHovedvedtakTildeltPlassLoependeOppstart(hovedopptakFellesOppstart)
         }
 
         actualResponse shouldBe expectedResponse
@@ -67,13 +67,13 @@ class PdfgenClientTest : ClientTestBase() {
     @Test
     fun `skal kaste feil nar genererHovedvedtakFellesOppstart returnerer feilkode`() {
         val sut = createPdfgenClient(
-            expectedUrl = GENERER_HOVEDVEDTAK_FELLES_OPPSTART_URL,
+            expectedUrl = GENERER_HOVEDVEDTAK_TILDEL_LOEPENDE_OPPSTART_URL,
             statusCode = HttpStatusCode.BadGateway,
         )
 
         val thrown = runBlocking {
             shouldThrow<IllegalStateException> {
-                sut.genererHovedvedtakFellesOppstart(hovedopptakFellesOppstart)
+                sut.genererHovedvedtakTildeltPlassLoependeOppstart(hovedopptakFellesOppstart)
             }
         }
 
@@ -188,13 +188,15 @@ class PdfgenClientTest : ClientTestBase() {
         private val expectedResponse = "Hello World!".toByteArray()
 
         private const val GENERER_HOVEDVEDTAK_URL = "http://localhost/api/v1/genpdf/amt/hovedvedtak"
-        private const val GENERER_HOVEDVEDTAK_FELLES_OPPSTART_URL = "http://localhost/api/v1/genpdf/amt/hovedvedtak-felles-oppstart"
+        private const val GENERER_HOVEDVEDTAK_TILDEL_LOEPENDE_OPPSTART_URL =
+            "http://localhost/api/v1/genpdf/amt/hovedvedtak-tildelt-plass-loepende-oppstart"
+
         private const val GENERER_INNSOKINGSBREV_PDF_URL = "http://localhost/api/v1/genpdf/amt/innsokingsbrev"
         private const val GENERER_VENTELISTEBREV_PDF_URL = "http://localhost/api/v1/genpdf/amt/ventelistebrev"
         private const val ENDRINGSVEDTAK_URL = "http://localhost/api/v1/genpdf/amt/endringsvedtak"
 
         private val hovedVedtakPdfDto = lagHovedvedtakPdfDto(
-            deltaker = deltaker(),
+            deltaker = lagDeltaker(),
             navBruker = Persondata.lagNavBruker(),
             utkast = utkast(),
             veileder = ansvarligNavVeileder(),
@@ -213,8 +215,8 @@ class PdfgenClientTest : ClientTestBase() {
             ),
         )
 
-        private val hovedopptakFellesOppstart = lagHovedopptakFellesOppstart(
-            deltaker = deltaker(),
+        private val hovedopptakFellesOppstart = lagHovedopptakForTildeltPlass(
+            deltaker = lagDeltaker(),
             navBruker = Persondata.lagNavBruker(),
             ansvarlig = ansvarlig,
             opprettetDato = LocalDate.now(),
@@ -225,7 +227,7 @@ class PdfgenClientTest : ClientTestBase() {
         )
 
         private val innsokingsbrevPdfDto = lagInnsokingsbrevPdfDto(
-            deltaker = deltaker(),
+            deltaker = lagDeltaker(),
             navBruker = Persondata.lagNavBruker(),
             veileder = ansvarligNavVeileder(),
             opprettetDato = LocalDate.now(),
@@ -233,14 +235,14 @@ class PdfgenClientTest : ClientTestBase() {
         )
 
         private val ventelistebrevPdfDto = lagVentelistebrevPdfDto(
-            deltaker = deltaker(),
+            deltaker = lagDeltaker(),
             navBruker = Persondata.lagNavBruker(),
             endretAv = ansvarlig,
             hendelseOpprettetDato = LocalDate.now(),
         )
 
         private val endringsvedtakPdfDto = lagEndringsvedtakPdfDto(
-            deltaker = deltaker(),
+            deltaker = lagDeltaker(),
             navBruker = Persondata.lagNavBruker(),
             ansvarlig = ansvarlig,
             hendelser = emptyList(),

@@ -11,7 +11,7 @@ import no.nav.amt.distribusjon.journalforing.model.HendelseMedJournalforingstatu
 import no.nav.amt.distribusjon.journalforing.model.Journalforingstatus
 import no.nav.amt.distribusjon.journalforing.pdf.PdfgenClient
 import no.nav.amt.distribusjon.journalforing.pdf.lagEndringsvedtakPdfDto
-import no.nav.amt.distribusjon.journalforing.pdf.lagHovedopptakFellesOppstart
+import no.nav.amt.distribusjon.journalforing.pdf.lagHovedopptakForTildeltPlass
 import no.nav.amt.distribusjon.journalforing.pdf.lagHovedvedtakPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagInnsokingsbrevPdfDto
 import no.nav.amt.distribusjon.journalforing.pdf.lagVentelistebrevPdfDto
@@ -19,6 +19,7 @@ import no.nav.amt.distribusjon.journalforing.person.AmtPersonClient
 import no.nav.amt.distribusjon.journalforing.person.model.DokumentType
 import no.nav.amt.distribusjon.journalforing.person.model.NavBruker
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClient
+import no.nav.amt.lib.models.deltakerliste.GjennomforingPameldingType
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
@@ -92,18 +93,9 @@ class JournalforingService(
             is HendelseType.DeltakerSistBesokt,
             -> {
             }
-
-            is HendelseType.SettPaaVenteliste -> {
-                journalforOgSendVentelisteBrev(hendelse, journalforingstatus)
-            }
-
-            is HendelseType.TildelPlass -> {
-                journalforHovedvedtakForFellesOppstart(hendelse, journalforingstatus)
-            }
-
-            is HendelseType.Avslag -> {
-                journalforAvslag(hendelse, journalforingstatus)
-            }
+            is HendelseType.SettPaaVenteliste -> journalforOgSendVentelisteBrev(hendelse, journalforingstatus)
+            is HendelseType.TildelPlass -> journalforHovedvedtakForTildeltPlass(hendelse, journalforingstatus)
+            is HendelseType.Avslag -> journalforAvslag(hendelse, journalforingstatus)
         }
     }
 
@@ -112,10 +104,10 @@ class JournalforingService(
         utkast: UtkastDto,
         journalforingstatus: Journalforingstatus?,
     ) {
-        when (val oppstartstype = hendelse.deltaker.deltakerliste.oppstartstype) {
-            HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE -> journalforHovedvedtak(hendelse, utkast, journalforingstatus)
-            HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES -> journalforOgSendInnsokingsbrev(hendelse, utkast, journalforingstatus)
-            else -> throw IllegalStateException("Oppstartstype $oppstartstype er ikke implementert")
+        when (val pameldingType = hendelse.deltaker.deltakerliste.pameldingstype) {
+            GjennomforingPameldingType.DIREKTE_VEDTAK -> journalforHovedvedtak(hendelse, utkast, journalforingstatus)
+            GjennomforingPameldingType.TRENGER_GODKJENNING -> journalforOgSendInnsokingsbrev(hendelse, utkast, journalforingstatus)
+            else -> throw IllegalStateException("Pameldingstype $pameldingType er ikke implementert")
         }
     }
 
@@ -147,21 +139,24 @@ class JournalforingService(
         log.info("Journalførte avslag for deltaker ${hendelse.deltaker.id}")
     }
 
-    private suspend fun journalforHovedvedtakForFellesOppstart(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
+    private suspend fun journalforHovedvedtakForTildeltPlass(hendelse: Hendelse, journalforingstatus: Journalforingstatus?) {
         val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
         val hendelseAnsvarlig = hendelse.ansvarlig.hentTiltakskoordinator()
         val deltaker = amtDeltakerClient.getDeltaker(hendelse.deltaker.id)
+        val hovedvedtakInput = lagHovedopptakForTildeltPlass(
+            deltaker = hendelse.deltaker,
+            navBruker = navBruker,
+            ansvarlig = hendelseAnsvarlig,
+            opprettetDato = hendelse.opprettet.toLocalDate(),
+            deltakelseInnhold = deltaker.deltakelsesinnhold,
+        )
 
         val pdf: suspend () -> ByteArray = {
-            pdfgenClient.genererHovedvedtakFellesOppstart(
-                lagHovedopptakFellesOppstart(
-                    deltaker = hendelse.deltaker,
-                    navBruker = navBruker,
-                    ansvarlig = hendelseAnsvarlig,
-                    opprettetDato = hendelse.opprettet.toLocalDate(),
-                    deltakelseInnhold = deltaker.deltakelsesinnhold,
-                ),
-            )
+            if (hendelse.deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES) {
+                pdfgenClient.genererHovedvedtakTildeltPlassFellesOppstart(hovedvedtakInput)
+            } else {
+                pdfgenClient.genererHovedvedtakTildeltPlassLoependeOppstart(hovedvedtakInput)
+            }
         }
 
         journalforOgSend(
@@ -241,7 +236,7 @@ class JournalforingService(
         val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
         val veileder = hendelse.ansvarlig.hentVeileder()
         val pdf: suspend () -> ByteArray = {
-            pdfgenClient.genererHovedvedtak(
+            pdfgenClient.genererHovedvedtakForIndividuelleTiltak(
                 lagHovedvedtakPdfDto(
                     deltaker = hendelse.deltaker,
                     navBruker = navBruker,

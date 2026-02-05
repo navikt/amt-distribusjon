@@ -27,7 +27,7 @@ import java.time.LocalDateTime
 class JournalforingServiceTest {
     @Test
     fun `handleHendelse - InnbyggerGodkjennUtkast - journalforer hovedvedtak`() = integrationTest { app, _ ->
-        val hendelseDto = Hendelsesdata.hendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
+        val hendelseDto = Hendelsesdata.lagHendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
 
         produce(hendelseDto)
 
@@ -186,7 +186,7 @@ class JournalforingServiceTest {
             ),
         )
 
-        val hendelse = Hendelsesdata.hendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
+        val hendelse = Hendelsesdata.lagHendelseDto(HendelseTypeData.innbyggerGodkjennUtkast())
 
         MockResponseHandler.addNavBrukerResponse(hendelse.deltaker.personident, navBruker)
 
@@ -207,7 +207,7 @@ class JournalforingServiceTest {
 
     @Test
     fun `journalforOgDistribuerEndringsvedtak - deltakelsesmengde og forleng - journalforer endringsvedtak`() = integrationTest { app, _ ->
-        val deltaker = Hendelsesdata.deltaker()
+        val deltaker = Hendelsesdata.lagDeltaker()
 
         val hendelseDeltakelsesmengde = Hendelsesdata.hendelse(
             HendelseTypeData.endreDeltakelsesmengde(),
@@ -246,7 +246,7 @@ class JournalforingServiceTest {
     @Test
     fun `journalforOgDistribuerEndringsvedtak - to endringer, en allerede journalfort - journalforer 1, distribuerer 2`() =
         integrationTest { app, _ ->
-            val deltaker = Hendelsesdata.deltaker()
+            val deltaker = Hendelsesdata.lagDeltaker()
 
             val hendelseDeltakelsesmengde = Hendelsesdata.hendelse(
                 HendelseTypeData.endreDeltakelsesmengde(),

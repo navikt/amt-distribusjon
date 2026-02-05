@@ -6,6 +6,7 @@ import no.nav.amt.distribusjon.hendelse.model.toModel
 import no.nav.amt.lib.models.arrangor.melding.EndringAarsak
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
+import no.nav.amt.lib.models.deltakerliste.GjennomforingPameldingType
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
@@ -18,10 +19,10 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 object Hendelsesdata {
-    fun hendelseDto(
+    fun lagHendelseDto(
         payload: HendelseType,
         id: UUID = UUID.randomUUID(),
-        deltaker: HendelseDeltaker = deltaker(),
+        deltaker: HendelseDeltaker = lagDeltaker(),
         ansvarlig: HendelseAnsvarlig = ansvarligNavVeileder(),
         opprettet: LocalDateTime = LocalDateTime.now(),
     ) = HendelseDto(
@@ -35,12 +36,12 @@ object Hendelsesdata {
     fun hendelse(
         payload: HendelseType,
         id: UUID = UUID.randomUUID(),
-        deltaker: HendelseDeltaker = deltaker(),
+        deltaker: HendelseDeltaker = lagDeltaker(),
         ansvarlig: HendelseAnsvarlig = ansvarligNavVeileder(),
         opprettet: LocalDateTime = LocalDateTime.now(),
         distribusjonskanal: Distribusjonskanal = Distribusjonskanal.DITT_NAV,
         manuellOppfolging: Boolean = false,
-    ) = hendelseDto(
+    ) = lagHendelseDto(
         payload,
         id,
         deltaker,
@@ -58,10 +59,10 @@ object Hendelsesdata {
     fun ansvarligNavEnhet(id: UUID = UUID.randomUUID(), enhetsnummer: String = randomEnhetsnummer()) =
         HendelseAnsvarlig.NavVeileder.Enhet(id, enhetsnummer)
 
-    fun deltaker(
+    fun lagDeltaker(
         id: UUID = UUID.randomUUID(),
         personident: String = randomIdent(),
-        deltakerliste: HendelseDeltaker.Deltakerliste = deltakerliste(),
+        deltakerliste: HendelseDeltaker.Deltakerliste = lagDeltakerliste(),
         forsteVedtakFattet: LocalDate? = LocalDate.now().minusDays(3),
         opprettet: LocalDate = LocalDate.now(),
     ) = HendelseDeltaker(
@@ -72,7 +73,7 @@ object Hendelsesdata {
         opprettet,
     )
 
-    fun deltakerliste(
+    fun lagDeltakerliste(
         id: UUID = UUID.randomUUID(),
         navn: String = "Deltakerlistenavn",
         arrangor: HendelseDeltaker.Deltakerliste.Arrangor = arrangor(),
@@ -80,7 +81,14 @@ object Hendelsesdata {
         startdato: LocalDate = LocalDate.now(),
         sluttdato: LocalDate? = LocalDate.now().plusDays(1),
         oppstartstype: HendelseDeltaker.Deltakerliste.Oppstartstype = HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE,
-    ) = HendelseDeltaker.Deltakerliste(id, navn, arrangor, tiltak, startdato, sluttdato, oppstartstype)
+        pameldingType: GjennomforingPameldingType = if (oppstartstype ==
+            HendelseDeltaker.Deltakerliste.Oppstartstype.LOPENDE
+        ) {
+            GjennomforingPameldingType.DIREKTE_VEDTAK
+        } else {
+            GjennomforingPameldingType.TRENGER_GODKJENNING
+        },
+    ) = HendelseDeltaker.Deltakerliste(id, navn, arrangor, tiltak, startdato, sluttdato, oppstartstype, pameldingType)
 
     fun arrangor(
         id: UUID = UUID.randomUUID(),
