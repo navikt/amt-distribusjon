@@ -27,8 +27,8 @@ class PdfgenClient(
         - Individuelle tiltak som AFT, Oppfølging
         - Gruppebaserte(ofte kalt "kurs") med løpende oppstart som i praksis gjør de til "individuelle"
      */
-    suspend fun genererHovedvedtakForIndividuelleTiltak(hovedvedtakPdfDto: HovedvedtakPdfDto): ByteArray {
-        val response = httpClient.post("$url/hovedvedtak") {
+    suspend fun genererHovedvedtakForIndividuellOppfolging(hovedvedtakPdfDto: HovedvedtakPdfDto): ByteArray {
+        val response = httpClient.post("$url/hovedvedtak-individuell-oppfolging") {
             contentType(ContentType.Application.Json)
             setBody(objectMapper.writeValueAsString(hovedvedtakPdfDto))
         }
@@ -38,6 +38,12 @@ class PdfgenClient(
         return response.body()
     }
 
+    /*
+        Genererer hovedvedtak etter tiltaksansvarlig har tildelt plass. Den vil gjelde:
+        - typiske kurs som gruppeamo, gruppefagyrk, og andre gruppebaserte tiltak med felles oppstart
+        - dette er "den gamle" malen som også ble brukt tidligere når felles oppstart
+        automatisk medførte krav om tildeling av plass fra tiltaksansvarlig
+     */
     suspend fun genererHovedvedtakTildeltPlassFellesOppstart(hovedvedtakPdfDto: HovedvedtakVedTildeltPlassPdfDto): ByteArray {
         val response = httpClient.post("$url/hovedvedtak-tildelt-plass-felles-oppstart") {
             contentType(ContentType.Application.Json)
@@ -49,6 +55,10 @@ class PdfgenClient(
         return response.body()
     }
 
+    /*
+        Genererer hovedvedtak etter tiltaksansvarlig har tildelt plass. Den vil gjelde:
+        - opplæringstiltak med rammeavtale som arbeidsmarkedsopplæring, norskopplæring osv
+     */
     suspend fun genererHovedvedtakTildeltPlassLoependeOppstart(hovedvedtakPdfDto: HovedvedtakVedTildeltPlassPdfDto): ByteArray {
         val response = httpClient.post("$url/hovedvedtak-tildelt-plass-loepende-oppstart") {
             contentType(ContentType.Application.Json)

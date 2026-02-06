@@ -28,7 +28,7 @@ class PdfgenClientTest : ClientTestBase() {
         )
 
         val actualResponse = runBlocking {
-            sut.genererHovedvedtakForIndividuelleTiltak(hovedVedtakPdfDto)
+            sut.genererHovedvedtakForIndividuellOppfolging(hovedVedtakPdfDto)
         }
 
         actualResponse shouldBe expectedResponse
@@ -43,7 +43,7 @@ class PdfgenClientTest : ClientTestBase() {
 
         val thrown = runBlocking {
             shouldThrow<IllegalStateException> {
-                sut.genererHovedvedtakForIndividuelleTiltak(hovedVedtakPdfDto)
+                sut.genererHovedvedtakForIndividuellOppfolging(hovedVedtakPdfDto)
             }
         }
 

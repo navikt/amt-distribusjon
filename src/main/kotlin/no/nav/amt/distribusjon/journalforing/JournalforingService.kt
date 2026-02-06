@@ -236,7 +236,7 @@ class JournalforingService(
         val navBruker = amtPersonClient.hentNavBruker(hendelse.deltaker.personident)
         val veileder = hendelse.ansvarlig.hentVeileder()
         val pdf: suspend () -> ByteArray = {
-            pdfgenClient.genererHovedvedtakForIndividuelleTiltak(
+            pdfgenClient.genererHovedvedtakForIndividuellOppfolging(
                 lagHovedvedtakPdfDto(
                     deltaker = hendelse.deltaker,
                     navBruker = navBruker,

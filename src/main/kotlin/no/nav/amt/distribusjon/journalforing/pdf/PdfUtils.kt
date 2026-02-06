@@ -76,7 +76,7 @@ fun lagHovedvedtakPdfDto(
     vedtaksdato = vedtaksdato,
     begrunnelseFraNav = begrunnelseFraNav,
     sidetittel = deltaker.deltakerliste.tittelVisningsnavn(),
-    ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(),
+    ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(), // TODO: brukes egentlig ikke for malen?
     opprettetDato = vedtaksdato,
 )
 
