@@ -54,9 +54,10 @@ class HendelseConsumer(
         transaction {
             hendelseRepository.insert(hendelse)
             varselService.handleHendelse(hendelse)
-            journalforingService.handleHendelse(hendelse)
             tiltakshendelseService.handleHendelse(hendelse)
         }
+
+        journalforingService.handleHendelse(hendelse)
     }
 
     override fun start() = consumer.start()
