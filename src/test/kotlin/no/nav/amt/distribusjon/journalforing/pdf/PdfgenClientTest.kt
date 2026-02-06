@@ -23,7 +23,7 @@ class PdfgenClientTest : ClientTestBase() {
     @Test
     fun `skal returnere ByteArray nar genererHovedvedtak kalles med gyldig respons`() {
         val sut = createPdfgenClient(
-            expectedUrl = GENERER_HOVEDVEDTAK_URL,
+            expectedUrl = GENERER_HOVEDVEDTAK_INDIVIDUELL_OPPFOLGING_URL,
             responseBody = expectedResponse,
         )
 
@@ -37,7 +37,7 @@ class PdfgenClientTest : ClientTestBase() {
     @Test
     fun `skal kaste feil nar genererHovedvedtak returnerer feilkode`() {
         val sut = createPdfgenClient(
-            expectedUrl = GENERER_HOVEDVEDTAK_URL,
+            expectedUrl = GENERER_HOVEDVEDTAK_INDIVIDUELL_OPPFOLGING_URL,
             statusCode = HttpStatusCode.BadGateway,
         )
 
@@ -188,6 +188,8 @@ class PdfgenClientTest : ClientTestBase() {
         private val expectedResponse = "Hello World!".toByteArray()
 
         private const val GENERER_HOVEDVEDTAK_URL = "http://localhost/api/v1/genpdf/amt/hovedvedtak"
+        private const val GENERER_HOVEDVEDTAK_INDIVIDUELL_OPPFOLGING_URL =
+            "http://localhost/api/v1/genpdf/amt/hovedvedtak-individuell-oppfolging"
         private const val GENERER_HOVEDVEDTAK_TILDEL_LOEPENDE_OPPSTART_URL =
             "http://localhost/api/v1/genpdf/amt/hovedvedtak-tildelt-plass-loepende-oppstart"
 
