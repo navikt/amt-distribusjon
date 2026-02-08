@@ -13,6 +13,7 @@ import no.nav.amt.lib.models.arrangor.melding.Vurderingstype
 import no.nav.amt.lib.models.deltaker.Deltakelsesinnhold
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
 import no.nav.amt.lib.models.deltaker.Innhold
+import no.nav.amt.lib.models.deltakerliste.Oppstartstype
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.hendelse.HendelseAnsvarlig
 import no.nav.amt.lib.models.hendelse.HendelseDeltaker
@@ -176,8 +177,7 @@ fun lagVentelistebrevPdfDto(
         startdato = deltaker.deltakerliste.startdato,
         sluttdato = deltaker.deltakerliste.sluttdato,
         oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
-        pameldingstype = deltaker.deltakerliste.pameldingstype
-            ?: throw IllegalStateException("deltakerliste ${deltaker.deltakerliste.id} må ha påmeldingstype for å lage ventelistebrev"),
+        oppstartstype = Oppstartstype.valueOf(deltaker.deltakerliste.oppstartstype!!.name),
     ),
     avsender = AvsenderDto(
         navn = endretAv.navn,
