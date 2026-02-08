@@ -205,6 +205,9 @@ fun lagEndringsvedtakPdfDto(
             ),
             forskriftskapittel = deltaker.deltakerliste.forskriftskapittel(),
             oppstart = deltaker.deltakerliste.oppstartstype,
+            pameldingstype = deltaker.deltakerliste.pameldingstype
+                ?: throw IllegalStateException("deltakerliste ${deltaker.deltakerliste.id} må ha påmeldingstype for å lage endringsvedtak"),
+            harKlagerett = deltaker.deltakerliste.harKlagerett(),
             klagerett = deltaker.deltakerliste.harKlagerett(),
         ),
         endringer = endringer.map {
