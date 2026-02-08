@@ -108,6 +108,10 @@ fun lagHovedopptakForTildeltPlass(
         ),
         oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
         harKlagerett = deltaker.deltakerliste.harKlagerett(),
+        pameldingstype = deltaker.deltakerliste.pameldingstype
+            ?: throw IllegalStateException(
+                "deltakerliste ${deltaker.deltakerliste.id} må ha påmeldingstype for å lage hovedopptak ved tildelt plass",
+            ),
     ),
     avsender = HovedvedtakVedTildeltPlassPdfDto.AvsenderDto(
         navn = ansvarlig.navn,
@@ -172,6 +176,8 @@ fun lagVentelistebrevPdfDto(
         startdato = deltaker.deltakerliste.startdato,
         sluttdato = deltaker.deltakerliste.sluttdato,
         oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
+        pameldingstype = deltaker.deltakerliste.pameldingstype
+            ?: throw IllegalStateException("deltakerliste ${deltaker.deltakerliste.id} må ha påmeldingstype for å lage ventelistebrev"),
     ),
     avsender = AvsenderDto(
         navn = endretAv.navn,
