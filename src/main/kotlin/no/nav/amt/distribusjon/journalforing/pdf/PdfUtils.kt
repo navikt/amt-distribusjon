@@ -142,6 +142,7 @@ fun lagInnsokingsbrevPdfDto(
         startdato = deltaker.deltakerliste.startdato,
         sluttdato = deltaker.deltakerliste.sluttdato,
         oppmoteSted = deltaker.deltakerliste.oppmoteSted?.trimOgFjernAvsluttendePunktum(),
+        oppstartstype = Oppstartstype.valueOf(deltaker.deltakerliste.oppstartstype!!.name),
     ),
     avsender = AvsenderDto(
         navn = veileder.navn,
