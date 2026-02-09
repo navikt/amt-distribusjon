@@ -50,8 +50,8 @@ data class Environment(
 
         const val LEADER_ELECTOR_URL = "ELECTOR_GET_URL"
 
-        const val HTTP_REQUEST_TIMEOUT_MILLIS = 10_000L
-        const val HTTP_CONNECT_TIMEOUT_MILLIS = 5_000L
+        const val HTTP_REQUEST_TIMEOUT_MILLIS = 20_000L
+        const val HTTP_CONNECT_TIMEOUT_MILLIS = 10_000L
         const val HTTP_SOCKET_TIMEOUT_MILLIS = 15_000L
 
         // consumer topics
