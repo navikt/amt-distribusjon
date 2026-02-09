@@ -75,25 +75,27 @@ class HendelseRepository {
                 )                                                         
             """.trimIndent()
 
-        val query = queryOf(sql, mapOf("opprettet" to opprettet))
-
         return Database.query { session ->
-            session.run(query.map(::hendelseMedJournalforingstatusRowMapper).asList)
+            session.run(
+                queryOf(
+                    sql,
+                    mapOf("opprettet" to opprettet),
+                ).map(::hendelseMedJournalforingstatusRowMapper).asList,
+            )
         }
     }
 
     fun getHendelser(hendelseIder: List<UUID>): List<Hendelse> {
         if (hendelseIder.isEmpty()) return emptyList()
 
-        val sql =
-            """
-            SELECT * FROM hendelse
-            WHERE id IN (${hendelseIder.joinToString { "?" }})
-            """.trimIndent()
-
-        val query = queryOf(sql, *hendelseIder.toTypedArray())
-
-        return Database.query { session -> session.run(query.map(::hendelseRowMapper).asList) }
+        return Database.query { session ->
+            session.run(
+                queryOf(
+                    """SELECT * FROM hendelse WHERE id IN (${hendelseIder.joinToString { "?" }})""",
+                    *hendelseIder.toTypedArray(),
+                ).map(::hendelseRowMapper).asList,
+            )
+        }
     }
 
     companion object {
@@ -122,7 +124,7 @@ class HendelseRepository {
             ansvarlig = objectMapper.readValue(row.string("ansvarlig")),
             payload = objectMapper.readValue(row.string("payload")),
             opprettet = row.localDateTime("created_at"),
-            distribusjonskanal = row.string("distribusjonskanal").let { Distribusjonskanal.valueOf(it) },
+            distribusjonskanal = Distribusjonskanal.valueOf(row.string("distribusjonskanal")),
             manuellOppfolging = row.boolean("manuelloppfolging"),
         )
 

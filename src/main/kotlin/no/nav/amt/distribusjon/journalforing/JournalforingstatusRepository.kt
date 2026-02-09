@@ -43,17 +43,13 @@ class JournalforingstatusRepository {
         Database.query { session -> session.update(queryOf(sql, params)) }
     }
 
-    fun get(hendelseId: UUID): Journalforingstatus? {
-        val sql =
-            """
-            SELECT * 
-            FROM journalforingstatus
-            WHERE hendelse_id = :hendelse_id
-            """.trimIndent()
-
-        val query = queryOf(sql, mapOf("hendelse_id" to hendelseId))
-
-        return Database.query { session -> session.run(query.map(::rowMapper).asSingle) }
+    fun get(hendelseId: UUID): Journalforingstatus? = Database.query { session ->
+        session.run(
+            queryOf(
+                "SELECT * FROM journalforingstatus WHERE hendelse_id = :hendelse_id",
+                mapOf("hendelse_id" to hendelseId),
+            ).map(::rowMapper).asSingle,
+        )
     }
 
     companion object {

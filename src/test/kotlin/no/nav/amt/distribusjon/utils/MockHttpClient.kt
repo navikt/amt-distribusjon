@@ -75,7 +75,7 @@ fun <T> createMockHttpClient(
 
                 else -> {
                     respond(
-                        content = responseBody.let { objectMapper.writeValueAsString(it) },
+                        content = objectMapper.writeValueAsString(responseBody),
                         status = statusCode,
                         headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
                     )

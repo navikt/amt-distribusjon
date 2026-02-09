@@ -6,20 +6,6 @@ import no.nav.amt.distribusjon.utils.DbUtils.toPGObject
 import no.nav.amt.lib.utils.database.Database
 
 object TestRepository {
-    fun cleanDatabase() {
-        val tables = listOf(
-            "varsel",
-            "journalforingstatus",
-            "hendelse",
-        )
-
-        Database.query { session ->
-            tables.forEach {
-                session.update(queryOf(statement = "DELETE FROM $it"))
-            }
-        }
-    }
-
     fun insertHendelse(hendelse: Hendelse) {
         val sql =
             """
