@@ -18,19 +18,19 @@ repositories {
 }
 
 val ktorVersion = "3.4.0"
-val logbackVersion = "1.5.26"
+val logbackVersion = "1.5.27"
 val prometeusVersion = "1.16.2"
 val ktlintVersion = "1.6.0"
 val jacksonVersion = "2.21.0"
 val logstashEncoderVersion = "9.0"
 val commonVersion = "3.2025.10.10_08.21-bb7c7830d93c"
-val kotestVersion = "6.1.1"
+val kotestVersion = "6.1.2"
 val flywayVersion = "12.0.0"
 val hikariVersion = "7.0.2"
 val kotliqueryVersion = "1.9.1"
 val postgresVersion = "42.7.9"
 val caffeineVersion = "3.2.3"
-val unleashVersion = "12.1.0"
+val unleashVersion = "12.1.1"
 val nimbusVersion = "10.7"
 val amtLibVersion = "1.2026.02.09_11.59-500376ac8a99"
 
