@@ -65,12 +65,25 @@ class PdfUtilsTest {
         }
 
         @Test
-        fun `tomt innhold`() {
+        fun `tomt innhold uten ledetekst`() {
             val innholdListeInTest = emptyList<Innhold>()
 
             val innholdPdfDto = innholdListeInTest.toInnholdPdfDto(null)
 
             innholdPdfDto.shouldBeNull()
+        }
+
+        @Test
+        fun `tomt innhold med ledetekst`() {
+            val innholdListeInTest = emptyList<Innhold>()
+
+            val innholdPdfDto = innholdListeInTest.toInnholdPdfDto("~ledetekst~")
+
+            assertSoftly(innholdPdfDto.shouldNotBeNull()) {
+                valgteInnholdselementer.shouldBeEmpty()
+                fritekstBeskrivelse shouldBe null
+                ledetekst shouldBe "~ledetekst~"
+            }
         }
     }
 

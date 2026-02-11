@@ -327,7 +327,7 @@ private fun InnholdDto.toInnhold() = Innhold(
     Opplæringstiltak: fritekst(som er inneholdt i annet checkboks)
  */
 fun List<Innhold>.toInnholdPdfDto(ledetekst: String?): InnholdPdfDto? {
-    if (this.isEmpty()) return null
+    if (this.isEmpty() && ledetekst == null) return null
 
     val fritekstbeskrivelse = this.firstOrNull { it.innholdskode == "annet" }?.beskrivelse
     val innholdselementer =
