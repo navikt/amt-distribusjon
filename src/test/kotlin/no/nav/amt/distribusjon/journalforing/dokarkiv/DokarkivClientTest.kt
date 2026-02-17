@@ -9,7 +9,6 @@ import kotlinx.coroutines.runBlocking
 import no.nav.amt.distribusjon.testEnvironment
 import no.nav.amt.distribusjon.utils.ClientTestBase
 import no.nav.amt.distribusjon.utils.createMockHttpClient
-import no.nav.amt.distribusjon.utils.data.Hendelsesdata.tiltak
 import no.nav.amt.distribusjon.utils.withLogCapture
 import no.nav.amt.distribusjon.veilarboppfolging.Sak
 import no.nav.amt.distribusjon.veilarboppfolging.VeilarboppfolgingClientTest.Companion.oppfolgingsperiodeId
@@ -79,7 +78,6 @@ class DokarkivClientTest : ClientTestBase() {
                 sak = Sak(oppfolgingsperiodeId, sakId = 42, fagsaksystem = "~fagsaksystem~"),
                 pdf = "Hello World".toByteArray(),
                 journalforendeEnhet = "~journalforendeEnhet~",
-                tiltakstype = tiltak(),
                 journalpostNavn = "~journalpostNavn~",
             )
         }
