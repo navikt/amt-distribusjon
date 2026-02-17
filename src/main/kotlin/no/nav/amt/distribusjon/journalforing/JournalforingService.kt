@@ -438,7 +438,6 @@ class JournalforingService(
             sak = sak,
             pdf = pdf,
             journalforendeEnhet = journalforendeEnhet,
-            tiltakstype = nyesteHendelse.deltaker.deltakerliste.tiltak,
             journalpostNavn = getJournalpostNavn(nyesteHendelse.deltaker.deltakerliste.tiltak, dokumentType),
         )
 

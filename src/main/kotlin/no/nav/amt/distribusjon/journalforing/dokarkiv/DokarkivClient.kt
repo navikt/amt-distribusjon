@@ -14,7 +14,6 @@ import no.nav.amt.distribusjon.Environment
 import no.nav.amt.distribusjon.application.plugins.objectMapper
 import no.nav.amt.distribusjon.auth.AzureAdTokenClient
 import no.nav.amt.distribusjon.veilarboppfolging.Sak
-import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -37,7 +36,6 @@ class DokarkivClient(
         sak: Sak,
         pdf: ByteArray,
         journalforendeEnhet: String,
-        tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
         journalpostNavn: String,
     ): String {
         val request = lagJournalpostRequest(
@@ -46,7 +44,6 @@ class DokarkivClient(
             sak = sak,
             pdf = pdf,
             journalforendeEnhet = journalforendeEnhet,
-            tiltakstype = tiltakstype,
             journalpostNavn = journalpostNavn,
         )
         val token = azureAdTokenClient.getMachineToMachineToken(scope)
@@ -73,7 +70,6 @@ class DokarkivClient(
         sak: Sak,
         pdf: ByteArray,
         journalforendeEnhet: String,
-        tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak,
         journalpostNavn: String,
     ): OpprettJournalpostRequest = OpprettJournalpostRequest(
         avsenderMottaker = AvsenderMottaker(
@@ -84,7 +80,7 @@ class DokarkivClient(
         ),
         dokumenter = listOf(
             Dokument(
-                brevkode = getBrevkode(tiltakstype), // Denne verdien har ikke noen betydning utrnom hvis man skal gjøre feilsøking i joark
+                brevkode = getBrevkode(), // Denne verdien har ikke noen betydning utrnom hvis man skal gjøre feilsøking i joark
                 dokumentvarianter = listOf(
                     DokumentVariant(
                         fysiskDokument = pdf,
@@ -103,5 +99,5 @@ class DokarkivClient(
         eksternReferanseId = hendelseId.toString(),
     )
 
-    private fun getBrevkode(tiltakstype: HendelseDeltaker.Deltakerliste.Tiltak): String = "tiltak-vedtak-${tiltakstype.tiltakskode.name}"
+    private fun getBrevkode(): String = "tiltak-vedtak"
 }
