@@ -3,6 +3,7 @@ package no.nav.amt.distribusjon
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.cio.endpoint
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -81,7 +82,13 @@ fun Application.module() {
 
     Database.init(config = environment.databaseConfig)
 
-    val httpClient = HttpClient(CIO.create()) {
+    val httpClient = HttpClient(CIO) {
+        engine {
+            endpoint {
+                keepAliveTime = 0
+            }
+        }
+
         install(ContentNegotiation) {
             jackson { applicationConfig() }
         }
