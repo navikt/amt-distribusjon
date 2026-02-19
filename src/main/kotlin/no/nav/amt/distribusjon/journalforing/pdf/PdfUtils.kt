@@ -77,7 +77,7 @@ fun lagHovedvedtakPdfDto(
     vedtaksdato = vedtaksdato,
     begrunnelseFraNav = begrunnelseFraNav,
     sidetittel = deltaker.deltakerliste.tittelVisningsnavn(),
-    ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(), // TODO: brukes egentlig ikke for malen?
+    ingressnavn = deltaker.deltakerliste.ingressVisningsnavn(),
     opprettetDato = vedtaksdato,
 )
 
@@ -283,7 +283,6 @@ fun HendelseDeltaker.Deltakerliste.tittelVisningsnavn() = when (this.tiltak.tilt
 
     Tiltakskode.JOBBKLUBB -> "Jobbsøkerkurs hos ${arrangor.visningsnavn()}"
 
-    // TODO: Denne kan nå bruke tiltaknavn??
     Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING -> "Arbeidsmarkedsopplæring hos ${this.arrangor.visningsnavn()}"
 
     Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING -> "Fag- og yrkesopplæring hos ${this.arrangor.visningsnavn()}"
@@ -291,13 +290,8 @@ fun HendelseDeltaker.Deltakerliste.tittelVisningsnavn() = when (this.tiltak.tilt
     else -> "${this.tiltak.navn} hos ${arrangor.visningsnavn()}"
 }
 
-fun HendelseDeltaker.Deltakerliste.ingressVisningsnavn() = when (this.tiltak.tiltakskode) {
-    Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
-    Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
-    -> "${this.navn} hos ${arrangor.visningsnavn()}"
-
-    else -> tittelVisningsnavn()
-}
+fun HendelseDeltaker.Deltakerliste.ingressVisningsnavn(): String =
+    if (this.tiltak.tiltakskode.erOpplaeringstiltak()) "${this.navn} hos ${arrangor.visningsnavn()}" else tittelVisningsnavn()
 
 fun HendelseDeltaker.Deltakerliste.Arrangor.visningsnavn(): String = with(overordnetArrangor) {
     val visningsnavn = if (this == null || this.navn == "Ukjent Virksomhet") {
