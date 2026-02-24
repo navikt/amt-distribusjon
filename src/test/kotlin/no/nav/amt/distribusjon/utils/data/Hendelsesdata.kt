@@ -170,7 +170,31 @@ object HendelseTypeData {
         begrunnelseFraNav: String? = "begrunnelse",
         begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
         endringFraForslag: Forslag.Endring? = Forslag.AvsluttDeltakelse(sluttdato, EndringAarsak.FattJobb, true, null),
-    ) = HendelseType.AvsluttDeltakelse(aarsak, sluttdato, begrunnelseFraNav, begrunnelseFraArrangor, endringFraForslag)
+        harFullfort: Boolean? = true,
+    ) = HendelseType.AvsluttDeltakelse(
+        aarsak = aarsak,
+        sluttdato = sluttdato,
+        harFullfort = harFullfort,
+        begrunnelseFraNav = begrunnelseFraNav,
+        begrunnelseFraArrangor = begrunnelseFraArrangor,
+        endringFraForslag = endringFraForslag,
+    )
+
+    fun endreAvsluttDeltakelse(
+        aarsak: DeltakerEndring.Aarsak = DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.FATT_JOBB, null),
+        sluttdato: LocalDate = LocalDate.now().plusDays(7),
+        begrunnelseFraNav: String? = "begrunnelse",
+        begrunnelseFraArrangor: String? = "Begrunnelse fra arrangør",
+        endringFraForslag: Forslag.Endring? = Forslag.AvsluttDeltakelse(sluttdato, EndringAarsak.FattJobb, true, null),
+        harFullfort: Boolean? = true,
+    ) = HendelseType.EndreAvslutning(
+        aarsak = aarsak,
+        sluttdato = sluttdato,
+        harFullfort = harFullfort,
+        begrunnelseFraNav = begrunnelseFraNav,
+        begrunnelseFraArrangor = begrunnelseFraArrangor,
+        endringFraForslag = endringFraForslag,
+    )
 
     fun endreSluttarsak(
         aarsak: DeltakerEndring.Aarsak = DeltakerEndring.Aarsak(DeltakerEndring.Aarsak.Type.ANNET, "Noe annet"),

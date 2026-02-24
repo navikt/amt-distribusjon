@@ -216,7 +216,9 @@ fun lagEndringsvedtakPdfDto(
             tilEndringDto(
                 it,
                 deltaker.deltakerliste.tiltak.tiltakskode,
-                deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES,
+                deltaker.deltakerliste.oppstartstype == HendelseDeltaker.Deltakerliste.Oppstartstype.FELLES ||
+                    deltaker.deltakerliste.tiltak.tiltakskode
+                        .erOpplaeringstiltak(),
             )
         },
         avsender = EndringsvedtakPdfDto.AvsenderDto(
@@ -348,7 +350,7 @@ private fun List<Innhold>.toVisingstekster() = this.map { innhold ->
 private fun tilEndringDto(
     hendelseType: HendelseType,
     tiltakskode: Tiltakskode,
-    erFellesOppstart: Boolean,
+    harFellesAvslutning: Boolean,
 ): EndringDto = when (hendelseType) {
     is HendelseType.InnbyggerGodkjennUtkast,
     is HendelseType.NavGodkjennUtkast,
@@ -375,8 +377,9 @@ private fun tilEndringDto(
                 )
             },
             tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
-            harDeltatt = if (erFellesOppstart) "Ja" else null,
-            harFullfort = if (erFellesOppstart) "Ja" else null,
+            harDeltatt = true.tilVisningstekst(harFellesAvslutning),
+            // Har fullført er alltid true fordi ellers hadde det vært avbrytDeltakelse hendelse
+            harFullfort = hendelseType.harFullfort.tilVisningstekst(harFellesAvslutning),
         )
     }
 
@@ -391,11 +394,7 @@ private fun tilEndringDto(
                 )
             },
             tittel = "Avslutning endret",
-            harFullfort = when (hendelseType.harFullfort) {
-                true -> "Ja"
-                false -> "Nei"
-                null -> null
-            },
+            harFullfort = hendelseType.harFullfort.tilVisningstekst(true),
             sluttdato = if (hendelseType.sluttdato != null) "Sluttdato: ${formatDate(hendelseType.sluttdato!!)}" else null,
         )
     }
@@ -411,8 +410,9 @@ private fun tilEndringDto(
                 )
             },
             tittel = "Ny sluttdato er ${formatDateWithMonthName(hendelseType.sluttdato)}",
-            harDeltatt = if (erFellesOppstart) "Ja" else null,
-            harFullfort = if (erFellesOppstart) "Nei" else null,
+            harDeltatt = true.tilVisningstekst(harFellesAvslutning),
+            // Har fullført er alltid false fordi ellers hadde det vært avsluttdeltakelse hendelse
+            harFullfort = false.tilVisningstekst(harFellesAvslutning),
         )
     }
 
@@ -679,4 +679,13 @@ private fun EndringFraTiltakskoordinator.Avslag.Aarsak.visningsnavn() = beskrive
 private fun Vurderingstype.visningsnavn() = when (this) {
     Vurderingstype.OPPFYLLER_KRAVENE -> "Krav for deltakelse er oppfylt"
     Vurderingstype.OPPFYLLER_IKKE_KRAVENE -> "Krav for deltakelse er ikke oppfylt"
+}
+
+private fun Boolean?.tilVisningstekst(skalVises: Boolean): String? {
+    if (!skalVises) return null
+    return when (this) {
+        true -> "Ja"
+        false -> "Nei"
+        else -> null
+    }
 }
