@@ -111,8 +111,14 @@ fun Application.module() {
             }
 
             retryOnExceptionIf { _, cause ->
-                cause is java.io.EOFException ||
-                    cause is java.net.ConnectException
+                when (cause) {
+                    is java.io.EOFException,
+                    is java.net.ConnectException,
+                    is io.ktor.client.network.sockets.SocketTimeoutException,
+                    -> true
+
+                    else -> false
+                }
             }
         }
     }
