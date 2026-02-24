@@ -114,7 +114,7 @@ fun Application.module() {
                 when (cause) {
                     is java.io.EOFException,
                     is java.net.ConnectException,
-                    is io.ktor.client.network.sockets.SocketTimeoutException,
+                    is java.net.SocketTimeoutException,
                     -> true
 
                     else -> false
