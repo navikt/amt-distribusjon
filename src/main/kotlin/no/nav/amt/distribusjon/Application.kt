@@ -4,9 +4,11 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.engine.cio.endpoint
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopPreparing
@@ -97,6 +99,21 @@ fun Application.module() {
             requestTimeoutMillis = HTTP_REQUEST_TIMEOUT_MILLIS
             connectTimeoutMillis = HTTP_CONNECT_TIMEOUT_MILLIS
             socketTimeoutMillis = HTTP_SOCKET_TIMEOUT_MILLIS
+        }
+
+        install(HttpRequestRetry) {
+            retryOnServerErrors(maxRetries = 3)
+            retryOnException(maxRetries = 3, retryOnTimeout = true)
+            exponentialDelay()
+
+            retryIf { _, response ->
+                !response.status.isSuccess()
+            }
+
+            retryOnExceptionIf { _, cause ->
+                cause is java.io.EOFException ||
+                    cause is java.net.ConnectException
+            }
         }
     }
 
