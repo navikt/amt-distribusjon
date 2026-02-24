@@ -115,6 +115,7 @@ fun Application.module() {
                     is java.io.EOFException,
                     is java.net.ConnectException,
                     is java.net.SocketTimeoutException,
+                    is io.ktor.client.plugins.HttpRequestTimeoutException,
                     -> true
 
                     else -> false
