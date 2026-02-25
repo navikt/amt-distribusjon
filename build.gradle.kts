@@ -46,9 +46,6 @@ dependencies {
     // --- Database ---
     implementation(libs.bundles.database)
 
-    // --- Feature Toggle ---
-    implementation(libs.unleash)
-
     // --- Test ---
     testImplementation(libs.bundles.ktor.test)
     testImplementation(libs.bundles.kotest)
