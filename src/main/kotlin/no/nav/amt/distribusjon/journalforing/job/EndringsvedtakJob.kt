@@ -19,7 +19,7 @@ class EndringsvedtakJob(
     fun startJob() = jobManager.startJob(
         name = this.javaClass.simpleName,
         initialDelay = Duration.of(5, ChronoUnit.MINUTES),
-        period = Duration.of(30, ChronoUnit.MINUTES),
+        period = Duration.of(10, ChronoUnit.MINUTES),
     ) {
         val enHalvtimeSiden = LocalDateTime.now().minusMinutes(30)
         val endringsvedtak = hendelseRepository
