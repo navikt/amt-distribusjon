@@ -30,9 +30,8 @@ class EndringsvedtakJob(
 
         endringsvedtakPrDeltaker.forEach { (deltakerId, hendelser) ->
             /*
-             * Prosesser kun hendelser for en deltaker hvis den nyeste hendelsen er eldre enn 30 minutter,
-             *  for å samle alle endringer gjort i løpet av en halvtime i samme brev.
-             * Dette for å unngå å sende flere endringsvedtak etter hverandre hvis det gjøres flere endringer på samme deltaker i løpet av kort tid.
+             * Journalfører kun endringsvedtak for en deltaker hvis den nyeste endringen er eldre enn en graceperiode på 30 minutter.
+             * Dette gjøres for å unngå at vi journalfører endringsvedtak før alle endringer er gjort.
              */
             val nyesteHendelseOpprettet = hendelser.maxByOrNull { it.hendelse.opprettet } ?: return@forEach
             if (nyesteHendelseOpprettet.hendelse.opprettet.isBefore(enHalvtimeSiden)) {
