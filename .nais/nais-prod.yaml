@@ -51,12 +51,9 @@ spec:
           namespace: poao
           cluster: prod-gcp
       external:
-        - host: amt-unleash-api.nav.cloud.nais.io
         - host: dokarkiv.prod-fss-pub.nais.io
         - host: dokdistkanal.prod-fss-pub.nais.io
         - host: dokdistfordeling.prod-fss-pub.nais.io
-  envFrom:
-    - secret: amt-distribusjon-unleash-api-token
   gcp:
     sqlInstances:
       - name: amt-distribusjon
