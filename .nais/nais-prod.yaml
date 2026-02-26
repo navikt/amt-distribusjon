@@ -42,6 +42,7 @@ spec:
     inbound:
       rules:
         - application: amt-deltaker-bff
+        - application: amt-deltaker
     outbound:
       rules:
         - application: amt-pdfgen
