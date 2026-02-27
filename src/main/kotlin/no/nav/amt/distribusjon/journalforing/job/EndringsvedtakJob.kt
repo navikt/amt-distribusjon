@@ -21,20 +21,24 @@ class EndringsvedtakJob(
         initialDelay = Duration.of(5, ChronoUnit.MINUTES),
         period = Duration.of(10, ChronoUnit.MINUTES),
     ) {
-        val enHalvtimeSiden = LocalDateTime.now().minusMinutes(30)
-        val endringsvedtak = hendelseRepository
-            .getIkkeJournalforteHendelser(enHalvtimeSiden)
+        journalforEndringsvedtak()
+    }
+
+    suspend fun journalforEndringsvedtak() {
+        val ikkeJournalforteEndringsvedtak = hendelseRepository
+            .getIkkeJournalforteHendelser()
             .filter { it.hendelse.erEndringsVedtakSomSkalJournalfores() }
 
-        val endringsvedtakPrDeltaker = endringsvedtak.groupBy { it.hendelse.deltaker.id }
+        val endringsvedtakPrDeltaker = ikkeJournalforteEndringsvedtak.groupBy { it.hendelse.deltaker.id }
+        val graceperiode = LocalDateTime.now().minusMinutes(30)
 
         endringsvedtakPrDeltaker.forEach { (deltakerId, hendelser) ->
             /*
              * Journalfører kun endringsvedtak for en deltaker hvis den nyeste endringen er eldre enn en graceperiode på 30 minutter.
-             * Dette gjøres for å unngå at vi journalfører endringsvedtak før alle endringer er gjort.
+             * Dette gjøres for å samle alle endringer gjort innenfor en kort periode slik at de havner i samme brev.
              */
             val nyesteHendelseOpprettet = hendelser.maxByOrNull { it.hendelse.opprettet } ?: return@forEach
-            if (nyesteHendelseOpprettet.hendelse.opprettet.isBefore(enHalvtimeSiden)) {
+            if (nyesteHendelseOpprettet.hendelse.opprettet.isBefore(graceperiode)) {
                 log.info("Behandler ${hendelser.size} endringsvedtak for deltaker med id $deltakerId")
                 try {
                     journalforingService.journalforOgDistribuerEndringsvedtak(hendelser)
@@ -45,6 +49,6 @@ class EndringsvedtakJob(
                 log.info("Venter med å behandle endringsvedtak for deltaker $deltakerId (nyeste hendelse: $nyesteHendelseOpprettet)")
             }
         }
-        log.info("Ferdig med å behandle ${endringsvedtak.size} endringsvedtak")
+        log.info("Ferdig med å behandle ${ikkeJournalforteEndringsvedtak.size} endringsvedtak")
     }
 }

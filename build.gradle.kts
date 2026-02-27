@@ -53,6 +53,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.nimbus.jose.jwt)
     testImplementation(libs.amt.testing)
+    testImplementation("io.mockk:mockk:1.14.9")
 }
 
 kotlin {

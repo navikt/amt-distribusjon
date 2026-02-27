@@ -57,7 +57,7 @@ class HendelseRepositoryTest {
                 ),
             )
 
-            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
+            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser()
 
             ikkeJournalforteHendelser.size shouldBe 1
             ikkeJournalforteHendelser.first().hendelse.id shouldBe hendelse.id
@@ -77,26 +77,7 @@ class HendelseRepositoryTest {
                 ),
             )
 
-            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
-
-            ikkeJournalforteHendelser.size shouldBe 0
-        }
-
-        @Test
-        fun `getIkkeJournalforteHendelser - hendelse er ikke journalfort, tidspunkt ikke passert - returnerer tom liste`() {
-            val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now())
-            TestRepository.insertHendelse(hendelse)
-            journalforingstatusRepository.upsert(
-                Journalforingstatus(
-                    hendelseId = hendelse.id,
-                    journalpostId = null,
-                    bestillingsId = null,
-                    kanIkkeDistribueres = null,
-                    kanIkkeJournalfores = null,
-                ),
-            )
-
-            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now().minusHours(1))
+            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser()
 
             ikkeJournalforteHendelser.size shouldBe 0
         }
@@ -115,7 +96,7 @@ class HendelseRepositoryTest {
                 ),
             )
 
-            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
+            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser()
 
             ikkeJournalforteHendelser.size shouldBe 0
         }
@@ -138,7 +119,7 @@ class HendelseRepositoryTest {
                 ),
             )
 
-            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
+            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser()
 
             ikkeJournalforteHendelser.size shouldBe 0
         }
@@ -161,7 +142,7 @@ class HendelseRepositoryTest {
                 ),
             )
 
-            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
+            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser()
 
             ikkeJournalforteHendelser.size shouldBe 1
             ikkeJournalforteHendelser.first().hendelse.id shouldBe hendelse.id
@@ -181,7 +162,7 @@ class HendelseRepositoryTest {
                 ),
             )
 
-            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
+            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser()
 
             ikkeJournalforteHendelser.size shouldBe 0
         }
@@ -191,7 +172,7 @@ class HendelseRepositoryTest {
             val hendelse = Hendelsesdata.hendelse(HendelseTypeData.forlengDeltakelse(), opprettet = LocalDateTime.now().minusHours(1))
             TestRepository.insertHendelse(hendelse)
 
-            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser(LocalDateTime.now())
+            val ikkeJournalforteHendelser = hendelseRepository.getIkkeJournalforteHendelser()
 
             ikkeJournalforteHendelser.size shouldBe 0
         }
