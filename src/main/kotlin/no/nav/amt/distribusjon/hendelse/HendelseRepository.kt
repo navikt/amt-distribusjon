@@ -50,14 +50,7 @@ class HendelseRepository {
         Database.query { session -> session.update(queryOf(sql, params)) }
     }
 
-    fun getIkkeJournalforteHendelser(): List<HendelseMedJournalforingstatus> {
-        val ikkeJournalforte = hentIkkeJournalforteHendelser()
-        val ikkeDistribuerte = hentHendelserSomSkalDistribueresSomBrev()
-
-        return ikkeJournalforte + ikkeDistribuerte
-    }
-
-    private fun hentIkkeJournalforteHendelser(): List<HendelseMedJournalforingstatus> {
+    fun hentIkkeJournalforteHendelser(): List<HendelseMedJournalforingstatus> {
         val where =
             """
             js.journalpost_id IS NULL
@@ -73,7 +66,7 @@ class HendelseRepository {
      * Vi ekskluderer "digitale" distribusjonskanaler (DITT_NAV/SDP), og ekskluderer samtidig
      * rader som allerede blir plukket opp av [hentIkkeJournalforteHendelser].
      */
-    private fun hentHendelserSomSkalDistribueresSomBrev(): List<HendelseMedJournalforingstatus> {
+    fun hentHendelserSomSkalDistribueresSomBrev(): List<HendelseMedJournalforingstatus> {
         val where =
             """
             js.bestillingsid IS NULL

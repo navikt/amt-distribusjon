@@ -22,10 +22,6 @@ import java.util.UUID
 class EndringsvedtakJobTest {
     @Test
     fun `journalforEndringsvedtak - journalforer og distribuerer endringsvedtak naar nyeste hendelse er eldre enn graceperiode`() {
-        val jobManager = mockk<JobManager>(relaxed = true)
-        val hendelseRepository = mockk<HendelseRepository>()
-        val journalforingService = mockk<JournalforingService>()
-
         val deltakerIdA = UUID.randomUUID()
         val deltakerIdB = UUID.randomUUID()
 
@@ -43,14 +39,12 @@ class EndringsvedtakJobTest {
             ),
         )
 
-        every { hendelseRepository.getIkkeJournalforteHendelser() } returns hendelser
-        coEvery { journalforingService.journalforOgDistribuerEndringsvedtak(any()) } returns Unit
+        val test = testSetup(hendelser)
 
-        val job = EndringsvedtakJob(jobManager, hendelseRepository, journalforingService)
-        runBlocking { job.journalforEndringsvedtak() }
+        runBlocking { test.job.journalforEndringsvedtak() }
 
         coVerify(exactly = 1) {
-            journalforingService.journalforOgDistribuerEndringsvedtak(
+            test.journalforingService.journalforOgDistribuerEndringsvedtak(
                 match { liste ->
                     liste.size == 2 && liste.all { it.hendelse.deltaker.id == deltakerIdA }
                 },
@@ -59,11 +53,22 @@ class EndringsvedtakJobTest {
     }
 
     @Test
-    fun `journalforEndringsvedtak - fortsetter med neste deltaker hvis journalforing feiler for en deltaker`() {
-        val jobManager = mockk<JobManager>(relaxed = true)
-        val hendelseRepository = mockk<HendelseRepository>()
-        val journalforingService = mockk<JournalforingService>()
+    fun `journalforEndringsvedtak - behandler ikke hendelser innenfor graceperiode`() {
+        val deltakerId = UUID.randomUUID()
 
+        val hendelser = listOf(
+            hendelseMedStatus(deltakerId = deltakerId, opprettet = LocalDateTime.now().minusMinutes(5)),
+        )
+
+        val test = testSetup(hendelser)
+
+        runBlocking { test.job.journalforEndringsvedtak() }
+
+        coVerify(exactly = 0) { test.journalforingService.journalforOgDistribuerEndringsvedtak(any()) }
+    }
+
+    @Test
+    fun `journalforEndringsvedtak - fortsetter med neste deltaker hvis journalforing feiler for en deltaker`() {
         val deltakerIdA = UUID.randomUUID()
         val deltakerIdB = UUID.randomUUID()
 
@@ -72,10 +77,10 @@ class EndringsvedtakJobTest {
             hendelseMedStatus(deltakerId = deltakerIdB, opprettet = LocalDateTime.now().minusMinutes(60)),
         )
 
-        every { hendelseRepository.getIkkeJournalforteHendelser() } returns hendelser
+        val test = testSetup(hendelser)
 
         coEvery {
-            journalforingService.journalforOgDistribuerEndringsvedtak(
+            test.journalforingService.journalforOgDistribuerEndringsvedtak(
                 match {
                     it
                         .first()
@@ -84,7 +89,7 @@ class EndringsvedtakJobTest {
             )
         } throws RuntimeException("Simulert feil")
         coEvery {
-            journalforingService.journalforOgDistribuerEndringsvedtak(
+            test.journalforingService.journalforOgDistribuerEndringsvedtak(
                 match {
                     it
                         .first()
@@ -93,11 +98,27 @@ class EndringsvedtakJobTest {
             )
         } returns Unit
 
-        val job = EndringsvedtakJob(jobManager, hendelseRepository, journalforingService)
-        runBlocking { job.journalforEndringsvedtak() }
+        runBlocking { test.job.journalforEndringsvedtak() }
 
-        // Skal forsøke begge deltakelsene selv om første feiler
-        coVerify(exactly = 2) { journalforingService.journalforOgDistribuerEndringsvedtak(any()) }
+        // Verifiserer at begge deltakere faktisk blir forsøkt
+        coVerify(exactly = 1) {
+            test.journalforingService.journalforOgDistribuerEndringsvedtak(
+                match {
+                    it
+                        .first()
+                        .hendelse.deltaker.id == deltakerIdA
+                },
+            )
+        }
+        coVerify(exactly = 1) {
+            test.journalforingService.journalforOgDistribuerEndringsvedtak(
+                match {
+                    it
+                        .first()
+                        .hendelse.deltaker.id == deltakerIdB
+                },
+            )
+        }
     }
 
     @Test
@@ -117,6 +138,25 @@ class EndringsvedtakJobTest {
             )
         }
     }
+
+    private fun testSetup(hendelser: List<HendelseMedJournalforingstatus>): TestSetup {
+        val jobManager = mockk<JobManager>(relaxed = true)
+        val hendelseRepository = mockk<HendelseRepository>(relaxed = true)
+        val journalforingService = mockk<JournalforingService>(relaxed = true)
+
+        every { hendelseRepository.hentIkkeJournalforteHendelser() } returns hendelser
+        every { hendelseRepository.hentHendelserSomSkalDistribueresSomBrev() } returns emptyList()
+
+        return TestSetup(
+            job = EndringsvedtakJob(jobManager, hendelseRepository, journalforingService),
+            journalforingService = journalforingService,
+        )
+    }
+
+    private data class TestSetup(
+        val job: EndringsvedtakJob,
+        val journalforingService: JournalforingService,
+    )
 
     private fun hendelseMedStatus(
         deltakerId: UUID,
