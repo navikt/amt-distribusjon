@@ -52,7 +52,7 @@ class HendelseRepository {
 
     fun getIkkeJournalforteHendelser(): List<HendelseMedJournalforingstatus> {
         val ikkeJournalforte = hentIkkeJournalforteHendelser()
-        val ikkeDistribuerte = hentIkkeDistribuerteHendelserSomSkalDistribueres()
+        val ikkeDistribuerte = hentHendelserSomSkalDistribueresSomBrev()
 
         return ikkeJournalforte + ikkeDistribuerte
     }
@@ -73,7 +73,7 @@ class HendelseRepository {
      * Vi ekskluderer "digitale" distribusjonskanaler (DITT_NAV/SDP), og ekskluderer samtidig
      * rader som allerede blir plukket opp av [hentIkkeJournalforteHendelser].
      */
-    private fun hentIkkeDistribuerteHendelserSomSkalDistribueres(): List<HendelseMedJournalforingstatus> {
+    private fun hentHendelserSomSkalDistribueresSomBrev(): List<HendelseMedJournalforingstatus> {
         val where =
             """
             js.bestillingsid IS NULL
