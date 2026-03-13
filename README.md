@@ -1,3 +1,5 @@
+Flyttet til nytt monorepo: https://github.com/navikt/amt-deltakelser
+
 # amt-distribusjon
 amt-distribusjon har ansvar for å journalføre vedtak og varsle tiltaksdeltaker og veileder om viktige endringer. NAV-veileder varsles gjennom OBO sitt filter i Modia Arbeidsrettet oppfølging, 
 mens deltakeren varsles gjennom minside-varsel på navno. Ikke-digitale deltakere får varsel som brev.
